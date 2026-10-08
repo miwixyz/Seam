@@ -64,20 +64,26 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
 
 ### E5 – Seam handelt nur auf eine Geste des Nutzers
 - **Entschieden:** Fenster ändert Seam nur (a) nach einem Tastenkürzel, (b) beim Loslassen nach
-  einem Ziehen in eine Andockzone, (c) während der Nutzer eine gemeinsame Kante zieht. Kein
-  selbsttätiges Umordnen im Hintergrund.
-- **Ziel immer begrenzt:** Jede gesetzte Lage wird auf den sichtbaren Bereich des Bildschirms
-  (`visibleFrame`) beschnitten. Danach wird zurückgelesen (Prototyp: Helium übernahm eine Position
-  nicht) und mit dem Ist-Wert weitergerechnet.
+  einem Ziehen in eine Andockzone, (c) beim Loslassen nach dem Ziehen einer gemeinsamen Kante.
+  Kein selbsttätiges Umordnen im Hintergrund.
+- **Ziel begrenzt:** Kürzel, Teilen und mitgesetzte Partner werden auf den sichtbaren Bereich
+  (`visibleFrame`) begrenzt. Beim Mitziehen behält ein Nachbar seine abgewandte Kante (Seam setzt
+  sie nicht neu). Nach jedem Setzen wird zurückgelesen (`setVerified`) und mit dem Ist-Wert
+  weitergerechnet (Prototyp: Helium übernahm eine Position nicht).
+- *Nachgezogen 08.10. nach rafter-code-review:* Partner beim Kürzel-Mitsetzen waren nicht
+  begrenzt; jetzt `intersection(visible)`.
 
-### E6 – Keine Rückkopplung beim Mitziehen (Dienstverweigerung gegen sich selbst)
-- **Risiko:** Seam setzt Fenster B → B meldet „Größe geändert“ → Seam setzt A → A meldet … Eine
-  Schleife lässt Fenster flackern und blockiert den Hauptthread.
-- **Entschieden:** (a) Nur das Fenster, dessen Kante der Nutzer gerade zieht, ist „führend“;
-  Meldungen der folgenden Fenster werden während der Geste ignoriert. (b) Eigene Schreibvorgänge
-  werden je Fenster mit Zeitstempel markiert und ihre Echo-Meldungen verworfen. (c) Höchstens eine
-  Nachstellung je Fenster und Bildschirmbild (≈ 60 Hz). (d) Kann ein Fenster nicht folgen
-  (Mindestbreite), bleibt die Kante stehen, statt dass Seam das führende Fenster zurückzwingt.
+### E6 – Keine Rückkopplung, kein Blockieren
+- **Stand 08.10.:** Nachbarn werden **nur beim Loslassen** gesetzt, nicht live (Michaels
+  Entscheidung nach Messungen mit Outlook/Edge; die Live-Mechanik mit Lese-Faden, Taktbremse und
+  Konturen ist ausgebaut). Damit gibt es während einer Geste keine Schreibvorgänge auf Nachbarn
+  und keine Echo-Schleife.
+- **Weiterhin:** (a) Nur das führende Fenster (das zuerst Bewegung meldet) zählt; Meldungen der
+  anderen Kandidaten werden ignoriert. (b) Alle Setzvorgänge laufen auf einer eigenen
+  Warteschlange (`NeighborWriter`), nie auf dem Hauptthread: Outlook antwortete bis 56 ms je
+  Setzen. (c) Kann ein Fenster nicht folgen (Mindestgröße), bleibt die Kante an dieser Stelle
+  (`Geometry.resolveMinimum`), statt dass Fenster überlappen. (d) Nachprüfung höchstens
+  5 Versuche, zusammen ~1,5 s; Abbruch, sobald die Lage sitzt und die Größe stabil abweicht.
 
 ### E7 – Niemand außer dem Nutzer steuert Seam
 - **Entschieden:** In Phase 1 **keine** Fernsteuerung: kein URL-Schema, kein AppleScript-Wörterbuch,
@@ -149,8 +155,11 @@ Adresse aus dem offiziellen README (Slopsquat).
 
 ## Ausstiegskriterien für Phase 1
 
-- [ ] `rafter-code-review` gegen E1 bis E11 gelaufen, Befunde behoben oder begründet
-- [ ] Test: Positivliste der gelesenen AX-Attribute (E3)
-- [ ] Test: Echo-Unterdrückung und Taktbegrenzung beim Mitziehen (E6)
-- [ ] `codesign -d --entitlements` zeigt keine Ausnahme von der Hardened Runtime (E8)
-- [ ] `rafter run` vor dem ersten Release (Kontingent prüfen)
+- [x] `rafter-code-review` gegen E1 bis E11 gelaufen (08.10.): E1/E2/E3/E7/E8 mit Belegen erfüllt;
+      E5 nachgezogen (Partner begrenzt), E6 an den ausgebauten Live-Betrieb angepasst
+- [x] Test: Positivliste der gelesenen AX-Attribute (E3) — `SeamTests/AXAllowlistTests.swift`
+- [x] E6: entfällt durch „Nachbar beim Loslassen“ (keine Schreibvorgänge während der Geste)
+- [x] `codesign -d --entitlements` zeigt keine Ausnahme, `flags=0x10000(runtime)` (E8, 08.10.)
+- [ ] `rafter run` vor dem ersten Release — braucht das Repo auf GitHub (noch lokal);
+      `rafter secrets` meldete „Betterleaks output is not an array“, daher von Hand nachgeprüft
+      (keine Schlüsselmuster) → `rafter agent update-betterleaks`

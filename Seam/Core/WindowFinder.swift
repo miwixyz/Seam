@@ -75,7 +75,11 @@ enum WindowFinder {
                 guard let r = Geometry.complement(of: e.bounds, target: t, edge: edge, gap: gap, visible: visible),
                       let w = AXAccess.windows(of: e.pid).first(where: { $0.frame.map { same($0, e.bounds) } ?? false }),
                       w != moving, !out.contains(where: { $0.0 == w }) else { continue }
-                out.append((w, r))
+                // E5: auf den sichtbaren Bereich begrenzen. Ein Nachbar, dessen äußerer Rand
+                // außerhalb lag, wird dabei mit eingeholt (rafter-code-review, 08.10.).
+                let clamped = r.intersection(visible)
+                guard !clamped.isNull, clamped.width >= 80, clamped.height >= 60 else { continue }
+                out.append((w, clamped))
                 break
             }
         }
