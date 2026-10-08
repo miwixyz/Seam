@@ -49,10 +49,43 @@ struct MenuContent: View {
             .keyboardShortcut("q")
     }
 
+    /// Anklickbar wie bei Magnet: wirkt auf das vorderste Fenster, das Kürzel steht
+    /// rechtsbündig daneben. Als reiner Text zeigte macOS die Liste grau (Michael, 08.10.).
     @ViewBuilder
     private func shortcutList(_ o: Orientation) -> some View {
         ForEach(Layout.specs(o), id: \.command) { spec in
-            Text("\(spec.command.title(o))   \(spec.key.label)")
+            if let shortcut = spec.key.menuShortcut {
+                Button(spec.command.title(o)) { engine.perform(spec.key) }
+                    .keyboardShortcut(shortcut)
+            } else {
+                Button("\(spec.command.title(o))   \(spec.key.label)") { engine.perform(spec.key) }
+            }
         }
+    }
+}
+
+private extension KeyCombo {
+    /// Dasselbe Kürzel als SwiftUI-Tastenkürzel, nur für die Anzeige im Menü.
+    var menuShortcut: KeyboardShortcut? {
+        let key: KeyEquivalent
+        switch keyCode {
+        case 123: key = .leftArrow
+        case 124: key = .rightArrow
+        case 125: key = .downArrow
+        case 126: key = .upArrow
+        case 36: key = .return
+        case 51: key = .delete
+        case 115: key = .home
+        default:
+            guard let s = KeyboardLayout.character(for: keyCode)?.lowercased(), s.count == 1,
+                  let c = s.first else { return nil }
+            key = KeyEquivalent(c)
+        }
+        var mods: EventModifiers = []
+        if modifiers & 4096 != 0 { mods.insert(.control) }
+        if modifiers & 2048 != 0 { mods.insert(.option) }
+        if modifiers & 512 != 0 { mods.insert(.shift) }
+        if modifiers & 256 != 0 { mods.insert(.command) }
+        return KeyboardShortcut(key, modifiers: mods)
     }
 }

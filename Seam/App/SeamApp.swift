@@ -82,6 +82,12 @@ final class Engine {
         drag.start()
     }
 
+    /// Befehl aus dem Menü: wirkt wie das Kürzel auf das vorderste Fenster.
+    func perform(_ key: KeyCombo) {
+        guard running else { return }
+        actions.perform(key)
+    }
+
     /// Kürzel an/aus: abmelden statt nur ignorieren, damit andere Apps sie nutzen können.
     func applyShortcutSetting() {
         guard running else { return }
