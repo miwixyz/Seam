@@ -118,6 +118,7 @@
   </p>
   <ul>
     <li>Seam braucht die Bedienungshilfen-Freigabe von macOS, um Fenster anderer Apps zu bewegen. Von diesen Fenstern liest es nur Rolle und Unterrolle, Lage, Größe, ob das Fenster minimiert oder im Vollbild ist, und die Prozessnummer der App. Für das Abdunkeln liest es aus der Fensterliste von macOS nur Fensternummer, Prozessnummer und Lage, um zu erkennen, welches Fenster vorn liegt. Fenstertitel und Inhalte liest Seam nicht, und eine Bildschirmaufnahme-Freigabe fragt es nicht an.</li>
+    <li>Für die Namen der Spaces liest Seam über eine nicht offiziell dokumentierte Schnittstelle von macOS nur die Liste der Spaces und welcher gerade aktiv ist. Die Namen, die du vergibst, speichert Seam nur in seinen Einstellungen auf deinem Mac.</li>
     <li>An Fenstern anderer Apps ändert Seam nur Lage und Größe. Bei zwei Fenstern, die du mit ⌃⌥S geteilt hast, hebt es zusätzlich den Partner an und minimiert ihn mit oder holt ihn zurück.</li>
     <li>Tastenkürzel meldet Seam bei macOS an und erhält nur diese Tastenkombinationen. Andere Tastatureingaben sieht es nicht, die Freigabe „Eingabeüberwachung“ braucht es nicht.</li>
     <li>Die Maus beobachtet Seam nur passiv (Taste gedrückt, Ziehen, Loslassen), um Andocken und Mitziehen zu erkennen. Es verändert oder erzeugt keine Maus- oder Tastaturereignisse.</li>
