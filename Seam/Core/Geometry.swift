@@ -338,6 +338,12 @@ enum Geometry {
             : seamStops.last { CGFloat($0) < current - eps }
     }
 
+    /// Steht `a` vor `b` (quer: weiter links, hochkant: weiter oben)? Nach der Mitte, damit
+    /// überlappende oder ungleich große Fenster trotzdem eindeutig sortiert werden.
+    static func comesFirst(_ a: CGRect, before b: CGRect, _ o: Orientation) -> Bool {
+        o == .landscape ? a.midX <= b.midX : a.midY <= b.midY
+    }
+
     /// Beide Hälften eines geteilten Bildschirms bei Naht `cells` (Zellen von 24).
     /// Quer: links/rechts, hochkant: oben/unten.
     static func splitFrames(at cells: Int, in visible: CGRect, _ o: Orientation, gap: CGFloat) -> (first: CGRect, second: CGRect) {

@@ -36,8 +36,10 @@ final class WindowActions {
     /// bündig stehen. Nur im Speicher (E10).
     private var lastPair: (AXWindow, AXWindow)?
 
-    /// ⌃⌥S: aktives Fenster links (hochkant oben), das nächste Fenster dahinter rechts,
-    /// beide volle Höhe, Naht in der Mitte.
+    /// ⌃⌥S: aktives Fenster und das nächste dahinter teilen sich den Bildschirm, beide
+    /// volle Höhe, Naht in der Mitte. **Jedes bleibt auf seiner Seite:** Wer weiter links
+    /// (hochkant: oben) steht, kommt links hin. Michael, 08.10.: Zuerst kam immer das aktive
+    /// Fenster nach links, „Outlook springt von links nach rechts“.
     private func split(_ w: AXWindow, _ f: CGRect, _ screen: Screens.Info) {
         guard let (partner, pf) = WindowFinder.nextWindow(after: w, frame: f, on: screen.frame) else {
             Self.log.notice("Teilen: kein zweites Fenster auf diesem Bildschirm")
@@ -45,9 +47,11 @@ final class WindowActions {
         }
         if original[w] == nil { original[w] = f }
         if original[partner] == nil { original[partner] = pf }
-        lastPair = (w, partner)
+        let wFirst = Geometry.comesFirst(f, before: pf, screen.orientation)
+        let (first, second) = wFirst ? (w, partner) : (partner, w)
+        lastPair = (first, second)
         let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
-        setPair((w, a), (partner, b), name: "Teilen")
+        setPair((first, a), (second, b), name: "Teilen")
     }
 
     /// ⌃⌥⇧← / → : Naht zur nächsten festen Stufe (⅓ ⅜ ½ ⅝ ⅔). Beide Fenster in einem
@@ -58,7 +62,7 @@ final class WindowActions {
             Self.log.notice("Naht: kein Nachbar an einer gemeinsamen Kante, erst ⌃⌥S")
             return
         }
-        let wFirst = o == .landscape ? f.midX < of.midX : f.midY < of.midY
+        let wFirst = Geometry.comesFirst(f, before: of, o)
         let (first, ff) = wFirst ? (w, f) : (other, of)
         let (second, sf) = wFirst ? (other, of) : (w, f)
         let seamPx = o == .landscape ? ff.maxX + gap / 2 : ff.maxY + gap / 2

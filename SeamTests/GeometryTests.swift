@@ -267,6 +267,17 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.nextSeamStop(current: 10.7, direction: 1), 12)   // von Hand gezogen
     }
 
+    func testSplitKeepsSides() {
+        // gemessen 08.10.: Outlook stand rechts und war aktiv, sprang beim Teilen nach links
+        let outlookRight = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        let edgeLeft = CGRect(x: 5, y: 35, width: 1713, height: 1345)
+        XCTAssertFalse(Geometry.comesFirst(outlookRight, before: edgeLeft, .landscape))
+        XCTAssertTrue(Geometry.comesFirst(edgeLeft, before: outlookRight, .landscape))
+        // Überlappend: entscheidet die Mitte
+        XCTAssertTrue(Geometry.comesFirst(CGRect(x: 0, y: 0, width: 2000, height: 900),
+                                          before: CGRect(x: 1500, y: 0, width: 1900, height: 900), .landscape))
+    }
+
     func testSplitFramesHalfAndTwoThirds() {
         let (l, r) = Geometry.splitFrames(at: 12, in: v, .landscape, gap: 5)
         XCTAssertEqual(l, CGRect(x: 5, y: 35, width: 1713, height: 1345))
