@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Seam</title>
+        <item>
+            <title>0.1.0</title>
+            <pubDate>Thu, 08 Oct 2026 19:00:40 +0200</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.1.0/Seam-0.1.0.zip" length="1412185" type="application/octet-stream" sparkle:edSignature="+1/wfcsTwd7vvRI33ylnSsXKCXA0HlCulbKE7BW94RznmM2X8AbsROGjnUAXnREuTQdJ7t3sNaQNtzVmpwhoCA=="/>
+        </item>
+    </channel>
+</rss>
