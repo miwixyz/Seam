@@ -57,10 +57,16 @@ final class DragController {
     }
 
     private var gesture: Gesture?
+    /// Zählt Gesten hoch. Kontur-Aktualisierungen von der Warteschlange gelten nur für
+    /// die Geste, die sie angestoßen hat, sonst bliebe nach dem Loslassen eine stehen.
+    private var generation = 0
 
     /// Nachstellen auf eigener Warteschlange, neuester Wert gewinnt (E6c, ersetzt die
     /// frühere 8-ms-Bremse, die den letzten Wert eines Meldungsstoßes verwarf).
     private let writer = NeighborWriter()
+    /// Wie schnell Apps auf Größenänderungen reagieren (automatisch je App, 08.10.).
+    private let slowApps = SlowApps()
+    private let contours = ContourOverlay()
     /// So weit um den Zeiger werden Fenster als Kandidaten gesucht.
     private static let grabRadius: CGFloat = 8
 
@@ -98,6 +104,7 @@ final class DragController {
         let p = Screens.mouse
         let candidates = Self.windowsNear(p)
         guard !candidates.isEmpty else { return }
+        generation += 1
         let g = Gesture(candidates: candidates, downPoint: p)
         gesture = g
         observe(g)
@@ -140,6 +147,7 @@ final class DragController {
                     let now = effectiveFrame(g, raw)
                     if prefs.linkEdges { prepareFinish(g, now: now) }
                     logResizeStats(g, leading: w)
+                    contours.hideAll()
                     finish(leading: w, raw: raw, now: now, frames: g.finalFrames, windows: g.neighborWindows)
                 }
             case .undecided:
@@ -180,7 +188,9 @@ final class DragController {
         let neighbors = Set(g.neighborWindows.values.map { app($0.pid) }).sorted().joined(separator: ",")
         let dur = g.lastNotification - g.firstNotification
         let st = writer.takeStats()
-        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms")
+        let slowList = Set(g.neighborWindows.values.filter { slowApps.isSlow($0.pid) }.map { app($0.pid) })
+            .sorted().joined(separator: ",")
+        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms, als langsam: \(slowList.isEmpty ? "–" : slowList, privacy: .public)")
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
@@ -220,14 +230,26 @@ final class DragController {
         guard let w = g.leading, ensureNeighbors(g), let neighbors = g.neighbors else { return }
         g.linkEvents += 1
         let start = g.start, grabbed = g.grabbed, gap = CGFloat(prefs.gap), windows = g.neighborWindows
+        let slow = slowApps, gen = generation
         writer.track {
             guard let raw = w.frame else { return 0 }
             let now = Geometry.keepUngrabbedEdges(now: raw, start: start, grabbed: grabbed, slack: gap + 6)
             var n = 0
+            var preview: [Int: CGRect] = [:]
             for (id, r) in Geometry.linkedFrames(start: start, now: now, neighbors: neighbors, gap: gap)
             where r.width >= 80 && r.height >= 60 {      // E6d: nie auf Splitter zusammendrücken
-                windows[id]?.setFrameLive(r)
+                guard let nw = windows[id] else { continue }
+                // Langsame App (Outlook): nur Kontur, gesetzt wird beim Loslassen.
+                if slow.isSlow(nw.pid) { preview[id] = r; continue }
+                let t0 = CFAbsoluteTimeGetCurrent()
+                nw.setFrameLive(r)
+                slow.record(nw.pid, seconds: CFAbsoluteTimeGetCurrent() - t0)
                 n += 1
+            }
+            let shown = preview
+            Task { @MainActor [weak self] in
+                guard let self, self.generation == gen, self.gesture != nil else { return }
+                self.contours.update(shown)
             }
             return n
         }
@@ -292,6 +314,7 @@ final class DragController {
     }
 
     private func endGesture() {
+        contours.hideAll()
         guard let g = gesture else { return }
         for obs in g.observers {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .commonModes)
