@@ -153,6 +153,38 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(out[1], CGRect(x: 0, y: 945, width: 1720, height: 495))
     }
 
+    // MARK: Gepackte Kante (macOS zieht ungepackte Kanten an den Bildschirmrand)
+
+    func testGrabInGapBetweenWindowsMeansLeftEdgeOfRightWindow() {
+        // Klick bei x 1720, rechtes Fenster beginnt bei 1723
+        let r = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        XCTAssertEqual(Geometry.grabbedEdges(at: CGPoint(x: 1720, y: 700), frame: r, radius: 8), [.left])
+    }
+
+    func testGrabCornerMeansTwoEdges() {
+        let r = CGRect(x: 100, y: 100, width: 500, height: 400)
+        XCTAssertEqual(Set(Geometry.grabbedEdges(at: CGPoint(x: 601, y: 501), frame: r, radius: 8)), [.right, .bottom])
+    }
+
+    func testGrabInsideIsNoEdge() {
+        let r = CGRect(x: 100, y: 100, width: 500, height: 400)
+        XCTAssertTrue(Geometry.grabbedEdges(at: CGPoint(x: 300, y: 300), frame: r, radius: 8).isEmpty)
+    }
+
+    func testUngrabbedRightEdgeSnappedByMacOSIsRestored() {
+        // Gemessen: linke Kante 300 nach links gezogen, macOS setzt rechts 3435 → 3440
+        let start = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        let now = CGRect(x: 1423, y: 35, width: 2017, height: 1345)
+        XCTAssertEqual(Geometry.keepUngrabbedEdges(now: now, start: start, grabbed: [.left], slack: 10),
+                       CGRect(x: 1423, y: 35, width: 2012, height: 1345))
+    }
+
+    func testGrabbedEdgeIsNeverReset() {
+        let start = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        let now = CGRect(x: 1718, y: 35, width: 1717, height: 1345)   // nur 5 px gezogen
+        XCTAssertEqual(Geometry.keepUngrabbedEdges(now: now, start: start, grabbed: [.left], slack: 10), now)
+    }
+
     func testLinkCandidates() {
         XCTAssertTrue(Geometry.isLinkCandidate(rightWin, to: leftWin, gap: 5))
         XCTAssertFalse(Geometry.isLinkCandidate(CGRect(x: 2600, y: 40, width: 800, height: 600), to: leftWin, gap: 5))

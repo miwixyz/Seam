@@ -87,6 +87,36 @@ enum Geometry {
         let frame: CGRect
     }
 
+    /// Welche Kanten hat der Nutzer gepackt? Die Kanten des Startrahmens, die
+    /// höchstens `radius` vom Klickpunkt entfernt sind (Ecken: zwei Kanten).
+    static func grabbedEdges(at p: CGPoint, frame f: CGRect, radius: CGFloat) -> [Edge] {
+        var out: [Edge] = []
+        let inY = p.y >= f.minY - radius && p.y <= f.maxY + radius
+        let inX = p.x >= f.minX - radius && p.x <= f.maxX + radius
+        if inY, abs(p.x - f.minX) <= radius { out.append(.left) }
+        if inY, abs(p.x - f.maxX) <= radius { out.append(.right) }
+        if inX, abs(p.y - f.minY) <= radius { out.append(.top) }
+        if inX, abs(p.y - f.maxY) <= radius { out.append(.bottom) }
+        return out
+    }
+
+    /// Setzt Kanten, die der Nutzer NICHT gepackt hat, auf den Startwert zurück,
+    /// sofern sie sich höchstens um `slack` bewegt haben.
+    ///
+    /// Gemessen 2026-10-08 auf macOS 27.0.1: Zieht man die linke Kante eines
+    /// Fensters, dessen rechte Kante 5 px vor dem Bildschirmrand steht, zieht
+    /// macOS die rechte Kante an den Rand (3435 → 3440), auch ganz ohne Seam.
+    /// Der Abstand am Rand ginge sonst bei jedem Ziehen verloren.
+    static func keepUngrabbedEdges(now n: CGRect, start s: CGRect, grabbed: [Edge], slack: CGFloat) -> CGRect {
+        guard !grabbed.isEmpty else { return n }
+        var minX = n.minX, maxX = n.maxX, minY = n.minY, maxY = n.maxY
+        if !grabbed.contains(.left), abs(minX - s.minX) <= slack { minX = s.minX }
+        if !grabbed.contains(.right), abs(maxX - s.maxX) <= slack { maxX = s.maxX }
+        if !grabbed.contains(.top), abs(minY - s.minY) <= slack { minY = s.minY }
+        if !grabbed.contains(.bottom), abs(maxY - s.maxY) <= slack { maxY = s.maxY }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
     /// Welche Kanten hat der Nutzer bewegt? Vergleich Start ↔ jetzt.
     static func movedEdges(from s: CGRect, to n: CGRect) -> [Edge] {
         let e: CGFloat = 0.5

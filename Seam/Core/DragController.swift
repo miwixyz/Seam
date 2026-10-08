@@ -28,6 +28,9 @@ final class DragController {
 
     private final class Gesture {
         var candidates: [(window: AXWindow, start: CGRect)]
+        /// Klickpunkt beim Gestenbeginn (für „welche Kante wurde gepackt?“).
+        let downPoint: CGPoint
+        var grabbed: [Geometry.Edge] = []
         var observers: [AXObserver] = []
         var leading: AXWindow?
         var start: CGRect = .zero
@@ -40,7 +43,10 @@ final class DragController {
         var restoredOriginal: CGRect?
         var lastApply: CFAbsoluteTime = 0
         var linkEvents = 0
-        init(candidates: [(window: AXWindow, start: CGRect)]) { self.candidates = candidates }
+        init(candidates: [(window: AXWindow, start: CGRect)], downPoint: CGPoint) {
+            self.candidates = candidates
+            self.downPoint = downPoint
+        }
     }
 
     private var gesture: Gesture?
@@ -84,7 +90,7 @@ final class DragController {
         let p = Screens.mouse
         let candidates = Self.windowsNear(p)
         guard !candidates.isEmpty else { return }
-        let g = Gesture(candidates: candidates)
+        let g = Gesture(candidates: candidates, downPoint: p)
         gesture = g
         observe(g)
     }
@@ -115,7 +121,15 @@ final class DragController {
                     actions.apply(cmd, to: w, current: cur, screen: screen, before: g.restoredOriginal ?? g.start)
                 }
             case .resizing:
-                if prefs.linkEdges, let now = w.frame { applyLink(g, now: now, final: true) }
+                if let raw = w.frame {
+                    let now = effectiveFrame(g, raw)
+                    // macOS hat eine nicht gepackte Kante an den Bildschirmrand gezogen: zurück.
+                    if now != raw {
+                        w.setFrame(now)
+                        Self.log.notice("Ungepackte Kante zurückgesetzt: \(NSStringFromRect(raw), privacy: .public) → \(NSStringFromRect(now), privacy: .public)")
+                    }
+                    if prefs.linkEdges { applyLink(g, now: now, final: true) }
+                }
             case .undecided:
                 break
             }
@@ -131,8 +145,10 @@ final class DragController {
             guard let c = g.candidates.first(where: { CFEqual($0.window.element, element) }) else { return }
             g.leading = c.window
             g.start = c.start
+            g.grabbed = Geometry.grabbedEdges(at: g.downPoint, frame: c.start, radius: Self.grabRadius + 2)
         }
-        guard let w = g.leading, CFEqual(w.element, element), let now = w.frame else { return }
+        guard let w = g.leading, CFEqual(w.element, element), let raw = w.frame else { return }
+        let now = effectiveFrame(g, raw)
 
         if !Geometry.movedEdges(from: g.start, to: now).isEmpty {
             if g.mode == .undecided { g.mode = .resizing }
@@ -141,6 +157,12 @@ final class DragController {
             g.mode = .moving
             restoreSizeIfSnapped(g, w: w, now: now)
         }
+    }
+
+    /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
+    /// bleiben, wo sie waren (Geometry.keepUngrabbedEdges, gemessen an macOS 27).
+    private func effectiveFrame(_ g: Gesture, _ raw: CGRect) -> CGRect {
+        Geometry.keepUngrabbedEdges(now: raw, start: g.start, grabbed: g.grabbed, slack: CGFloat(prefs.gap) + 6)
     }
 
     /// Magnet „ursprüngliche Größe wiederherstellen“: Ein angedocktes Fenster bekommt
@@ -226,10 +248,13 @@ final class DragController {
                   let bounds = CGRect(dictionaryRepresentation: b),
                   bounds.insetBy(dx: -grabRadius, dy: -grabRadius).contains(p) else { continue }
             hits.append((pid, bounds))
-            if hits.count == 3 { break }
         }
+        // Erst über die Bedienungshilfen zuordnen, DANN auf drei begrenzen: Überlagerungen
+        // wie HazeOver (ein Fenster über den ganzen Bildschirm, gemessen 08.10.) liegen
+        // vorn in der Liste, sind aber keine verwaltbaren App-Fenster und würden sonst
+        // einen Kandidatenplatz belegen.
         var out: [(window: AXWindow, start: CGRect)] = []
-        for (pid, bounds) in hits {
+        for (pid, bounds) in hits where out.count < 3 {
             if let w = AXAccess.windows(of: pid).first(where: { win in
                 guard let f = win.frame else { return false }
                 return abs(f.minX - bounds.minX) <= 2 && abs(f.minY - bounds.minY) <= 2
