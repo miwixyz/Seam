@@ -112,7 +112,8 @@ final class WindowActions {
                 NeighborWriter.setVerified(second.0, fix.leading)
                 log.notice("\(name, privacy: .public): Mindestgröße links/oben, Naht gehalten")
             }
-            log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
+            func app(_ w: AXWindow) -> String { NSRunningApplication(processIdentifier: w.pid)?.bundleIdentifier ?? "\(w.pid)" }
+            log.notice("\(name, privacy: .public): \(app(first.0), privacy: .public) + \(app(second.0), privacy: .public) | Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
         }
     }
 
