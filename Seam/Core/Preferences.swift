@@ -16,6 +16,8 @@ final class Preferences {
         static let keepPairs = "keepPairs"
         static let dimEnabled = "dimEnabled"
         static let dimStrength = "dimStrength"
+        static let showSpaceName = "showSpaceName"
+        static let spaceNames = "spaceNames"
     }
 
     private let defaults: UserDefaults
@@ -35,9 +37,19 @@ final class Preferences {
     var dimEnabled: Bool { didSet { defaults.set(dimEnabled, forKey: Key.dimEnabled) } }
     /// Deckkraft der Abdunklung in Prozent.
     var dimStrength: Int { didSet { defaults.set(dimStrength, forKey: Key.dimStrength) } }
+    /// Namen des aktuellen Space neben dem Symbol in der Menüleiste zeigen (E14).
+    var showSpaceName: Bool { didSet { defaults.set(showSpaceName, forKey: Key.showSpaceName) } }
+    /// Namen der Spaces: Space-Schlüssel (UUID) → Name. Nur Eingaben des Nutzers (E14).
+    var spaceNames: [String: String] { didSet { defaults.set(spaceNames, forKey: Key.spaceNames) } }
 
     static let gapChoices = [0, 5, 10, 20]
     static let dimChoices = [20, 35, 50]
+
+    /// Namen setzen (leer = Standardname „Schreibtisch N“).
+    func setSpaceName(_ name: String, for key: String) {
+        let n = SpaceNames.sanitize(name)
+        if n.isEmpty { spaceNames[key] = nil } else { spaceNames[key] = n }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -52,5 +64,12 @@ final class Preferences {
         dimEnabled = defaults.object(forKey: Key.dimEnabled) as? Bool ?? false
         let s = defaults.object(forKey: Key.dimStrength) as? Int ?? 35
         dimStrength = Self.dimChoices.contains(s) ? s : 35
+        showSpaceName = defaults.object(forKey: Key.showSpaceName) as? Bool ?? true
+        // Von außen veränderte Werte bereinigen (STRIDE T): nur Text, gekürzt, ohne Steuerzeichen.
+        let raw = defaults.dictionary(forKey: Key.spaceNames) as? [String: String] ?? [:]
+        spaceNames = raw.reduce(into: [:]) { r, e in
+            let n = SpaceNames.sanitize(e.value)
+            if !n.isEmpty, e.key.count <= 80 { r[e.key] = n }
+        }
     }
 }

@@ -78,6 +78,17 @@ custom_rules:
     message: "Fensterliste nur Nummer/Prozess/Ebene/Lage lesen (SECURE-DESIGN E13)."
     severity: error
 
+  # Seam, docs/SECURE-DESIGN.md E14: nicht dokumentierte Systemfunktionen nur in SpaceReader.swift.
+  private_schnittstelle_nur_spacereader:
+    name: "Private Schnittstelle nur in SpaceReader"
+    regex: '@_silgen_name'
+    excluded: 'Seam/Core/SpaceReader\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Nicht dokumentierte Funktionen nur in SpaceReader.swift deklarieren (SECURE-DESIGN E14)."
+    severity: error
+
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
   # SwiftUI-App mit @NSApplicationDelegateAdaptor ist NSApp.delegate NICHT die
   # eigene AppDelegate-Instanz — der Cast liefert immer nil, `?.` verschluckt es,

@@ -21,6 +21,9 @@ IDENTITY=$(security find-identity -v -p codesigning \
 
 STAGE=$(mktemp -d /tmp/seam-install.XXXXXX)
 ditto build-dev/Build/Products/Release/Seam.app "$STAGE/Seam.app"
+# Build-Nummer wie release.sh (Anzahl Commits). Sonst trägt die lokale Fassung Build 1 und
+# Sparkle bietet das letzte Release als „Update“ an — das wäre ein Rückschritt (09.10.).
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" "$STAGE/Seam.app/Contents/Info.plist"
 # Von innen nach außen, ohne --deep (Sparkle rät davon ab; Rafter-Fund F3): Sparkles
 # Hilfsprogramme behalten ihre eigenen Berechtigungen, nur die App bekommt Seams.
 SPK="$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework/Versions/B"

@@ -28,6 +28,15 @@ Programme. Beende das andere oder schalte dort die Kürzel ab.
   wird, die App endet oder ausgeblendet wird (⌘H), oder die beiden nicht mehr nebeneinander
   stehen. Abschalten: „Einstellungen“ → „Geteilte Fenster bleiben zusammen“.
 
+## Namen für Spaces
+
+Im Menü unter „Spaces“ → „Spaces benennen …“ gibst du jedem Schreibtisch einen Namen. Der Name
+des aktuellen Space steht dann neben dem Seam-Symbol in der Menüleiste; Spaces ohne eigenen Namen
+zeigen nur das Symbol. Die Namen hängen am Space selbst, nicht an seiner Position: Ordnet macOS
+die Spaces neu an, stimmen sie weiter. Wechseln geht wie gewohnt mit ⌃← / ⌃→ oder Mission
+Control. Seam liest dafür über eine nicht offiziell dokumentierte Schnittstelle von macOS nur die
+Liste der Spaces. Liefert macOS sie nach einem Update nicht mehr, blendet Seam die Funktion aus.
+
 ## Hintergrund abdunkeln
 
 Unter „Einstellungen“ → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.

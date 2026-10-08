@@ -22,6 +22,10 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   löst sich, wenn ein Fenster schließt, die App endet oder ausgeblendet wird, oder die beiden
   nicht mehr nebeneinander stehen. Idee aus [WindowGlue](https://github.com/Conxt/WindowGlue)
   (MIT), eigener Code.
+- **Namen für Spaces:** Name des aktuellen Space neben dem Symbol, Liste im Menü, Fenster zum
+  Benennen. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
+  lesend über eine nicht dokumentierte macOS-Schnittstelle, ohne neue Berechtigung; kein Wechseln
+  per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
   beide hell. Stärke 20/35/50 %. Seam schiebt dafür ein eigenes Fenster unter das aktive, liest
   nur Nummer, Prozess und Lage der Fenster und braucht keine Bildschirmaufnahme-Freigabe.

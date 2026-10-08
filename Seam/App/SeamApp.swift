@@ -13,7 +13,13 @@ struct SeamApp: App {
                 .environment(engine)
                 .environment(engine.prefs)
         } label: {
-            Image(systemName: engine.isTrusted ? "rectangle.split.2x1" : "rectangle.split.2x1.slash")
+            let symbol = engine.isTrusted ? "rectangle.split.2x1" : "rectangle.split.2x1.slash"
+            // E14: selbst vergebener Name des aktuellen Space neben dem Symbol.
+            if let name = engine.spaces.menuBarTitle(engine.prefs) {
+                Label(name, systemImage: symbol).labelStyle(.titleAndIcon)
+            } else {
+                Image(systemName: symbol)
+            }
         }
         .menuBarExtraStyle(.menu)
 
@@ -23,6 +29,15 @@ struct SeamApp: App {
             HelpView()
                 .padding(16)
                 .frame(width: 520)
+        }
+        .windowResizability(.contentSize)
+
+        Window("Spaces benennen", id: "spaces") {
+            SpaceNamesView()
+                .environment(engine)
+                .environment(engine.prefs)
+                .padding(16)
+                .frame(width: 380)
         }
         .windowResizability(.contentSize)
     }
@@ -37,6 +52,8 @@ final class Engine {
     private static let log = Logger(subsystem: "dev.mwlr.seam", category: "start")
 
     let prefs = Preferences()
+    /// Spaces und ihre Namen (E14). Läuft auch ohne Bedienungshilfen-Freigabe.
+    let spaces = SpaceWatcher()
     private(set) var isTrusted = AXAccess.isTrusted
     private(set) var failedShortcuts: [KeyCombo] = []
     /// Updates (Sparkle). Im Testlauf nicht gestartet: kein Netz aus dem Test-Host.
@@ -59,6 +76,7 @@ final class Engine {
     init() {
         guard !Self.isRunningTests else { return }
         updater = Updater()
+        spaces.start()
         Task { @MainActor in self.boot() }
     }
 

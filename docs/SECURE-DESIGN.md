@@ -199,6 +199,38 @@ Michael, 09.10.: „so etwas wie HazeOver“, bei Paaren bleiben beide hell. Ab 
   vorn, mehrere Bildschirme, Space-/Vollbild-Wechsel. Kein fremdes Fenster wird verändert, keine
   Titel gelesen (Fensterliste nur Nummer/Prozess/Ebene/Lage).
 
+### E14 – Namen für Spaces (0.3, Durchgang 2026-10-09)
+
+Michael, 09.10.: 5–8 Spaces (Arbeit, Privat, Produktivität, Social, Media, Grafik, Text), Name des
+aktuellen Space in der Menüleiste. Vorbilder gelesen: NameSpace (MIT), spaces-renamer (verworfen:
+Plugin im Dock, braucht abgeschalteten Systemschutz SIP).
+
+- **Entschieden:** Liste der Spaces und aktiver Space über die **nicht dokumentierte**
+  CGS-Schnittstelle (`CGSMainConnectionID`, `CGSCopyManagedDisplaySpaces`), **nur lesend**.
+  Gemessen 09.10. unter macOS 27: liefert je Bildschirm die Spaces in Mission-Control-Reihenfolge,
+  den aktuellen Space und je Space eine UUID, die macOS in `com.apple.spaces.plist` dauerhaft
+  speichert. Alle Aufrufe in einer Datei (`SpaceReader.swift`), Lint-Regel
+  `private_schnittstelle_nur_spacereader` (`@_silgen_name` nur dort).
+- **Schlüssel für Namen:** UUID des Space (überlebt „Spaces automatisch neu anordnen“, anders als
+  NameSpace, das nach Position zählt). Der ursprüngliche Schreibtisch hat eine leere UUID →
+  Schlüssel `haupt:<Bildschirmkennung>`.
+- **Verworfen:** per Klick zu einem Space wechseln. Ginge nur mit künstlichen Tastendrücken (E2)
+  oder schreibenden privaten Aufrufen, die den Dock-Zustand durcheinanderbringen.
+- **Ausfall:** Liefert die Schnittstelle nichts (z. B. nach einem macOS-Update), blendet Seam die
+  Funktion aus und protokolliert es einmal. Kein Absturz, keine falschen Namen.
+- **Daten (E10, erweitert):** Namen sind Eingaben des Nutzers, gespeichert in UserDefaults
+  (UUID → Name, höchstens 40 Zeichen, Steuerzeichen entfernt). Nichts von fremden Apps.
+- **STRIDE:** *T* – Namen in UserDefaults verändert (gleicher Nutzer) → zeigt nur anderen Text.
+  *D* – private Schnittstelle hängt/ändert sich → Aufruf nur bei Space-Wechsel/Menü, Ausfall s. o.
+  *E* – keine neue Berechtigung; die Schnittstelle liest nur Kennungen, keine Inhalte.
+- **Umsetzung 09.10. geprüft** (`rafter-code-review`, Sichttest): Rohdaten nur über `as?` gelesen,
+  fremde Strukturen ergeben eine leere Liste statt Absturz (Test). Namen beim Laden und Setzen
+  bereinigt (Test). Lint-Regel `private_schnittstelle_nur_spacereader` (Positivfall ausgelöst).
+  Gemessen: Anzeige folgt dem Space-Wechsel (gegengeprüft mit unabhängigem Leser), Menü mit Häkchen
+  beim aktuellen, Fenster „Spaces benennen“ mit 4 Feldern, Eingabe landet bereinigt unter der UUID.
+  Nicht gemessen: mehrere Bildschirme, Neustart (UUID-Beständigkeit nur aus `com.apple.spaces.plist`
+  geschlossen), Vollbild-Spaces.
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |

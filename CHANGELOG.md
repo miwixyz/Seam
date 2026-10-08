@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Namen für Spaces:** Gib deinen Schreibtischen Namen wie „Arbeit“ oder „Grafik“. Der Name des
+  aktuellen Space steht neben dem Seam-Symbol in der Menüleiste, im Menü unter „Spaces“ siehst
+  du alle mit Häkchen beim aktuellen. Benennen über „Spaces“ → „Spaces benennen …“. Die Namen
+  bleiben auch, wenn macOS die Spaces neu anordnet. Zu einem Space springen kann Seam nicht,
+  dafür bleiben ⌃← / ⌃→ und Mission Control. Abschalten der Anzeige: „Einstellungen“ →
+  „Space-Namen in der Menüleiste“.
+
 ## [0.2.1] — 2026-10-09
 
 ### Behoben

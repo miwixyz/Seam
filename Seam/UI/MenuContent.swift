@@ -22,6 +22,20 @@ struct MenuContent: View {
             // Typisch: Magnet läuft noch und hält dieselben Kürzel.
             Text("\(engine.failedShortcuts.count) Kürzel belegt (läuft Magnet noch?)")
         }
+        if engine.spaces.available {
+            Menu("Spaces") {
+                ForEach(engine.spaces.spaces.filter { !$0.isFullScreen }) { space in
+                    // Häkchen = aktueller Space. Ein Klick öffnet „Spaces benennen“; wechseln
+                    // kann Seam nicht (SECURE-DESIGN E14: keine künstlichen Tastendrücke).
+                    Toggle(SpaceNames.title(space, prefs.spaceNames), isOn: Binding(
+                        get: { space.isCurrent },
+                        set: { _ in openSpacesWindow() }
+                    ))
+                }
+                Divider()
+                Button("Spaces benennen …") { openSpacesWindow() }
+            }
+        }
         if let version = engine.updater?.pendingVersion {
             Button("Update \(version) verfügbar …") { engine.updater?.checkForUpdates() }
         }
@@ -45,6 +59,7 @@ struct MenuContent: View {
             }
             .disabled(!prefs.dimEnabled)
             .onChange(of: prefs.dimStrength) { engine.applyDimStrength() }
+            Toggle("Space-Namen in der Menüleiste", isOn: $prefs.showSpaceName)
             Toggle("Tastenkürzel", isOn: $prefs.shortcuts)
                 .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
 
@@ -77,6 +92,12 @@ struct MenuContent: View {
         Divider()
         Button("Seam beenden") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    private func openSpacesWindow() {
+        engine.spaces.refresh()
+        openWindow(id: "spaces")
+        NSApp.activate()
     }
 
     private static func dimLabel(_ p: Int) -> String {
