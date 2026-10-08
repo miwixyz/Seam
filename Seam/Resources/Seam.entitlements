@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Absichtlich leer. Keine App Sandbox: Die Bedienungshilfen-Schnittstelle,
+	     mit der Seam fremde Fenster bewegt, ist in der Sandbox gesperrt.
+	     Und KEINE Ausnahme von der Hardened Runtime (keine
+	     disable-library-validation, keine allow-dyld-environment-variables):
+	     Wer Code in Seam einschleust, erbt dessen Bedienungshilfen-Freigabe.
+	     docs/SECURE-DESIGN.md E8. -->
+</dict>
+</plist>

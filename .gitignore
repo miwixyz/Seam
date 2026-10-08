@@ -1,0 +1,10 @@
+build/
+*.xcodeproj/
+.DS_Store
+*.xcuserstate
+xcuserdata/
+dist/
+release.env
+release.env.*
+build-dev/
+build-test/
