@@ -54,12 +54,16 @@ struct MenuContent: View {
     @ViewBuilder
     private func shortcutList(_ o: Orientation) -> some View {
         ForEach(Layout.specs(o), id: \.command) { spec in
-            if let shortcut = spec.key.menuShortcut {
-                Button(spec.command.title(o)) { engine.perform(spec.key) }
-                    .keyboardShortcut(shortcut)
-            } else {
-                Button("\(spec.command.title(o))   \(spec.key.label)") { engine.perform(spec.key) }
+            let shortcut = spec.key.menuShortcut
+            let title = shortcut == nil ? "\(spec.command.title(o))   \(spec.key.label)" : spec.command.title(o)
+            Button { engine.perform(spec.key) } label: {
+                if let icon = MenuIcon.image(spec, o) {
+                    Label { Text(title) } icon: { Image(nsImage: icon) }
+                } else {
+                    Text(title)
+                }
             }
+            .keyboardShortcut(shortcut)
         }
     }
 }
