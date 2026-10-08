@@ -253,6 +253,35 @@ enum Geometry {
         return nil
     }
 
+    // MARK: - Nur sichtbare Nachbarn (Michael, 08.10.)
+
+    /// Der Streifen eines Nachbarn an der Kante zum führenden Fenster: Dort sieht man,
+    /// ob er wirklich an die Naht grenzt. Gleichseitig gestapelte Fenster: ganzer Rahmen.
+    static func contactStrip(of w: CGRect, to s: CGRect, gap: CGFloat) -> CGRect {
+        let tol = gap + linkTolerance, depth: CGFloat = 20
+        let yLo = max(w.minY, s.minY), yHi = min(w.maxY, s.maxY)
+        let xLo = max(w.minX, s.minX), xHi = min(w.maxX, s.maxX)
+        if overlapsVertically(w, s), abs(w.minX - s.maxX) <= tol {        // rechts daneben
+            return CGRect(x: w.minX, y: yLo, width: min(depth, w.width), height: yHi - yLo)
+        }
+        if overlapsVertically(w, s), abs(s.minX - w.maxX) <= tol {        // links daneben
+            return CGRect(x: w.maxX - min(depth, w.width), y: yLo, width: min(depth, w.width), height: yHi - yLo)
+        }
+        if overlapsHorizontally(w, s), abs(w.minY - s.maxY) <= tol {      // darunter
+            return CGRect(x: xLo, y: w.minY, width: xHi - xLo, height: min(depth, w.height))
+        }
+        if overlapsHorizontally(w, s), abs(s.minY - w.maxY) <= tol {      // darüber
+            return CGRect(x: xLo, y: w.maxY - min(depth, w.height), width: xHi - xLo, height: min(depth, w.height))
+        }
+        return w
+    }
+
+    /// Verdeckt, wenn ein einzelnes Fenster davor den Kontaktstreifen ganz enthält.
+    /// (Bewusst einfach: Teilabdeckungen durch mehrere Fenster zählen als sichtbar.)
+    static func isHidden(_ strip: CGRect, by inFront: [CGRect]) -> Bool {
+        inFront.contains { $0.insetBy(dx: -1, dy: -1).contains(strip) }
+    }
+
     // MARK: - Bildschirmwechsel
 
     /// Überträgt ein Fenster proportional vom sichtbaren Bereich `from` nach `to`.

@@ -185,6 +185,30 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.keepUngrabbedEdges(now: now, start: start, grabbed: [.left], slack: 10), now)
     }
 
+    // MARK: Nur sichtbare Nachbarn (gemessen 08.10.: Gmail-Fenster hinter TextEdit zog mit)
+
+    func testNeighborHiddenBehindAnotherWindowIsHidden() {
+        let leading = CGRect(x: 0, y: 30, width: 1713, height: 1345)
+        let textEdit = CGRect(x: 1723, y: 35, width: 1712, height: 1345)        // vorn
+        let gmail = CGRect(x: 1724, y: 39, width: 1707, height: 1339)           // dahinter
+        let strip = Geometry.contactStrip(of: gmail, to: leading, gap: 5)
+        XCTAssertTrue(Geometry.isHidden(strip, by: [textEdit]))
+        XCTAssertFalse(Geometry.isHidden(Geometry.contactStrip(of: textEdit, to: leading, gap: 5), by: []))
+    }
+
+    func testPartlyVisibleNeighborCounts() {
+        let leading = CGRect(x: 0, y: 30, width: 1713, height: 1345)
+        let neighbor = CGRect(x: 1723, y: 30, width: 1712, height: 1345)
+        let smallInFront = CGRect(x: 1700, y: 200, width: 400, height: 300)    // deckt nur einen Teil
+        XCTAssertFalse(Geometry.isHidden(Geometry.contactStrip(of: neighbor, to: leading, gap: 5), by: [smallInFront]))
+    }
+
+    func testContactStripIsTheEdgeFacingTheLeadingWindow() {
+        let leading = CGRect(x: 0, y: 30, width: 1713, height: 1345)
+        let right = CGRect(x: 1718, y: 30, width: 1722, height: 1345)
+        XCTAssertEqual(Geometry.contactStrip(of: right, to: leading, gap: 5), CGRect(x: 1718, y: 30, width: 20, height: 1345))
+    }
+
     // MARK: Mindestgröße des Nachbarn (gemessen an Outlook, 08.10.)
 
     func testOutlookMinimumWidthStopsSeamOnTheLeft() {
