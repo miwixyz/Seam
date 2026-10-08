@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// Menü in der Menüleiste. Bewusst ein einfaches Systemmenü: Seam soll man
-/// nicht bedienen müssen, nur einstellen.
+/// Menü in der Menüleiste. Bewusst ein einfaches Systemmenü.
+/// Querformat-Kürzel stehen direkt im Hauptmenü (schneller auszuführen, Michael 08.10.),
+/// alles andere im Untermenü „Einstellungen“. Hinweise, die man sehen muss
+/// (Freigabe fehlt, Kürzel belegt, Update verfügbar), bleiben oben.
 struct MenuContent: View {
     @Environment(Engine.self) private var engine
     @Environment(Preferences.self) private var prefs
@@ -20,44 +22,47 @@ struct MenuContent: View {
             // Typisch: Magnet läuft noch und hält dieselben Kürzel.
             Text("\(engine.failedShortcuts.count) Kürzel belegt (läuft Magnet noch?)")
         }
-
-        Divider()
-
-        Toggle("Fenster an gemeinsamen Kanten mitziehen", isOn: $prefs.linkEdges)
-        Toggle("Andocken per Ziehen an den Bildschirmrand", isOn: $prefs.dragSnap)
-        Toggle("Beim Herausziehen ursprüngliche Größe", isOn: $prefs.restoreOnDragOut)
-        Toggle("Tastenkürzel", isOn: $prefs.shortcuts)
-            .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
-
-        Picker("Abstand zwischen Fenstern", selection: $prefs.gap) {
-            ForEach(Preferences.gapChoices, id: \.self) { Text($0 == 0 ? "Kein Abstand" : "\($0) pt").tag($0) }
-        }
-
-        Menu("Tastenkürzel anzeigen") {
-            Section("Querformat") { shortcutList(.landscape) }
-            Section("Hochkant") { shortcutList(.portrait) }
+        if let version = engine.updater?.pendingVersion {
+            Button("Update \(version) verfügbar …") { engine.updater?.checkForUpdates() }
         }
 
         Divider()
 
-        Toggle("Bei Anmeldung starten", isOn: Binding(
-            get: { LoginItem.state == .on },
-            set: { LoginItem.set($0) }
-        ))
+        shortcutList(.landscape)
 
         Divider()
 
-        if let updater = engine.updater {
-            if let version = updater.pendingVersion {
-                Button("Update \(version) verfügbar …") { updater.checkForUpdates() }
+        Menu("Einstellungen") {
+            Toggle("Fenster an gemeinsamen Kanten mitziehen", isOn: $prefs.linkEdges)
+            Toggle("Andocken per Ziehen an den Bildschirmrand", isOn: $prefs.dragSnap)
+            Toggle("Beim Herausziehen ursprüngliche Größe", isOn: $prefs.restoreOnDragOut)
+            Toggle("Tastenkürzel", isOn: $prefs.shortcuts)
+                .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
+
+            Picker("Abstand zwischen Fenstern", selection: $prefs.gap) {
+                ForEach(Preferences.gapChoices, id: \.self) { Text($0 == 0 ? "Kein Abstand" : "\($0) pt").tag($0) }
             }
-            Button("Nach Updates suchen …") { updater.checkForUpdates() }
-                .disabled(!updater.canCheck)
-        }
-        Button("Hilfe …") {
-            openWindow(id: "hilfe")
-            // Menüleisten-App ohne Dock-Symbol: sonst öffnet das Fenster hinter der aktiven App.
-            NSApp.activate()
+
+            Menu("Kürzel für Hochkant-Bildschirme") { shortcutList(.portrait) }
+
+            Divider()
+
+            Toggle("Bei Anmeldung starten", isOn: Binding(
+                get: { LoginItem.state == .on },
+                set: { LoginItem.set($0) }
+            ))
+
+            Divider()
+
+            if let updater = engine.updater {
+                Button("Nach Updates suchen …") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheck)
+            }
+            Button("Hilfe …") {
+                openWindow(id: "hilfe")
+                // Menüleisten-App ohne Dock-Symbol: sonst öffnet das Fenster hinter der aktiven App.
+                NSApp.activate()
+            }
         }
 
         Divider()

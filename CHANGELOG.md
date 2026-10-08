@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.1.1] — 2026-10-08
+
+### Geändert
+
+- **Menü aufgeräumt:** Die Tastenkürzel fürs Querformat stehen jetzt direkt im Menü und sind mit
+  einem Klick erreichbar. Einstellungen, die Kürzel für Hochkant-Bildschirme, „Bei Anmeldung
+  starten“, „Nach Updates suchen …“ und die Hilfe liegen im Untermenü „Einstellungen“. Hinweise
+  (Freigabe fehlt, Kürzel belegt, Update verfügbar) bleiben oben im Menü.
+
 ## [0.1.0] — 2026-10-08
 
 Erste öffentliche Version.

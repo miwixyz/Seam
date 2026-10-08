@@ -42,7 +42,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Mit mehreren Bildschirmen arbeiten | ⌃⌥⌘← und ⌃⌥⌘→ schicken das Fenster auf den vorherigen oder nächsten Bildschirm |
 | Einen Bildschirm hochkant nutzen | Ein eigener Satz Kürzel, Drittel teilen dann von oben nach unten |
 | Etwas Luft zwischen den Fenstern | Abstand wählbar: 0, 5, 10 oder 20 Punkt |
-| Kürzel nachschlagen | Das Menü zeigt alle Kürzel mit Piktogramm, ein Klick wendet sie an. Die Beschriftung folgt deiner Tastaturbelegung |
+| Kürzel nachschlagen | Die Kürzel fürs Querformat stehen mit Piktogramm direkt im Menü, ein Klick wendet sie an. Die Beschriftung folgt deiner Tastaturbelegung. Die Kürzel für Hochkant liegen unter „Einstellungen“ |
 
 ---
 

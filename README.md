@@ -32,7 +32,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
    per Doppelklick entpacken und `Seam.app` in den Ordner Programme ziehen.
 2. Seam starten. Das Symbol erscheint in der Menüleiste.
 3. Systemeinstellungen → Datenschutz & Sicherheit → **Bedienungshilfen** → Seam einschalten.
-4. Im Seam-Menü „Bei Anmeldung starten“ anhaken.
+4. Im Seam-Menü unter „Einstellungen“ „Bei Anmeldung starten“ anhaken.
 
 Läuft ein anderer Fenstermanager mit denselben Kürzeln, beende ihn oder schalte dort die Kürzel
 ab.
@@ -40,7 +40,7 @@ ab.
 ## Aktualisieren
 
 Seam aktualisiert sich über [Sparkle](https://sparkle-project.org). Beim ersten Mal fragt es, ob
-es automatisch suchen darf. Von Hand: Menü → „Nach Updates suchen …“. Updates sind mit EdDSA
+es automatisch suchen darf. Von Hand: Menü → „Einstellungen“ → „Nach Updates suchen …“. Updates sind mit EdDSA
 signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 ## Datenschutz und Berechtigung

@@ -9,7 +9,7 @@ Seam braucht die Freigabe für die **Bedienungshilfen**, sonst darf es fremde Fe
 bewegen. Öffne Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen und schalte
 Seam ein. Seam merkt die Freigabe selbst, ein Neustart ist nicht nötig.
 
-Damit Seam nach dem Anmelden läuft, setze im Menü den Haken bei „Bei Anmeldung starten“.
+Damit Seam nach dem Anmelden läuft, setze im Menü unter „Einstellungen“ den Haken bei „Bei Anmeldung starten“.
 
 Läuft noch ein anderer Fenstermanager mit denselben Kürzeln, gewinnt eines der beiden
 Programme. Beende das andere oder schalte dort die Kürzel ab.
@@ -39,14 +39,14 @@ wieder heraus, bekommt es seine ursprüngliche Größe zurück.
 
 ## Alle Tastenkürzel
 
-Im Menü unter „Tastenkürzel anzeigen“. Ein Klick auf einen Eintrag wirkt wie das Kürzel auf das
-vorderste Fenster. Die Einträge unter „Hochkant“ gelten für Fenster auf einem hochkant
-gestellten Bildschirm.
+Die Kürzel stehen direkt im Menü. Ein Klick auf einen Eintrag wirkt wie das Kürzel auf das
+vorderste Fenster. Für hochkant gestellte Bildschirme gilt ein eigener Satz, zu finden unter
+„Einstellungen“ → „Kürzel für Hochkant-Bildschirme“.
 
 ## Updates
 
 Seam sucht über Sparkle nach neuen Versionen. Beim ersten Mal fragt es, ob es das automatisch
-tun darf. Von Hand: Menü → „Nach Updates suchen …“. Ein gefundenes Update steht oben im Menü.
+tun darf. Von Hand: Menü → „Einstellungen“ → „Nach Updates suchen …“. Ein gefundenes Update steht oben im Menü.
 Jedes Update ist mit einem Schlüssel signiert, den Seam vor dem Entpacken prüft.
 
 ## Datenschutz

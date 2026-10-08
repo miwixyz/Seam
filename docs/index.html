@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Erst erhöhen, wenn diese Seite gegen das Release gelesen wurde. -->
-<meta name="seam:documented-version" content="0.1.0">
+<meta name="seam:documented-version" content="0.1.1">
 <title>Seam: Fenster anordnen auf dem Mac, mit einer Naht zwischen zwei Fenstern</title>
 <meta name="description" content="Seam ordnet Fenster auf deinem Mac per Tastenkürzel oder durch Ziehen an. Zwei Fenster teilen sich eine Kante, und wenn du sie verschiebst, gehen beide mit. Kostenlos und Open Source.">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -226,7 +226,7 @@
       <div class="feature card">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-gap"/></svg></div>
         <h3>Abstand nach Wahl</h3>
-        <p>Zwischen den Fenstern lässt Seam 5 Punkt frei. Im Menü stellst du 0, 10 oder 20 Punkt ein.</p>
+        <p>Zwischen den Fenstern lässt Seam 5 Punkt frei. Im Menü unter „Einstellungen“ stellst du 0, 10 oder 20 Punkt ein.</p>
       </div>
     </div>
   </div>
@@ -235,7 +235,7 @@
 <section id="kuerzel">
   <div class="wrap">
     <h2>Alle Kürzel auf einen Blick</h2>
-    <p class="lead">Dieselbe Liste steht im Menü von Seam, dort mit Piktogramm und zum Anklicken. Die Beschriftung folgt deiner Tastaturbelegung.</p>
+    <p class="lead">Dieselbe Liste steht direkt im Menü von Seam, mit Piktogramm und zum Anklicken. Die Beschriftung folgt deiner Tastaturbelegung.</p>
     <div class="keygroups">
       <div class="keygroup card">
         <table>
@@ -290,7 +290,7 @@
         </table>
       </div>
     </div>
-    <p class="keys-note">Die Tabelle zeigt das Querformat mit deutscher Tastatur. ↩ ist die Eingabetaste, ⌫ die Rückschritttaste und ↖ die Taste Pos1. Für hochkant gestellte Bildschirme gilt ein eigener Satz, den das Menü unter „Tastenkürzel anzeigen“ auflistet. In Version 0.1 sind die Kürzel fest belegt, du kannst sie im Menü aber gesammelt abschalten.</p>
+    <p class="keys-note">Die Tabelle zeigt das Querformat mit deutscher Tastatur. ↩ ist die Eingabetaste, ⌫ die Rückschritttaste und ↖ die Taste Pos1. Für hochkant gestellte Bildschirme gilt ein eigener Satz. Du findest ihn im Menü unter „Einstellungen“ → „Kürzel für Hochkant-Bildschirme“. In Version 0.1 sind die Kürzel fest belegt, du kannst sie unter „Einstellungen“ aber gesammelt abschalten.</p>
   </div>
 </section>
 
@@ -340,7 +340,7 @@
       <details><summary>Warum folgt das Nachbarfenster erst beim Loslassen?</summary><p>Manche Apps brauchen für jede Größenänderung spürbar lange, Outlook in Messungen bis zu 56 Millisekunden. Live mitgezogen hätte das geruckelt. Deshalb bewegt sich während des Ziehens nur dein Fenster, und beim Loslassen setzt Seam den Nachbarn in einem Schritt an die neue Kante.</p></details>
       <details><summary>Warum bleibt die Kante manchmal stehen?</summary><p>Viele Apps legen fest, wie klein ihr Fenster höchstens werden darf. Erreicht das Nachbarfenster diese Grenze, bleibt die Naht dort stehen, damit sich die Fenster nicht überlappen.</p></details>
       <details><summary>Welche Fenster fasst Seam an?</summary><p>Seam bewegt nur normale App-Fenster. Dialoge, das Dock und andere Systemflächen lässt Seam in Ruhe, ebenso minimierte Fenster und Fenster im Vollbild.</p></details>
-      <details><summary>Ein anderes Programm nutzt schon dieselben Kürzel. Was passiert dann?</summary><p>Belegen zwei Programme dasselbe Kürzel, reagiert nur eines von beiden. Schalte die Kürzel im anderen Programm ab oder beende es. In Seam kannst du alle Kürzel auf einmal im Menü abschalten.</p></details>
+      <details><summary>Ein anderes Programm nutzt schon dieselben Kürzel. Was passiert dann?</summary><p>Belegen zwei Programme dasselbe Kürzel, reagiert nur eines von beiden. Schalte die Kürzel im anderen Programm ab oder beende es. Im Menü unter „Einstellungen“ schaltest du in Seam alle Kürzel auf einmal ab.</p></details>
       <details><summary>Läuft Seam auf Intel-Macs oder älteren macOS-Versionen?</summary><p>Nein, Seam braucht einen Mac mit Apple Silicon und macOS 27.</p></details>
     </div>
   </div>
