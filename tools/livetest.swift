@@ -9,7 +9,10 @@
 //   livetest focus <pid> <titel>                Fenster nach vorn
 //   livetest drag x1 y1 x2 y2 [schritte]        Ziehen mit gedrückter Maustaste
 //   livetest key <keycode> <ctrl|opt|cmd>...    Tastenkürzel drücken
-//   livetest sample <pidL> <titelL> <pidR> <titelR> <sek>   Spalt alle 10 ms messen
+//   livetest sample <pidL> <titelL> <pidR> <titelR> <sek>   Spalt alle 10 ms messen (AX, nacheinander)
+//   livetest samplecg <pidL> <pidR> <y> <h> <sek>   Spalt aus EINEM Fensterserver-Abzug
+//     (beide Fenster gleichzeitig: Der AX-Messer liest nacheinander und täuscht beim
+//      Schmalerziehen Lücken, beim Breiterziehen Überlappungen vor, 08.10.)
 import AppKit
 import ApplicationServices
 
@@ -129,6 +132,25 @@ case "sample":
     let moving = gaps.enumerated().filter { $0.offset > 0 && gaps[$0.offset - 1] != $0.element }.count
     let s = gaps.sorted()
     print("Stichproben \(gaps.count), Spalt min \(s.first ?? 0) / Median \(s[s.count / 2]) / max \(s.last ?? 0) px, Anteil ≠ 5 px: \(gaps.filter { $0 != 5 }.count * 100 / max(gaps.count, 1)) %, Wechsel \(moving)")
+case "samplecg":
+    let pl = pid_t(a[2])!, pr = pid_t(a[3])!, y = Double(a[4])!, h = Double(a[5])!
+    let end = CFAbsoluteTimeGetCurrent() + Double(a[6])!
+    var gaps: [Int] = []
+    while CFAbsoluteTimeGetCurrent() < end {
+        let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+        func bounds(_ pid: pid_t) -> CGRect? {
+            for i in list where (i[kCGWindowOwnerPID as String] as? pid_t) == pid && (i[kCGWindowLayer as String] as? Int) == 0 {
+                if let b = i[kCGWindowBounds as String] as? NSDictionary, let r = CGRect(dictionaryRepresentation: b),
+                   abs(r.minY - y) <= 6, abs(r.height - h) <= 12 { return r }
+            }
+            return nil
+        }
+        if let l = bounds(pl), let r = bounds(pr) { gaps.append(Int(r.minX - l.maxX)) }
+        usleep(10_000)
+    }
+    let s = gaps.sorted()
+    guard !s.isEmpty else { print("keine Stichproben"); exit(1) }
+    print("Fensterserver: Stichproben \(gaps.count), Spalt min \(s.first!) / Median \(s[s.count / 2]) / max \(s.last!) px, Lücke > 5 px: \(gaps.filter { $0 > 5 }.count * 100 / gaps.count) %")
 default:
     print("Aufruf siehe Kopfkommentar"); exit(1)
 }

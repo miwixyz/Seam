@@ -97,21 +97,29 @@ final class NeighborWriter: @unchecked Sendable {
     static let retryDelays: [useconds_t] = [50_000, 100_000, 200_000, 400_000, 800_000]
 
     static func setVerified(_ w: AXWindow, _ r: CGRect) -> CGRect? {
+        setVerifiedCounting(w, r).frame
+    }
+
+    /// Wie `setVerified`, liefert zusätzlich die Zahl der Versuche (Messpunkt: Nach dem
+    /// Loslassen vergingen am 08.10. bis zu 1,7 s bis zum Endzustand).
+    static func setVerifiedCounting(_ w: AXWindow, _ r: CGRect) -> (frame: CGRect?, attempts: Int) {
         var previous: CGRect?
+        var attempts = 0
         for delay in retryDelays {
+            attempts += 1
             w.setFrame(r)
             usleep(delay)
-            guard let a = w.frame else { return nil }
-            if close(a, r) { return a }
+            guard let a = w.frame else { return (nil, attempts) }
+            if close(a, r) { return (a, attempts) }
             // Mindestgröße: Lage sitzt, nur die Größe weicht ab, und das zweimal gleich.
             // NICHT bei abweichender Lage: Das ist Edges kurze Positionssperre nach dem
             // Größeziehen, dort liefert die App ebenfalls zweimal denselben Wert, nimmt
             // die Position aber kurz danach an.
             let originOK = abs(a.minX - r.minX) <= 2 && abs(a.minY - r.minY) <= 2
-            if originOK, let p = previous, close(p, a) { return a }
+            if originOK, let p = previous, close(p, a) { return (a, attempts) }
             previous = a
         }
-        return previous
+        return (previous, attempts)
     }
 
     static func close(_ a: CGRect, _ b: CGRect) -> Bool {

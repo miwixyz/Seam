@@ -102,6 +102,70 @@ enum Geometry {
         return out
     }
 
+    /// Rahmen des gezogenen Fensters aus dem Mausweg: gepackte Kanten um `delta`
+    /// verschoben, die anderen bleiben. Schnell, aber der App voraus.
+    static func predictedFrame(start s: CGRect, grabbed: [Edge], delta d: CGPoint) -> CGRect {
+        var minX = s.minX, maxX = s.maxX, minY = s.minY, maxY = s.maxY
+        if grabbed.contains(.left) { minX = min(s.minX + d.x, maxX - 80) }
+        if grabbed.contains(.right) { maxX = max(s.maxX + d.x, minX + 80) }
+        if grabbed.contains(.top) { minY = min(s.minY + d.y, maxY - 60) }
+        if grabbed.contains(.bottom) { maxY = max(s.maxY + d.y, minY + 60) }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
+    /// Liegt der Nachbar dem führenden Fenster an einer GEPACKTEN Kante gegenüber?
+    /// Hängt von der Kante ab: Das untere linke Fenster liegt dem oberen gegenüber, wenn
+    /// die waagrechte Naht gezogen wird, ist aber ein gleichseitiger Stapelnachbar, wenn
+    /// die senkrechte Kante gezogen wird (gefunden per Test, 08.10.).
+    static func isOpposite(_ w: CGRect, to s: CGRect, gap: CGFloat, grabbed: [Edge]) -> Bool {
+        let tol = gap + linkTolerance
+        let edges = grabbed.isEmpty ? Edge.allCases : grabbed
+        return edges.contains { e in
+            switch e {
+            case .right: overlapsVertically(w, s) && abs(w.minX - s.maxX) <= tol
+            case .left: overlapsVertically(w, s) && abs(s.minX - w.maxX) <= tol
+            case .bottom: overlapsHorizontally(w, s) && abs(w.minY - s.maxY) <= tol
+            case .top: overlapsHorizontally(w, s) && abs(s.minY - w.maxY) <= tol
+            }
+        }
+    }
+
+    /// Wählt je gegenüberliegendem Nachbarn den Rahmen, der weiter UNTER das gezogene
+    /// Fenster reicht (bei fester abgewandter Kante: der größere).
+    ///
+    /// Gemessen 2026-10-08: Outlook als gezogenes Fenster verrät seine Kante nur alle
+    /// 43–99 ms. Nur nach der gelesenen Kante hinkt der Nachbar hinterher, nur nach der
+    /// Maus läuft er voraus. Das gezogene Fenster liegt vorn: Überlappung darunter ist
+    /// unsichtbar, nur eine Lücke sieht man. Also immer die Variante ohne Lücke.
+    /// Gleichseitig gestapelte Nachbarn liegen nicht unter dem gezogenen Fenster und
+    /// folgen der Maus.
+    static func preferUnder(mouse p: [Int: CGRect], read r: [Int: CGRect], opposite: Set<Int>) -> [Int: CGRect] {
+        var out = p
+        for (id, a) in p where opposite.contains(id) {
+            guard let b = r[id] else { continue }
+            out[id] = a.width * a.height >= b.width * b.height ? a : b
+        }
+        return out
+    }
+
+    /// Puffer unter dem gezogenen Fenster während des Ziehens.
+    ///
+    /// Gemessen 2026-10-08 (Helium → TextEdit, ~600 px/s): Zwischen zwei Nachstellungen
+    /// (≤ 40/s) wandert die Kante weiter, beim Schmalerziehen blieb so kurz eine Lücke
+    /// von 25 px. Reicht der Nachbar 40 px unter das (vorn liegende) gezogene Fenster,
+    /// sieht man nichts davon, und eine Lücke entsteht erst ab ~1600 px/s. Beim
+    /// Loslassen setzt Seam den exakten Abstand.
+    static let underlap: CGFloat = 40
+
+    /// Verlängert einen gegenüberliegenden Nachbarn um `m` unter das gezogene Fenster.
+    static func extendUnder(_ r: CGRect, neighborStart w: CGRect, leadingStart s: CGRect, by m: CGFloat) -> CGRect {
+        if w.minX >= s.maxX - 1 { return CGRect(x: r.minX - m, y: r.minY, width: r.width + m, height: r.height) }   // rechts
+        if w.maxX <= s.minX + 1 { return CGRect(x: r.minX, y: r.minY, width: r.width + m, height: r.height) }       // links
+        if w.minY >= s.maxY - 1 { return CGRect(x: r.minX, y: r.minY - m, width: r.width, height: r.height + m) }   // unten
+        if w.maxY <= s.minY + 1 { return CGRect(x: r.minX, y: r.minY, width: r.width, height: r.height + m) }       // oben
+        return r
+    }
+
     /// Setzt Kanten, die der Nutzer NICHT gepackt hat, auf den Startwert zurück,
     /// sofern sie sich höchstens um `slack` bewegt haben.
     ///
