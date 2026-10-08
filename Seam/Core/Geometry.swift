@@ -102,23 +102,6 @@ enum Geometry {
         return out
     }
 
-    /// Rahmen des gezogenen Fensters aus dem Mausweg: gepackte Kanten um `delta`
-    /// verschoben, die anderen bleiben.
-    ///
-    /// Gemessen 2026-10-08: Outlook schickte bei 75 Mausschritten nur 13
-    /// Größenmeldungen, alle in den ersten 108 ms. Wer nur auf Meldungen wartet,
-    /// lässt den Nachbarn stehen. Fenster folgen beim Größeziehen der Maus, also ist
-    /// der Mausweg das zuverlässigere Signal. Mindestgrößen des gezogenen Fensters
-    /// korrigiert das Ende der Geste mit dem echten Rahmen.
-    static func predictedFrame(start s: CGRect, grabbed: [Edge], delta d: CGPoint) -> CGRect {
-        var minX = s.minX, maxX = s.maxX, minY = s.minY, maxY = s.maxY
-        if grabbed.contains(.left) { minX = min(s.minX + d.x, maxX - 80) }
-        if grabbed.contains(.right) { maxX = max(s.maxX + d.x, minX + 80) }
-        if grabbed.contains(.top) { minY = min(s.minY + d.y, maxY - 60) }
-        if grabbed.contains(.bottom) { maxY = max(s.maxY + d.y, minY + 60) }
-        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
-    }
-
     /// Setzt Kanten, die der Nutzer NICHT gepackt hat, auf den Startwert zurück,
     /// sofern sie sich höchstens um `slack` bewegt haben.
     ///

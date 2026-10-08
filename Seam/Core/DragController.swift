@@ -105,10 +105,10 @@ final class DragController {
 
     private func mouseDragged() {
         gesture?.mouseDrags += 1
-        // Größeziehen: Nachbarn folgen dem Mausweg, nicht den Meldungen der App
-        // (Outlook: 13 Meldungen bei 75 Mausschritten, gemessen 08.10.).
-        if let g = gesture, g.mode == .resizing, prefs.linkEdges, !g.grabbed.isEmpty {
-            applyLink(g, now: mousePredicted(g), final: false)
+        // Größeziehen: Jede Mausbewegung stößt ein Nachstellen an, nicht nur die Meldungen
+        // der App (Outlook: 13 Meldungen bei 75 Mausschritten, gemessen 08.10.).
+        if let g = gesture, g.mode == .resizing, prefs.linkEdges {
+            trackLive(g)
             return
         }
         guard let g = gesture, g.mode == .moving, prefs.dragSnap else { return }
@@ -138,7 +138,7 @@ final class DragController {
             case .resizing:
                 if let raw = w.frame {
                     let now = effectiveFrame(g, raw)
-                    if prefs.linkEdges { applyLink(g, now: now, final: true) }
+                    if prefs.linkEdges { prepareFinish(g, now: now) }
                     logResizeStats(g, leading: w)
                     finish(leading: w, raw: raw, now: now, frames: g.finalFrames, windows: g.neighborWindows)
                 }
@@ -168,11 +168,7 @@ final class DragController {
             if g.resizeNotifications == 0 { g.firstNotification = t }
             g.resizeNotifications += 1
             g.lastNotification = t
-            // Erste Meldung schaltet auf „Größeziehen“; danach treibt der Mausweg das
-            // Mitziehen. Ohne erkannte Kante bleiben die Meldungen der Taktgeber.
-            if g.mode == .resizing, prefs.linkEdges {
-                applyLink(g, now: g.grabbed.isEmpty ? now : mousePredicted(g), final: false)
-            }
+            if g.mode == .resizing, prefs.linkEdges { trackLive(g) }
         } else if now.origin != g.start.origin, g.mode == .undecided {
             g.mode = .moving
             restoreSizeIfSnapped(g, w: w, now: now)
@@ -184,13 +180,7 @@ final class DragController {
         let neighbors = Set(g.neighborWindows.values.map { app($0.pid) }).sorted().joined(separator: ",")
         let dur = g.lastNotification - g.firstNotification
         let st = writer.takeStats()
-        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), gesetzt \(st.count, privacy: .public), Setzen Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms")
-    }
-
-    private func mousePredicted(_ g: Gesture) -> CGRect {
-        let p = Screens.mouse
-        return Geometry.predictedFrame(start: g.start, grabbed: g.grabbed,
-                                       delta: CGPoint(x: p.x - g.downPoint.x, y: p.y - g.downPoint.y))
+        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms")
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
@@ -210,30 +200,45 @@ final class DragController {
         g.restoredOriginal = orig
     }
 
-    private func applyLink(_ g: Gesture, now: CGRect, final: Bool) {
-        guard let w = g.leading else { return }
+    /// Nachbarn einmal je Geste suchen (beim ersten Größeziehen).
+    private func ensureNeighbors(_ g: Gesture) -> Bool {
+        guard let w = g.leading else { return false }
         if g.neighbors == nil {
             let found = WindowFinder.neighbors(of: w, frame: g.start, gap: CGFloat(prefs.gap))
             g.neighbors = found.enumerated().map { Geometry.Neighbor(id: $0.offset, frame: $0.element.1) }
             g.neighborWindows = Dictionary(uniqueKeysWithValues: found.enumerated().map { ($0.offset, $0.element.0) })
             Self.log.notice("Mitziehen: \(found.count, privacy: .public) Nachbar(n) an der Kante")
         }
-        guard let neighbors = g.neighbors, !neighbors.isEmpty else { return }
+        return !(g.neighbors ?? []).isEmpty
+    }
+
+    /// Während des Ziehens: Die Warteschlange liest die TATSÄCHLICHE Kante des gezogenen
+    /// Fensters und stellt die Nachbarn daran. Nicht dorthin, wo die Maus ist: Outlook
+    /// folgt der Maus selbst verzögert, ein Nachbar an der Mausposition lief ihm voraus
+    /// und ließ eine Lücke (Bildschirmaufnahme 08.10.).
+    private func trackLive(_ g: Gesture) {
+        guard let w = g.leading, ensureNeighbors(g), let neighbors = g.neighbors else { return }
         g.linkEvents += 1
-        let frames = Geometry.linkedFrames(start: g.start, now: now, neighbors: neighbors, gap: CGFloat(prefs.gap))
-            .filter { $0.value.width >= 80 && $0.value.height >= 60 }   // E6d: nie auf Splitter zusammendrücken
-
-        guard final else {
-            // Während des Ziehens: auf eigener Warteschlange, neuester Wert gewinnt.
-            var batch: [Int: (AXWindow, CGRect)] = [:]
-            for (id, r) in frames { if let nw = g.neighborWindows[id] { batch[id] = (nw, r) } }
-            writer.submit(batch)
-            return
+        let start = g.start, grabbed = g.grabbed, gap = CGFloat(prefs.gap), windows = g.neighborWindows
+        writer.track {
+            guard let raw = w.frame else { return 0 }
+            let now = Geometry.keepUngrabbedEdges(now: raw, start: start, grabbed: grabbed, slack: gap + 6)
+            var n = 0
+            for (id, r) in Geometry.linkedFrames(start: start, now: now, neighbors: neighbors, gap: gap)
+            where r.width >= 80 && r.height >= 60 {      // E6d: nie auf Splitter zusammendrücken
+                windows[id]?.setFrameLive(r)
+                n += 1
+            }
+            return n
         }
+    }
 
-        // Ende: Zwischenstände abwarten; gesetzt wird in `finish` mit Nachprüfung.
+    /// Ende: Zwischenstände abwarten, Endrahmen berechnen; gesetzt wird in `finish`.
+    private func prepareFinish(_ g: Gesture, now: CGRect) {
+        guard ensureNeighbors(g), let neighbors = g.neighbors else { return }
         writer.flush()
-        g.finalFrames = frames
+        g.finalFrames = Geometry.linkedFrames(start: g.start, now: now, neighbors: neighbors, gap: CGFloat(prefs.gap))
+            .filter { $0.value.width >= 80 && $0.value.height >= 60 }
     }
 
     /// Abschluss einer Größen-Geste, nacheinander auf der Warteschlange, jeder Endwert

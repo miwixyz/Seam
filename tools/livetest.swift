@@ -9,6 +9,7 @@
 //   livetest focus <pid> <titel>                Fenster nach vorn
 //   livetest drag x1 y1 x2 y2 [schritte]        Ziehen mit gedrückter Maustaste
 //   livetest key <keycode> <ctrl|opt|cmd>...    Tastenkürzel drücken
+//   livetest sample <pidL> <titelL> <pidR> <titelR> <sek>   Spalt alle 10 ms messen
 import AppKit
 import ApplicationServices
 
@@ -33,7 +34,7 @@ func frame(_ w: AXUIElement) -> CGRect {
     return CGRect(origin: pt, size: sz)
 }
 func find(_ pid: pid_t, _ t: String) -> AXUIElement {
-    guard let w = windows(pid).first(where: { title($0) == t }) else {
+    guard let w = windows(pid).first(where: { title($0) == t || title($0).hasPrefix(t) }) else {
         print("❌ Fenster '\(t)' fehlt, vorhanden: \(windows(pid).map(title))"); exit(1)
     }
     return w
@@ -116,6 +117,18 @@ case "key":
     up.flags = flags; up.post(tap: .cghidEventTap)
     usleep(400_000)
     print("Taste \(code) mit \(a.dropFirst(3).joined(separator: "+"))")
+case "sample":
+    // Spalt zwischen rechter Kante links und linker Kante rechts, alle 10 ms.
+    let l = find(pid_t(a[2])!, a[3]), r = find(pid_t(a[4])!, a[5])
+    let end = CFAbsoluteTimeGetCurrent() + Double(a[6])!
+    var gaps: [Int] = []
+    while CFAbsoluteTimeGetCurrent() < end {
+        gaps.append(Int(frame(r).minX - frame(l).maxX))
+        usleep(10_000)
+    }
+    let moving = gaps.enumerated().filter { $0.offset > 0 && gaps[$0.offset - 1] != $0.element }.count
+    let s = gaps.sorted()
+    print("Stichproben \(gaps.count), Spalt min \(s.first ?? 0) / Median \(s[s.count / 2]) / max \(s.last ?? 0) px, Anteil ≠ 5 px: \(gaps.filter { $0 != 5 }.count * 100 / max(gaps.count, 1)) %, Wechsel \(moving)")
 default:
     print("Aufruf siehe Kopfkommentar"); exit(1)
 }
