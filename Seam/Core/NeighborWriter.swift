@@ -1,82 +1,13 @@
 import Foundation
 
-/// Stellt Nachbarfenster auf einer eigenen Warteschlange nach, nicht auf dem
-/// Hauptthread.
+/// Setzt Fensterrahmen auf einer eigenen Warteschlange, nicht auf dem Hauptthread,
+/// jeweils mit Nachprüfung (`setVerified`).
 ///
-/// Gemessen 2026-10-08 (Edge ↔ Outlook): Ein Setzen bei Outlook dauerte bis 56 ms,
-/// weil die Bedienungshilfen synchron auf die andere App warten. Auf dem Hauptthread
-/// blockierte das Seam.
-///
-/// **Eine Aufgabe, neueste gewinnt:** Es gibt immer nur eine wartende Nachstell-Aufgabe.
-/// Eine neue ersetzt die alte. So geht nie der letzte Stand verloren, und eine langsame
-/// App wird nicht mit Zwischenständen überhäuft.
-///
-/// **Höchstens 40 Nachstellungen pro Sekunde:** In der Bildschirmaufnahme vom 08.10.
-/// kam Edge bei ~100 Nachstellungen pro Sekunde mit dem Zeichnen nicht nach; für knapp
-/// eine Sekunde war statt Edge das Fenster dahinter zu sehen.
+/// Gemessen 2026-10-08: Ein Setzen bei Outlook dauerte bis 56 ms, Edge übernahm Rahmen
+/// teils erst beim zweiten Versuch. Auf dem Hauptthread blockierte das Seam.
 final class NeighborWriter: @unchecked Sendable {
 
-    private let queue = DispatchQueue(label: "dev.mwlr.seam.nachstellen", qos: .userInteractive)
-    private let lock = NSLock()
-    private var pending: (@Sendable () -> Int)?
-    private var draining = false
-    private var lastRun: CFAbsoluteTime = 0
-    static let minInterval: CFAbsoluteTime = 0.025
-
-    // Messwerte der laufenden Geste
-    private var jobs = 0
-    private var writes = 0
-    private var total: CFAbsoluteTime = 0
-    private var maximum: CFAbsoluteTime = 0
-    private var readTotal: CFAbsoluteTime = 0
-    private var setTotal: CFAbsoluteTime = 0
-
-    /// Aufteilung eines Laufs: Kante der gezogenen App lesen / Nachbarn setzen.
-    func note(read: CFAbsoluteTime, set: CFAbsoluteTime) {
-        lock.lock(); readTotal += read; setTotal += set; lock.unlock()
-    }
-
-    /// Reicht eine Nachstell-Aufgabe ein; sie gibt die Zahl gesetzter Fenster zurück.
-    func track(_ job: @escaping @Sendable () -> Int) {
-        lock.lock()
-        pending = job
-        let start = !draining
-        draining = true
-        lock.unlock()
-        if start { queue.async { [self] in drain() } }
-    }
-
-    private func drain() {
-        while true {
-            lock.lock()
-            guard let job = pending else { draining = false; lock.unlock(); return }
-            pending = nil
-            let wait = lastRun + Self.minInterval - CFAbsoluteTimeGetCurrent()
-            lock.unlock()
-            if wait > 0 { usleep(useconds_t(wait * 1_000_000)) }
-            // Nach dem Warten könnte eine neuere Aufgabe da sein: dann die nehmen.
-            lock.lock()
-            let latest = pending ?? job
-            pending = nil
-            lock.unlock()
-            let t0 = CFAbsoluteTimeGetCurrent()
-            // Takt ab BEGINN des Laufs: Ab dem Ende gemessen wurden es effektiv nur ~25
-            // statt 40 Läufe pro Sekunde (Lauf 14 ms + 25 ms Pause, gemessen 08.10.).
-            lock.lock(); lastRun = t0; lock.unlock()
-            let n = latest()
-            let dt = CFAbsoluteTimeGetCurrent() - t0
-            lock.lock()
-            jobs += 1; writes += n; total += dt; maximum = max(maximum, dt)
-            lock.unlock()
-        }
-    }
-
-    /// Verwirft Wartendes und wartet, bis die laufende Aufgabe fertig ist. Vor dem
-    /// Abschluss einer Geste aufrufen, sonst überholt ein später Zwischenstand das Ende.
-    func flush() {
-        lock.lock(); pending = nil; lock.unlock()
-        queue.sync {}
-    }
+    private let queue = DispatchQueue(label: "dev.mwlr.seam.setzen", qos: .userInteractive)
 
     /// Mehrere Schritte nacheinander auf der Warteschlange (nach allen Zwischenständen).
     func run(_ work: @escaping @Sendable () -> Void) {
@@ -96,6 +27,7 @@ final class NeighborWriter: @unchecked Sendable {
     /// sichtbar übereinander (Bildschirmaufnahme 08.10.).
     static let retryDelays: [useconds_t] = [50_000, 100_000, 200_000, 400_000, 800_000]
 
+    @discardableResult
     static func setVerified(_ w: AXWindow, _ r: CGRect) -> CGRect? {
         setVerifiedCounting(w, r).frame
     }
@@ -125,15 +57,5 @@ final class NeighborWriter: @unchecked Sendable {
     static func close(_ a: CGRect, _ b: CGRect) -> Bool {
         abs(a.minX - b.minX) <= 2 && abs(a.minY - b.minY) <= 2
             && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
-    }
-
-    struct Stats { let jobs: Int, writes: Int, avgMs: Int, maxMs: Int, readAvgMs: Int, setAvgMs: Int }
-
-    /// Messwerte abholen und zurücksetzen (Ø/max je Nachstell-Aufgabe).
-    func takeStats() -> Stats {
-        lock.lock(); defer { jobs = 0; writes = 0; total = 0; maximum = 0; readTotal = 0; setTotal = 0; lock.unlock() }
-        func avg(_ t: CFAbsoluteTime) -> Int { jobs > 0 ? Int(t / Double(jobs) * 1000) : 0 }
-        return Stats(jobs: jobs, writes: writes, avgMs: avg(total), maxMs: Int(maximum * 1000),
-                     readAvgMs: avg(readTotal), setAvgMs: avg(setTotal))
     }
 }

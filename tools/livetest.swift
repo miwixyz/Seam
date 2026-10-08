@@ -105,7 +105,7 @@ case "key":
     var flags: CGEventFlags = []
     for m in a.dropFirst(3) {
         switch m { case "ctrl": flags.insert(.maskControl); case "opt": flags.insert(.maskAlternate)
-        case "cmd": flags.insert(.maskCommand); default: break }
+        case "cmd": flags.insert(.maskCommand); case "shift": flags.insert(.maskShift); default: break }
     }
     // Echte Pfeil-/Navigationstasten tragen Fn und Ziffernblock im Ereignis. Ohne
     // diese Merkmale erkannte macOS ⌃⌥← nicht als Seams Kürzel (gemessen 08.10.).
@@ -118,6 +118,13 @@ case "key":
     usleep(40_000)
     let up = CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false)!
     up.flags = flags; up.post(tap: .cghidEventTap)
+    // Zusatztasten ausdrücklich loslassen. Sonst hält macOS ⌃/⌥/⇧ für gedrückt, und ein
+    // folgendes Ziehen wird zum ⌃-Klick (Rechtsklick) statt zum Größeziehen (08.10.).
+    if let clear = CGEvent(source: src) {
+        clear.type = .flagsChanged
+        clear.flags = []
+        clear.post(tap: .cghidEventTap)
+    }
     usleep(400_000)
     print("Taste \(code) mit \(a.dropFirst(3).joined(separator: "+"))")
 case "sample":

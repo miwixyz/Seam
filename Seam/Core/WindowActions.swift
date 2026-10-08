@@ -22,7 +22,94 @@ final class WindowActions {
             return
         }
         guard let cmd = Layout.command(for: key, screen.orientation) else { return }
-        apply(cmd, to: w, current: f, screen: screen, before: f)
+        switch cmd {
+        case .split: split(w, f, screen)
+        case .seamLeft: moveSeam(w, f, screen, direction: -1)
+        case .seamRight: moveSeam(w, f, screen, direction: 1)
+        default: apply(cmd, to: w, current: f, screen: screen, before: f)
+        }
+    }
+
+    // MARK: - Geteilter Bildschirm (Michael, 08.10.)
+
+    /// Zuletzt geteiltes Paar. Hilft „Naht verschieben“, wenn die Fenster nicht mehr
+    /// bündig stehen. Nur im Speicher (E10).
+    private var lastPair: (AXWindow, AXWindow)?
+
+    /// ⌃⌥S: aktives Fenster links (hochkant oben), das nächste Fenster dahinter rechts,
+    /// beide volle Höhe, Naht in der Mitte.
+    private func split(_ w: AXWindow, _ f: CGRect, _ screen: Screens.Info) {
+        guard let (partner, pf) = WindowFinder.nextWindow(after: w, frame: f, on: screen.frame) else {
+            Self.log.notice("Teilen: kein zweites Fenster auf diesem Bildschirm")
+            return
+        }
+        if original[w] == nil { original[w] = f }
+        if original[partner] == nil { original[partner] = pf }
+        lastPair = (w, partner)
+        let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
+        setPair((w, a), (partner, b), name: "Teilen")
+    }
+
+    /// ⌃⌥⇧← / → : Naht zur nächsten festen Stufe (⅓ ⅜ ½ ⅝ ⅔). Beide Fenster in einem
+    /// Schritt; jedes behält seine eigene Höhe (bzw. Breite hochkant).
+    private func moveSeam(_ w: AXWindow, _ f: CGRect, _ screen: Screens.Info, direction: Int) {
+        let gap = CGFloat(prefs.gap), o = screen.orientation, v = screen.visible
+        guard let (other, of) = seamPartner(of: w, frame: f, gap: gap, orientation: o) else {
+            Self.log.notice("Naht: kein Nachbar an einer gemeinsamen Kante, erst ⌃⌥S")
+            return
+        }
+        let wFirst = o == .landscape ? f.midX < of.midX : f.midY < of.midY
+        let (first, ff) = wFirst ? (w, f) : (other, of)
+        let (second, sf) = wFirst ? (other, of) : (w, f)
+        let seamPx = o == .landscape ? ff.maxX + gap / 2 : ff.maxY + gap / 2
+        let cell = o == .landscape ? v.width / 24 : v.height / 24
+        let current = (seamPx - (o == .landscape ? v.minX : v.minY)) / cell
+        guard let stop = Geometry.nextSeamStop(current: current, direction: direction) else {
+            Self.log.notice("Naht: schon an der äußersten Stufe")
+            return
+        }
+        let (a, b) = Geometry.splitFrames(at: stop, in: v, o, gap: gap)
+        let fa = o == .landscape ? CGRect(x: a.minX, y: ff.minY, width: a.width, height: ff.height)
+                                 : CGRect(x: ff.minX, y: a.minY, width: ff.width, height: a.height)
+        let fb = o == .landscape ? CGRect(x: b.minX, y: sf.minY, width: b.width, height: sf.height)
+                                 : CGRect(x: sf.minX, y: b.minY, width: sf.width, height: b.height)
+        lastPair = (first, second)
+        setPair((first, fa), (second, fb), name: "Naht \(stop)/24")
+    }
+
+    /// Partner für die Naht: ein bündiger Nachbar auf der passenden Achse, sonst das
+    /// zuletzt geteilte Paar.
+    private func seamPartner(of w: AXWindow, frame f: CGRect, gap: CGFloat, orientation o: Orientation) -> (AXWindow, CGRect)? {
+        let side: [Geometry.Edge] = o == .landscape ? [.left, .right] : [.top, .bottom]
+        for (n, nf) in WindowFinder.neighbors(of: w, frame: f, gap: gap)
+        where side.contains(where: { Geometry.isFacing(nf, to: f, gap: gap, edge: $0) }) {
+            return (n, nf)
+        }
+        if let (a, b) = lastPair, a == w || b == w {
+            let other = a == w ? b : a
+            if let of = other.frame { return (other, of) }
+        }
+        return nil
+    }
+
+    /// Setzt zwei Fenster nacheinander mit Nachprüfung. Hat eines eine Mindestgröße,
+    /// bleibt die Naht dort stehen und das andere passt sich an (wie beim Ziehen).
+    private func setPair(_ first: (AXWindow, CGRect), _ second: (AXWindow, CGRect), name: String) {
+        let log = Self.log
+        writer.run {
+            let a1 = NeighborWriter.setVerified(first.0, first.1)
+            let a2 = NeighborWriter.setVerified(second.0, second.1)
+            if let a2, let fix = Geometry.resolveMinimum(leading: first.1, wanted: second.1, actual: a2) {
+                NeighborWriter.setVerified(second.0, fix.neighbor)
+                NeighborWriter.setVerified(first.0, fix.leading)
+                log.notice("\(name, privacy: .public): Mindestgröße rechts/unten, Naht gehalten")
+            } else if let a1, let fix = Geometry.resolveMinimum(leading: second.1, wanted: first.1, actual: a1) {
+                NeighborWriter.setVerified(first.0, fix.neighbor)
+                NeighborWriter.setVerified(second.0, fix.leading)
+                log.notice("\(name, privacy: .public): Mindestgröße links/oben, Naht gehalten")
+            }
+            log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
+        }
     }
 
     /// `before` = Rahmen vor der Geste (beim Andocken per Ziehen der Rahmen vor dem Ziehen).

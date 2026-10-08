@@ -72,7 +72,7 @@ enum WindowFinder {
         for edge in Geometry.innerEdges(of: t, in: visible, gap: gap) {
             // Von vorn nach hinten: das erste passende Fenster gewinnt.
             for e in entries {
-                guard let r = Geometry.complement(of: e.bounds, target: t, edge: edge, gap: gap),
+                guard let r = Geometry.complement(of: e.bounds, target: t, edge: edge, gap: gap, visible: visible),
                       let w = AXAccess.windows(of: e.pid).first(where: { $0.frame.map { same($0, e.bounds) } ?? false }),
                       w != moving, !out.contains(where: { $0.0 == w }) else { continue }
                 out.append((w, r))
@@ -80,6 +80,28 @@ enum WindowFinder {
             }
         }
         return out
+    }
+
+    /// ⌃⌥S: das vorderste andere Fenster auf demselben Bildschirm (also meist das
+    /// zuletzt benutzte), als Partner zum Teilen.
+    static func nextWindow(after moving: AXWindow, frame: CGRect, on screen: CGRect) -> (AXWindow, CGRect)? {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                                    kCGNullWindowID) as? [[String: Any]] else { return nil }
+        for info in list {
+            guard (info[kCGWindowLayer as String] as? Int) == 0,
+                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
+                  let b = info[kCGWindowBounds as String] as? NSDictionary,
+                  let bounds = CGRect(dictionaryRepresentation: b),
+                  bounds.width >= 200, bounds.height >= 150,
+                  screen.contains(CGPoint(x: bounds.midX, y: bounds.midY)),
+                  !same(bounds, frame),
+                  NSRunningApplication(processIdentifier: pid)?.activationPolicy == .regular,
+                  let w = AXAccess.windows(of: pid).first(where: { $0.frame.map { same($0, bounds) } ?? false }),
+                  w != moving else { continue }
+            return (w, bounds)
+        }
+        return nil
     }
 
     private static func mostlyOverlaps(_ a: CGRect, _ b: CGRect) -> Bool {

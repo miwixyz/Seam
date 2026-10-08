@@ -8,8 +8,11 @@ Stand: in Entwicklung, noch kein Release.
 
 ## Funktionen
 
-- **Mitziehen** an gemeinsamen Kanten: links/rechts, oben/unten, übereinander gestapelte Fenster
-  auf derselben Seite inklusive. Live während des Ziehens, nicht erst beim Loslassen.
+- **Zwei Fenster teilen** (⌃⌥S) und **Naht verschieben** (⌃⌥⇧←/→) in festen Stufen ⅓ · ⅜ · ½ ·
+  ⅝ · ⅔ — beide Fenster in einem Schritt, auch mit trägen Apps wie Outlook ruckelfrei.
+- **Mitziehen** an gemeinsamen Kanten beim Loslassen: links/rechts, oben/unten, gestapelte
+  Fenster auf derselben Seite inklusive; Mindestgrößen halten die Kante. Nur sichtbare Nachbarn.
+- **Kürzel setzen den Nachbarn mit**: das gegenüberliegende Fenster rückt an die Naht.
 - **Andocken per Ziehen** an den Bildschirmrand mit Vorschaufläche (Hälften, Viertel, Drittel,
   zwei Drittel, maximieren), Magnets Rastermodell 24 × 12 (quer) bzw. 12 × 24 (hochkant).
 - **Tastenkürzel** wie in Michaels Magnet-Einstellung (Menü → „Tastenkürzel anzeigen“).

@@ -102,70 +102,6 @@ enum Geometry {
         return out
     }
 
-    /// Rahmen des gezogenen Fensters aus dem Mausweg: gepackte Kanten um `delta`
-    /// verschoben, die anderen bleiben. Schnell, aber der App voraus.
-    static func predictedFrame(start s: CGRect, grabbed: [Edge], delta d: CGPoint) -> CGRect {
-        var minX = s.minX, maxX = s.maxX, minY = s.minY, maxY = s.maxY
-        if grabbed.contains(.left) { minX = min(s.minX + d.x, maxX - 80) }
-        if grabbed.contains(.right) { maxX = max(s.maxX + d.x, minX + 80) }
-        if grabbed.contains(.top) { minY = min(s.minY + d.y, maxY - 60) }
-        if grabbed.contains(.bottom) { maxY = max(s.maxY + d.y, minY + 60) }
-        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
-    }
-
-    /// Liegt der Nachbar dem führenden Fenster an einer GEPACKTEN Kante gegenüber?
-    /// Hängt von der Kante ab: Das untere linke Fenster liegt dem oberen gegenüber, wenn
-    /// die waagrechte Naht gezogen wird, ist aber ein gleichseitiger Stapelnachbar, wenn
-    /// die senkrechte Kante gezogen wird (gefunden per Test, 08.10.).
-    static func isOpposite(_ w: CGRect, to s: CGRect, gap: CGFloat, grabbed: [Edge]) -> Bool {
-        let tol = gap + linkTolerance
-        let edges = grabbed.isEmpty ? Edge.allCases : grabbed
-        return edges.contains { e in
-            switch e {
-            case .right: overlapsVertically(w, s) && abs(w.minX - s.maxX) <= tol
-            case .left: overlapsVertically(w, s) && abs(s.minX - w.maxX) <= tol
-            case .bottom: overlapsHorizontally(w, s) && abs(w.minY - s.maxY) <= tol
-            case .top: overlapsHorizontally(w, s) && abs(s.minY - w.maxY) <= tol
-            }
-        }
-    }
-
-    /// Wählt je gegenüberliegendem Nachbarn den Rahmen, der weiter UNTER das gezogene
-    /// Fenster reicht (bei fester abgewandter Kante: der größere).
-    ///
-    /// Gemessen 2026-10-08: Outlook als gezogenes Fenster verrät seine Kante nur alle
-    /// 43–99 ms. Nur nach der gelesenen Kante hinkt der Nachbar hinterher, nur nach der
-    /// Maus läuft er voraus. Das gezogene Fenster liegt vorn: Überlappung darunter ist
-    /// unsichtbar, nur eine Lücke sieht man. Also immer die Variante ohne Lücke.
-    /// Gleichseitig gestapelte Nachbarn liegen nicht unter dem gezogenen Fenster und
-    /// folgen der Maus.
-    static func preferUnder(mouse p: [Int: CGRect], read r: [Int: CGRect], opposite: Set<Int>) -> [Int: CGRect] {
-        var out = p
-        for (id, a) in p where opposite.contains(id) {
-            guard let b = r[id] else { continue }
-            out[id] = a.width * a.height >= b.width * b.height ? a : b
-        }
-        return out
-    }
-
-    /// Puffer unter dem gezogenen Fenster während des Ziehens.
-    ///
-    /// Gemessen 2026-10-08 (Helium → TextEdit, ~600 px/s): Zwischen zwei Nachstellungen
-    /// (≤ 40/s) wandert die Kante weiter, beim Schmalerziehen blieb so kurz eine Lücke
-    /// von 25 px. Reicht der Nachbar 40 px unter das (vorn liegende) gezogene Fenster,
-    /// sieht man nichts davon, und eine Lücke entsteht erst ab ~1600 px/s. Beim
-    /// Loslassen setzt Seam den exakten Abstand.
-    static let underlap: CGFloat = 40
-
-    /// Verlängert einen gegenüberliegenden Nachbarn um `m` unter das gezogene Fenster.
-    static func extendUnder(_ r: CGRect, neighborStart w: CGRect, leadingStart s: CGRect, by m: CGFloat) -> CGRect {
-        if w.minX >= s.maxX - 1 { return CGRect(x: r.minX - m, y: r.minY, width: r.width + m, height: r.height) }   // rechts
-        if w.maxX <= s.minX + 1 { return CGRect(x: r.minX, y: r.minY, width: r.width + m, height: r.height) }       // links
-        if w.minY >= s.maxY - 1 { return CGRect(x: r.minX, y: r.minY - m, width: r.width, height: r.height + m) }   // unten
-        if w.maxY <= s.minY + 1 { return CGRect(x: r.minX, y: r.minY, width: r.width, height: r.height + m) }       // oben
-        return r
-    }
-
     /// Setzt Kanten, die der Nutzer NICHT gepackt hat, auf den Startwert zurück,
     /// sofern sie sich höchstens um `slack` bewegt haben.
     ///
@@ -338,7 +274,7 @@ enum Geometry {
     /// Neuer Rahmen für ein Fenster `w` auf der anderen Seite der Kante `edge` der
     /// Zielfläche `t`: zugewandte Kante an die Naht (mit Abstand), abgewandte bleibt.
     /// nil, wenn `w` dieser Kante nicht gegenübersteht.
-    static func complement(of w: CGRect, target t: CGRect, edge: Edge, gap: CGFloat) -> CGRect? {
+    static func complement(of w: CGRect, target t: CGRect, edge: Edge, gap: CGFloat, visible: CGRect? = nil) -> CGRect? {
         let r: CGRect
         switch edge {
         case .right:
@@ -354,7 +290,17 @@ enum Geometry {
             guard w.midY < t.minY, overlapRatioX(w, t) >= 0.5, abs(w.maxY - (t.minY - gap)) <= complementReach else { return nil }
             r = CGRect(x: w.minX, y: w.minY, width: w.width, height: (t.minY - gap) - w.minY)
         }
-        return r.width >= 80 && r.height >= 60 ? r : nil
+        // Spannt die Zielfläche die volle Höhe (bzw. Breite), bekommt der Partner sie auch.
+        // Gemessen 08.10.: Edge behielt beim Mitsetzen y 290 / Höhe 991 statt der vollen Höhe.
+        var out = r
+        if let v = visible {
+            let e = gap + 2
+            let fullHeight = t.minY - v.minY <= e && v.maxY - t.maxY <= e
+            let fullWidth = t.minX - v.minX <= e && v.maxX - t.maxX <= e
+            if fullHeight, edge == .left || edge == .right { out = CGRect(x: r.minX, y: t.minY, width: r.width, height: t.height) }
+            if fullWidth, edge == .top || edge == .bottom { out = CGRect(x: t.minX, y: r.minY, width: t.width, height: r.height) }
+        }
+        return out.width >= 80 && out.height >= 60 ? out : nil
     }
 
     /// Anteil der Zielfläche, den `w` senkrecht bzw. waagrecht abdeckt.
@@ -364,6 +310,44 @@ enum Geometry {
 
     static func overlapRatioX(_ w: CGRect, _ t: CGRect) -> CGFloat {
         max(0, min(w.maxX, t.maxX) - max(w.minX, t.minX)) / max(t.width, 1)
+    }
+
+    /// Liegt `w` an der Kante `edge` von `s` bündig gegenüber?
+    static func isFacing(_ w: CGRect, to s: CGRect, gap: CGFloat, edge: Edge) -> Bool {
+        let tol = gap + linkTolerance
+        switch edge {
+        case .right: return overlapsVertically(w, s) && abs(w.minX - s.maxX) <= tol
+        case .left: return overlapsVertically(w, s) && abs(s.minX - w.maxX) <= tol
+        case .bottom: return overlapsHorizontally(w, s) && abs(w.minY - s.maxY) <= tol
+        case .top: return overlapsHorizontally(w, s) && abs(s.minY - w.maxY) <= tol
+        }
+    }
+
+    // MARK: - Geteilter Bildschirm: Naht in festen Stufen (Michael, 08.10.)
+
+    /// Stellen der Naht in Rasterspalten (quer, von 24) bzw. -zeilen (hochkant, von 24):
+    /// ⅓ · ⅜ · ½ · ⅝ · ⅔.
+    static let seamStops = [8, 9, 12, 15, 16]
+
+    /// Nächste Stufe links (-1) bzw. rechts (+1) der aktuellen Naht. `current` in Zellen,
+    /// darf krumm sein (von Hand gezogen). nil am Ende der Stufen.
+    static func nextSeamStop(current: CGFloat, direction: Int) -> Int? {
+        let eps: CGFloat = 0.25
+        return direction > 0
+            ? seamStops.first { CGFloat($0) > current + eps }
+            : seamStops.last { CGFloat($0) < current - eps }
+    }
+
+    /// Beide Hälften eines geteilten Bildschirms bei Naht `cells` (Zellen von 24).
+    /// Quer: links/rechts, hochkant: oben/unten.
+    static func splitFrames(at cells: Int, in visible: CGRect, _ o: Orientation, gap: CGFloat) -> (first: CGRect, second: CGRect) {
+        let n = 24
+        if o == .landscape {
+            return (rect(for: Cells(0, 0, cells, 12), in: visible, .landscape, gap: gap),
+                    rect(for: Cells(cells, 0, n - cells, 12), in: visible, .landscape, gap: gap))
+        }
+        return (rect(for: Cells(0, 0, 12, cells), in: visible, .portrait, gap: gap),
+                rect(for: Cells(0, cells, 12, n - cells), in: visible, .portrait, gap: gap))
     }
 
     // MARK: - Nur sichtbare Nachbarn (Michael, 08.10.)

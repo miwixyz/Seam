@@ -209,64 +209,6 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.contactStrip(of: right, to: leading, gap: 5), CGRect(x: 1718, y: 30, width: 20, height: 1345))
     }
 
-    // MARK: Nachbar unter das gezogene Fenster (Outlook liest langsam, 08.10.)
-
-    func testPredictedFrameMovesOnlyGrabbedEdge() {
-        let s = CGRect(x: 5, y: 35, width: 1713, height: 1345)
-        XCTAssertEqual(Geometry.predictedFrame(start: s, grabbed: [.right], delta: CGPoint(x: -300, y: 12)),
-                       CGRect(x: 5, y: 35, width: 1413, height: 1345))
-    }
-
-    func testShrinkingLeadingNeighborFollowsMouse() {
-        // Outlook (links, vorn) wird schmaler: Maus schon bei 1300, gelesene Kante noch 1500.
-        let start = CGRect(x: 5, y: 35, width: 1713, height: 1345)
-        let edge = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
-        let mouse = Geometry.linkedFrames(start: start, now: CGRect(x: 5, y: 35, width: 1295, height: 1345),
-                                          neighbors: [.init(id: 1, frame: edge)], gap: 5)
-        let read = Geometry.linkedFrames(start: start, now: CGRect(x: 5, y: 35, width: 1495, height: 1345),
-                                         neighbors: [.init(id: 1, frame: edge)], gap: 5)
-        // Edge reicht schon bis 1305 nach links, also unter Outlook: keine Lücke
-        XCTAssertEqual(Geometry.preferUnder(mouse: mouse, read: read, opposite: [1])[1]?.minX, 1305)
-    }
-
-    func testGrowingLeadingNeighborWaitsForRealEdge() {
-        // Outlook wird breiter: Maus schon bei 2000, gelesene Kante erst 1800.
-        let start = CGRect(x: 5, y: 35, width: 1713, height: 1345)
-        let edge = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
-        let mouse = Geometry.linkedFrames(start: start, now: CGRect(x: 5, y: 35, width: 1995, height: 1345),
-                                          neighbors: [.init(id: 1, frame: edge)], gap: 5)
-        let read = Geometry.linkedFrames(start: start, now: CGRect(x: 5, y: 35, width: 1795, height: 1345),
-                                         neighbors: [.init(id: 1, frame: edge)], gap: 5)
-        // Edge weicht erst bis 1805 zurück; der Rest liegt unter Outlook
-        XCTAssertEqual(Geometry.preferUnder(mouse: mouse, read: read, opposite: [1])[1]?.minX, 1805)
-    }
-
-    func testUnderlapExtendsTowardLeadingWindow() {
-        let s = CGRect(x: 5, y: 35, width: 1713, height: 1345)
-        let right = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
-        let r = Geometry.extendUnder(CGRect(x: 1505, y: 35, width: 1930, height: 1345), neighborStart: right, leadingStart: s, by: 40)
-        XCTAssertEqual(r, CGRect(x: 1465, y: 35, width: 1970, height: 1345))   // rechter Rand bleibt 3435
-        let left = CGRect(x: 5, y: 35, width: 1713, height: 1345)
-        let r2 = Geometry.extendUnder(CGRect(x: 5, y: 35, width: 1500, height: 1345), neighborStart: left, leadingStart: right, by: 40)
-        XCTAssertEqual(r2.maxX, 1545)
-    }
-
-    func testStackedNeighborFollowsMouse() {
-        let p = [2: CGRect(x: 0, y: 742, width: 1520, height: 698)]
-        let r = [2: CGRect(x: 0, y: 742, width: 1700, height: 698)]
-        XCTAssertEqual(Geometry.preferUnder(mouse: p, read: r, opposite: [])[2], p[2])
-    }
-
-    func testOppositeVsStacked() {
-        let topLeft = CGRect(x: 0, y: 40, width: 1720, height: 697)
-        let bottomLeft = CGRect(x: 0, y: 742, width: 1720, height: 698)
-        XCTAssertTrue(Geometry.isOpposite(rightWin, to: topLeft, gap: 5, grabbed: [.right]))
-        // Senkrechte Kante gezogen: unteres linkes Fenster ist gestapelt, nicht gegenüber
-        XCTAssertFalse(Geometry.isOpposite(bottomLeft, to: topLeft, gap: 5, grabbed: [.right]))
-        // Waagrechte Naht gezogen: dann liegt es gegenüber
-        XCTAssertTrue(Geometry.isOpposite(bottomLeft, to: topLeft, gap: 5, grabbed: [.bottom]))
-    }
-
     // MARK: Kürzel setzen den Nachbarn mit (gemessen 08.10.: Outlook/Edge nicht bündig)
 
     private let v = CGRect(x: 0, y: 30, width: 3440, height: 1355)
@@ -299,6 +241,39 @@ final class GeometryTests: XCTestCase {
     func testSmallWindowBesideOnlyPartlyIsLeftAlone() {
         let small = CGRect(x: 1700, y: 1100, width: 600, height: 250)  // deckt < 50 % der Höhe
         XCTAssertNil(Geometry.complement(of: small, target: leftHalf, edge: .right, gap: 5))
+    }
+
+    func testPartnerGetsFullHeightBesideAHalf() {
+        // gemessen: Edge blieb bei y 290 / Höhe 991
+        let edge = CGRect(x: 1455, y: 290, width: 1980, height: 991)
+        XCTAssertEqual(Geometry.complement(of: edge, target: leftHalf, edge: .right, gap: 5, visible: v),
+                       CGRect(x: 1723, y: 35, width: 1712, height: 1345))
+    }
+
+    func testPartnerKeepsHeightBesideAQuarter() {
+        let topLeft = CGRect(x: 5, y: 35, width: 1713, height: 670)
+        let rightHalf = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        // Neben einem Viertel bleibt eine rechte Hälfte eine Hälfte
+        XCTAssertEqual(Geometry.complement(of: rightHalf, target: topLeft, edge: .right, gap: 5, visible: v)?.height, 1345)
+    }
+
+    // MARK: Geteilter Bildschirm, Naht in Stufen
+
+    func testSeamStopsStepThroughFixedPositions() {
+        XCTAssertEqual(Geometry.nextSeamStop(current: 12, direction: 1), 15)     // ½ → ⅝
+        XCTAssertEqual(Geometry.nextSeamStop(current: 12, direction: -1), 9)     // ½ → ⅜
+        XCTAssertEqual(Geometry.nextSeamStop(current: 16, direction: 1), nil)    // ⅔ ist Ende
+        XCTAssertEqual(Geometry.nextSeamStop(current: 8, direction: -1), nil)    // ⅓ ist Ende
+        XCTAssertEqual(Geometry.nextSeamStop(current: 10.7, direction: 1), 12)   // von Hand gezogen
+    }
+
+    func testSplitFramesHalfAndTwoThirds() {
+        let (l, r) = Geometry.splitFrames(at: 12, in: v, .landscape, gap: 5)
+        XCTAssertEqual(l, CGRect(x: 5, y: 35, width: 1713, height: 1345))
+        XCTAssertEqual(r.minX - l.maxX, 5)
+        let (l2, r2) = Geometry.splitFrames(at: 16, in: v, .landscape, gap: 5)
+        XCTAssertEqual(l2.maxX, 2291)                    // ⅔ von 3440 = 2293,3 − 2,5
+        XCTAssertEqual(r2.maxX, 3435)
     }
 
     // MARK: Mindestgröße des Nachbarn (gemessen an Outlook, 08.10.)

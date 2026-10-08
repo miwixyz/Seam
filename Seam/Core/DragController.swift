@@ -12,8 +12,15 @@ import OSLog
 /// 2. Das erste Kandidatenfenster, das „verschoben“ oder „Größe geändert“ meldet,
 ///    wird **führend**. Nur seine Meldungen zählen ab dann (E6a: keine Rückkopplung
 ///    über die nachgestellten Nachbarn, die ja ebenfalls beobachtet werden).
-/// 3. Größe geändert → Nachbarn an der bewegten Kante nachstellen.
+/// 3. Größe geändert → beim LOSLASSEN die Nachbarn an der bewegten Kante bündig setzen.
 ///    Verschoben → Andockzone am Bildschirmrand anzeigen, beim Loslassen andocken.
+///
+/// **Nachbar beim Loslassen, nicht live** (Michael, 08.10.: „alles andere als flüssig“).
+/// Live-Mitziehen fremder Fenster über die Bedienungshilfen war mit Outlook/Edge nicht
+/// flüssig zu bekommen: kurze Gesten erreichten nur 3–13 Zwischenstände, Outlook verrät
+/// seine Kante nur alle 43–99 ms. Lese-Faden, Konturen und Langsam-Erkennung sind
+/// deshalb wieder ausgebaut (Verlauf: Projektdatei Seam, Chat-Übergabe 08.10.).
+/// Fein verschieben geht per Tastatur: ⌃⌥S teilt, ⌃⌥⇧←/→ verschiebt die Naht.
 @MainActor
 final class DragController {
 
@@ -41,15 +48,6 @@ final class DragController {
         var pending: (Command, Screens.Info)?
         /// Ursprüngliche Größe, falls beim Herausziehen wiederhergestellt.
         var restoredOriginal: CGRect?
-        var linkEvents = 0
-        /// Endrahmen der Nachbarn, berechnet beim Loslassen.
-        var finalFrames: [Int: CGRect] = [:]
-        // Messpunkt (08.10., „Edge und Outlook haken“): unterscheidet „App meldet
-        // selten“ von „Nachstellen blockiert Seam“.
-        var mouseDrags = 0
-        var resizeNotifications = 0
-        var firstNotification: CFAbsoluteTime = 0
-        var lastNotification: CFAbsoluteTime = 0
         init(candidates: [(window: AXWindow, start: CGRect)], downPoint: CGPoint) {
             self.candidates = candidates
             self.downPoint = downPoint
@@ -57,18 +55,9 @@ final class DragController {
     }
 
     private var gesture: Gesture?
-    /// Zählt Gesten hoch. Kontur-Aktualisierungen von der Warteschlange gelten nur für
-    /// die Geste, die sie angestoßen hat, sonst bliebe nach dem Loslassen eine stehen.
-    private var generation = 0
-
-    /// Nachstellen auf eigener Warteschlange, neuester Wert gewinnt (E6c, ersetzt die
-    /// frühere 8-ms-Bremse, die den letzten Wert eines Meldungsstoßes verwarf).
+    /// Abschluss einer Geste auf eigener Warteschlange (Setzen mit Nachprüfung blockiert
+    /// sonst den Hauptthread, Outlook antwortete bis 56 ms je Setzen).
     private let writer = NeighborWriter()
-    /// Wie schnell Apps auf Größenänderungen reagieren (automatisch je App, 08.10.).
-    private let slowApps = SlowApps()
-    private let contours = ContourOverlay()
-    /// Liest die Kante des gezogenen Fensters laufend, ohne das Setzen aufzuhalten.
-    private let reader = LeadingReader()
     /// So weit um den Zeiger werden Fenster als Kandidaten gesucht.
     private static let grabRadius: CGFloat = 8
 
@@ -106,20 +95,12 @@ final class DragController {
         let p = Screens.mouse
         let candidates = Self.windowsNear(p)
         guard !candidates.isEmpty else { return }
-        generation += 1
         let g = Gesture(candidates: candidates, downPoint: p)
         gesture = g
         observe(g)
     }
 
     private func mouseDragged() {
-        gesture?.mouseDrags += 1
-        // Größeziehen: Jede Mausbewegung stößt ein Nachstellen an, nicht nur die Meldungen
-        // der App (Outlook: 13 Meldungen bei 75 Mausschritten, gemessen 08.10.).
-        if let g = gesture, g.mode == .resizing, prefs.linkEdges {
-            trackLive(g)
-            return
-        }
         guard let g = gesture, g.mode == .moving, prefs.dragSnap else { return }
         let p = Screens.mouse
         guard let screen = Screens.containing(p) else { return }
@@ -147,10 +128,12 @@ final class DragController {
             case .resizing:
                 if let raw = w.frame {
                     let now = effectiveFrame(g, raw)
-                    if prefs.linkEdges { prepareFinish(g, now: now) }
-                    logResizeStats(g, leading: w)
-                    contours.hideAll()
-                    finish(leading: w, raw: raw, now: now, frames: g.finalFrames, windows: g.neighborWindows)
+                    var frames: [Int: CGRect] = [:]
+                    if prefs.linkEdges, ensureNeighbors(g), let neighbors = g.neighbors {
+                        frames = Geometry.linkedFrames(start: g.start, now: now, neighbors: neighbors, gap: CGFloat(prefs.gap))
+                            .filter { $0.value.width >= 80 && $0.value.height >= 60 }   // E6d
+                    }
+                    finish(leading: w, raw: raw, now: now, frames: frames, windows: g.neighborWindows)
                 }
             case .undecided:
                 break
@@ -173,29 +156,11 @@ final class DragController {
         let now = effectiveFrame(g, raw)
 
         if !Geometry.movedEdges(from: g.start, to: now).isEmpty {
-            if g.mode == .undecided {
-                g.mode = .resizing
-                reader.start(w, initial: raw)
-            }
-            let t = CFAbsoluteTimeGetCurrent()
-            if g.resizeNotifications == 0 { g.firstNotification = t }
-            g.resizeNotifications += 1
-            g.lastNotification = t
-            if g.mode == .resizing, prefs.linkEdges { trackLive(g) }
+            if g.mode == .undecided { g.mode = .resizing }
         } else if now.origin != g.start.origin, g.mode == .undecided {
             g.mode = .moving
             restoreSizeIfSnapped(g, w: w, now: now)
         }
-    }
-
-    private func logResizeStats(_ g: Gesture, leading w: AXWindow) {
-        func app(_ pid: pid_t) -> String { NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? "\(pid)" }
-        let neighbors = Set(g.neighborWindows.values.map { app($0.pid) }).sorted().joined(separator: ",")
-        let dur = g.lastNotification - g.firstNotification
-        let st = writer.takeStats()
-        let slowList = Set(g.neighborWindows.values.filter { slowApps.isSlow(w.pid, $0.pid) }.map { app($0.pid) })
-            .sorted().joined(separator: ",")
-        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms (Setzen Ø \(st.setAvgMs, privacy: .public)), langsames Paar mit: \(slowList.isEmpty ? "–" : slowList, privacy: .public)")
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
@@ -225,73 +190,6 @@ final class DragController {
             Self.log.notice("Mitziehen: \(found.count, privacy: .public) Nachbar(n) an der Kante")
         }
         return !(g.neighbors ?? []).isEmpty
-    }
-
-    /// Während des Ziehens: Die Warteschlange liest die TATSÄCHLICHE Kante des gezogenen
-    /// Fensters und stellt die Nachbarn daran. Nicht dorthin, wo die Maus ist: Outlook
-    /// folgt der Maus selbst verzögert, ein Nachbar an der Mausposition lief ihm voraus
-    /// und ließ eine Lücke (Bildschirmaufnahme 08.10.).
-    /// Während des Ziehens: Nachbarn so setzen, dass nie eine Lücke entsteht.
-    /// Zwei Quellen für die Kante des gezogenen Fensters (Geometry.preferUnder):
-    /// die Maus (schnell, voraus) und der Lese-Faden (echt, langsam bei Outlook).
-    /// Gesetzt wird ohne auf das Lesen zu warten.
-    private func trackLive(_ g: Gesture) {
-        guard let w = g.leading, ensureNeighbors(g), let neighbors = g.neighbors else { return }
-        g.linkEvents += 1
-        let start = g.start, grabbed = g.grabbed, gap = CGFloat(prefs.gap), windows = g.neighborWindows
-        let opposite = Set(neighbors.filter { Geometry.isOpposite($0.frame, to: start, gap: gap, grabbed: grabbed) }.map(\.id))
-        let down = g.downPoint
-        let slow = slowApps, gen = generation, writer = writer, reader = reader
-        writer.track {
-            // Maus erst JETZT lesen, nicht beim Mausereignis: Bis zum Setzen vergehen bis
-            // zu 25 ms, schnelle Apps sind der Maus da schon weiter gefolgt (gemessen:
-            // 35 px Lücke beim Schmalerziehen). CGEvent-Koordinaten = Bedienungshilfen-
-            // Koordinaten (oben links), und der Aufruf ist auf jedem Faden erlaubt.
-            let m = CGEvent(source: nil)?.location ?? down
-            let predicted: CGRect? = grabbed.isEmpty ? nil
-                : Geometry.predictedFrame(start: start, grabbed: grabbed,
-                                          delta: CGPoint(x: m.x - down.x, y: m.y - down.y))
-            let raw = reader.last ?? start
-            let read = Geometry.keepUngrabbedEdges(now: raw, start: start, grabbed: grabbed, slack: gap + 6)
-            let fromRead = Geometry.linkedFrames(start: start, now: read, neighbors: neighbors, gap: gap)
-            let fromMouse = predicted.map { Geometry.linkedFrames(start: start, now: $0, neighbors: neighbors, gap: gap) } ?? fromRead
-            let starts = Dictionary(uniqueKeysWithValues: neighbors.map { ($0.id, $0.frame) })
-            let frames = Geometry.preferUnder(mouse: fromMouse, read: fromRead, opposite: opposite)
-                .filter { $0.value.width >= 80 && $0.value.height >= 60 }   // E6d
-                .reduce(into: [Int: CGRect]()) { out, kv in
-                    // Puffer unter dem gezogenen Fenster (unsichtbar), exakt erst beim Loslassen.
-                    guard opposite.contains(kv.key), let ns = starts[kv.key] else { out[kv.key] = kv.value; return }
-                    out[kv.key] = Geometry.extendUnder(kv.value, neighborStart: ns, leadingStart: start, by: Geometry.underlap)
-                }
-            var n = 0, tSet = 0.0
-            var preview: [Int: CGRect] = [:]
-            for (id, r) in frames {
-                guard let nw = windows[id] else { continue }
-                // Nachbar selbst langsam umzusetzen (Outlook als Folger): nur Kontur.
-                if slow.isSlow(w.pid, nw.pid) { preview[id] = r; continue }
-                let t1 = CFAbsoluteTimeGetCurrent()
-                nw.setFrameLive(r)
-                let dt = CFAbsoluteTimeGetCurrent() - t1
-                tSet += dt
-                slow.record(w.pid, nw.pid, seconds: dt)   // nur Setzen: Lesen wartet nicht mehr
-                n += 1
-            }
-            writer.note(read: 0, set: tSet)
-            let shown = preview
-            Task { @MainActor [weak self] in
-                guard let self, self.generation == gen, self.gesture != nil else { return }
-                self.contours.update(shown)
-            }
-            return n
-        }
-    }
-
-    /// Ende: Zwischenstände abwarten, Endrahmen berechnen; gesetzt wird in `finish`.
-    private func prepareFinish(_ g: Gesture, now: CGRect) {
-        guard ensureNeighbors(g), let neighbors = g.neighbors else { return }
-        writer.flush()
-        g.finalFrames = Geometry.linkedFrames(start: g.start, now: now, neighbors: neighbors, gap: CGFloat(prefs.gap))
-            .filter { $0.value.width >= 80 && $0.value.height >= 60 }
     }
 
     /// Abschluss einer Größen-Geste, nacheinander auf der Warteschlange, jeder Endwert
@@ -349,8 +247,6 @@ final class DragController {
     }
 
     private func endGesture() {
-        contours.hideAll()
-        reader.stop()
         guard let g = gesture else { return }
         for obs in g.observers {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .commonModes)

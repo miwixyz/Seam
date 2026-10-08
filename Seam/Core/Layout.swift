@@ -43,6 +43,7 @@ struct KeyCombo: Equatable, Hashable, Sendable {
     static let ctrlOpt: UInt32 = 4096 | 2048
     static let ctrlCmd: UInt32 = 4096 | 256
     static let ctrlOptCmd: UInt32 = 4096 | 2048 | 256
+    static let ctrlOptShift: UInt32 = 4096 | 2048 | 512
 
     /// Lesbar für Menü und Hilfe, z. B. „⌃⌥←“.
     var label: String {
@@ -56,7 +57,7 @@ struct KeyCombo: Equatable, Hashable, Sendable {
 
     private static let keyNames: [UInt32: String] = [
         123: "←", 124: "→", 125: "↓", 126: "↑", 36: "↩", 51: "⌫", 115: "↖",
-        2: "D", 3: "F", 5: "G", 8: "C", 14: "E", 15: "R", 16: "Y", 17: "T",
+        1: "S", 2: "D", 3: "F", 5: "G", 8: "C", 14: "E", 15: "R", 16: "Y", 17: "T",
         32: "U", 34: "I", 37: "L", 38: "J", 40: "K",
     ]
 }
@@ -68,6 +69,8 @@ enum Command: String, CaseIterable, Sendable {
     case firstTwoThirds, centerTwoThirds, lastTwoThirds
     case nextDisplay, previousDisplay
     case maximize, center, restore
+    /// Geteilter Bildschirm (Michael, 08.10.): zwei Fenster teilen, Naht verschieben.
+    case split, seamLeft, seamRight
 
     /// Deutscher Name fürs Menü, abhängig von der Ausrichtung.
     func title(_ o: Orientation) -> String {
@@ -95,6 +98,11 @@ enum Command: String, CaseIterable, Sendable {
         case (.maximize, _): "Maximieren"
         case (.center, _): "Zentrieren"
         case (.restore, _): "Ursprüngliche Größe"
+        case (.split, _): "Zwei Fenster teilen"
+        case (.seamLeft, .landscape): "Naht nach links"
+        case (.seamLeft, .portrait): "Naht nach oben"
+        case (.seamRight, .landscape): "Naht nach rechts"
+        case (.seamRight, .portrait): "Naht nach unten"
         }
     }
 }
@@ -142,6 +150,9 @@ enum Layout {
         .init(command: .maximize,        key: k(36,  KeyCombo.ctrlCmd), target: Cells(0, 0, 24, 12), activation: [Cells(1, 0, 22, 1)]),
         .init(command: .center,          key: k(115, KeyCombo.ctrlCmd), target: nil, activation: []),
         .init(command: .restore,         key: k(51), target: nil, activation: []),
+        .init(command: .split,           key: k(1), target: nil, activation: []),
+        .init(command: .seamLeft,        key: k(123, KeyCombo.ctrlOptShift), target: nil, activation: []),
+        .init(command: .seamRight,       key: k(124, KeyCombo.ctrlOptShift), target: nil, activation: []),
     ]
 
     static let portrait: [CommandSpec] = [
@@ -164,6 +175,9 @@ enum Layout {
         .init(command: .maximize,        key: k(36),  target: Cells(0, 0, 12, 24), activation: [Cells(1, 0, 10, 1)]),
         .init(command: .center,          key: k(8),   target: nil, activation: []),
         .init(command: .restore,         key: k(51),  target: nil, activation: []),
+        .init(command: .split,           key: k(1),   target: nil, activation: []),
+        .init(command: .seamLeft,        key: k(123, KeyCombo.ctrlOptShift), target: nil, activation: []),
+        .init(command: .seamRight,       key: k(124, KeyCombo.ctrlOptShift), target: nil, activation: []),
     ]
     // swiftlint:enable comma
 
