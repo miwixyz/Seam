@@ -1,7 +1,13 @@
 import AppKit
 
-/// Merkt sich, wie schnell Apps auf eine Größenänderung reagieren (Michael, 08.10.:
+/// Merkt sich, wie schnell App-PAARE beim Mitziehen sind (Michael, 08.10.:
 /// „automatisch je App“).
+///
+/// **Paar statt einzelne App** (zweite Aufnahme, 08.10.): Bewertet wurde zuerst nur das
+/// Setzen des Nachbarn. Die Wartezeit steckt aber im ganzen Durchgang (Kante der
+/// gezogenen App lesen + Nachbar setzen): Outlook→Edge Ø 81 ms, Edge→Outlook Ø 159 ms,
+/// trotzdem stufte Seam nichts als langsam ein, und Edge zeigte eine Sekunde lang den
+/// Schreibtisch statt sich selbst. Je Paar, damit Edge mit Obsidian live bleibt.
 ///
 /// Gemessen 2026-10-08: Outlook brauchte als folgendes Fenster Ø 125 ms, max 448 ms
 /// je Größenänderung und kam während einer Geste auf nur 4 Bilder. Edge lag bei
@@ -17,9 +23,12 @@ final class SlowApps: @unchecked Sendable {
     static let minSamples = 3
 
     private let lock = NSLock()
-    private var samples: [pid_t: [Double]] = [:]
+    private var samples: [String: [Double]] = [:]
 
-    func record(_ pid: pid_t, seconds: Double) {
+    static func key(_ leading: pid_t, _ neighbor: pid_t) -> String { "\(leading)-\(neighbor)" }
+
+    func record(_ leading: pid_t, _ neighbor: pid_t, seconds: Double) {
+        let pid = Self.key(leading, neighbor)
         lock.lock(); defer { lock.unlock() }
         var s = samples[pid] ?? []
         s.append(seconds)
@@ -27,13 +36,15 @@ final class SlowApps: @unchecked Sendable {
         samples[pid] = s
     }
 
-    func isSlow(_ pid: pid_t) -> Bool {
+    func isSlow(_ leading: pid_t, _ neighbor: pid_t) -> Bool {
         #if DEBUG
         if let forced = Self.forcedBundleID,
-           NSRunningApplication(processIdentifier: pid)?.bundleIdentifier == forced { return true }
+           [leading, neighbor].contains(where: { NSRunningApplication(processIdentifier: $0)?.bundleIdentifier == forced }) {
+            return true
+        }
         #endif
         lock.lock(); defer { lock.unlock() }
-        return Self.isSlow(samples[pid] ?? [])
+        return Self.isSlow(samples[Self.key(leading, neighbor)] ?? [])
     }
 
     #if DEBUG

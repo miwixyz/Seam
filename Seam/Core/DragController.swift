@@ -188,9 +188,9 @@ final class DragController {
         let neighbors = Set(g.neighborWindows.values.map { app($0.pid) }).sorted().joined(separator: ",")
         let dur = g.lastNotification - g.firstNotification
         let st = writer.takeStats()
-        let slowList = Set(g.neighborWindows.values.filter { slowApps.isSlow($0.pid) }.map { app($0.pid) })
+        let slowList = Set(g.neighborWindows.values.filter { slowApps.isSlow(w.pid, $0.pid) }.map { app($0.pid) })
             .sorted().joined(separator: ",")
-        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms, als langsam: \(slowList.isEmpty ? "–" : slowList, privacy: .public)")
+        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), Nachstell-Läufe \(st.jobs, privacy: .public), Fenster gesetzt \(st.writes, privacy: .public), je Lauf Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms (davon Lesen Ø \(st.readAvgMs, privacy: .public), Setzen Ø \(st.setAvgMs, privacy: .public)), langsames Paar mit: \(slowList.isEmpty ? "–" : slowList, privacy: .public)")
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
@@ -230,22 +230,30 @@ final class DragController {
         guard let w = g.leading, ensureNeighbors(g), let neighbors = g.neighbors else { return }
         g.linkEvents += 1
         let start = g.start, grabbed = g.grabbed, gap = CGFloat(prefs.gap), windows = g.neighborWindows
-        let slow = slowApps, gen = generation
+        let slow = slowApps, gen = generation, writer = writer
         writer.track {
+            let t0 = CFAbsoluteTimeGetCurrent()
             guard let raw = w.frame else { return 0 }
+            let tRead = CFAbsoluteTimeGetCurrent() - t0
             let now = Geometry.keepUngrabbedEdges(now: raw, start: start, grabbed: grabbed, slack: gap + 6)
-            var n = 0
+            let frames = Geometry.linkedFrames(start: start, now: now, neighbors: neighbors, gap: gap)
+                .filter { $0.value.width >= 80 && $0.value.height >= 60 }   // E6d
+            // Ist irgendein Paar dieser Geste langsam, werden ALLE Nachbarn zur Kontur:
+            // Ein langsamer Durchgang bremst auch die schnellen Nachbarn desselben Laufs.
+            let anySlow = frames.keys.contains { id in windows[id].map { slow.isSlow(w.pid, $0.pid) } ?? false }
+            var n = 0, tSet = 0.0
             var preview: [Int: CGRect] = [:]
-            for (id, r) in Geometry.linkedFrames(start: start, now: now, neighbors: neighbors, gap: gap)
-            where r.width >= 80 && r.height >= 60 {      // E6d: nie auf Splitter zusammendrücken
+            for (id, r) in frames {
                 guard let nw = windows[id] else { continue }
-                // Langsame App (Outlook): nur Kontur, gesetzt wird beim Loslassen.
-                if slow.isSlow(nw.pid) { preview[id] = r; continue }
-                let t0 = CFAbsoluteTimeGetCurrent()
+                if anySlow { preview[id] = r; continue }
+                let t1 = CFAbsoluteTimeGetCurrent()
                 nw.setFrameLive(r)
-                slow.record(nw.pid, seconds: CFAbsoluteTimeGetCurrent() - t0)
+                let dt = CFAbsoluteTimeGetCurrent() - t1
+                tSet += dt
+                slow.record(w.pid, nw.pid, seconds: tRead + dt)   // ganzer Durchgang je Paar
                 n += 1
             }
+            writer.note(read: tRead, set: tSet)
             let shown = preview
             Task { @MainActor [weak self] in
                 guard let self, self.generation == gen, self.gesture != nil else { return }

@@ -28,6 +28,13 @@ final class NeighborWriter: @unchecked Sendable {
     private var writes = 0
     private var total: CFAbsoluteTime = 0
     private var maximum: CFAbsoluteTime = 0
+    private var readTotal: CFAbsoluteTime = 0
+    private var setTotal: CFAbsoluteTime = 0
+
+    /// Aufteilung eines Laufs: Kante der gezogenen App lesen / Nachbarn setzen.
+    func note(read: CFAbsoluteTime, set: CFAbsoluteTime) {
+        lock.lock(); readTotal += read; setTotal += set; lock.unlock()
+    }
 
     /// Reicht eine Nachstell-Aufgabe ein; sie gibt die Zahl gesetzter Fenster zurück.
     func track(_ job: @escaping @Sendable () -> Int) {
@@ -112,12 +119,13 @@ final class NeighborWriter: @unchecked Sendable {
             && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
     }
 
-    struct Stats { let jobs: Int, writes: Int, avgMs: Int, maxMs: Int }
+    struct Stats { let jobs: Int, writes: Int, avgMs: Int, maxMs: Int, readAvgMs: Int, setAvgMs: Int }
 
     /// Messwerte abholen und zurücksetzen (Ø/max je Nachstell-Aufgabe).
     func takeStats() -> Stats {
-        lock.lock(); defer { jobs = 0; writes = 0; total = 0; maximum = 0; lock.unlock() }
-        return Stats(jobs: jobs, writes: writes,
-                     avgMs: jobs > 0 ? Int(total / Double(jobs) * 1000) : 0, maxMs: Int(maximum * 1000))
+        lock.lock(); defer { jobs = 0; writes = 0; total = 0; maximum = 0; readTotal = 0; setTotal = 0; lock.unlock() }
+        func avg(_ t: CFAbsoluteTime) -> Int { jobs > 0 ? Int(t / Double(jobs) * 1000) : 0 }
+        return Stats(jobs: jobs, writes: writes, avgMs: avg(total), maxMs: Int(maximum * 1000),
+                     readAvgMs: avg(readTotal), setAvgMs: avg(setTotal))
     }
 }
