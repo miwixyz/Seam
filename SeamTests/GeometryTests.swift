@@ -185,6 +185,43 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.keepUngrabbedEdges(now: now, start: start, grabbed: [.left], slack: 10), now)
     }
 
+    // MARK: Mindestgröße des Nachbarn (gemessen an Outlook, 08.10.)
+
+    func testOutlookMinimumWidthStopsSeamOnTheLeft() {
+        // Edge (rechts, führend) zog seine linke Kante bis 1180; Outlook links sollte
+        // 1175 breit werden, blieb aber 1415.
+        let edge = CGRect(x: 1180, y: 35, width: 2255, height: 1345)
+        let wanted = CGRect(x: 5, y: 35, width: 1170, height: 1345)
+        let actual = CGRect(x: 5, y: 35, width: 1415, height: 1345)
+        let r = Geometry.resolveMinimum(leading: edge, wanted: wanted, actual: actual)
+        XCTAssertEqual(r?.neighbor, CGRect(x: 5, y: 35, width: 1415, height: 1345))
+        // Kante bei 1420 + Abstand 5, rechter Rand von Edge bleibt 3435
+        XCTAssertEqual(r?.leading, CGRect(x: 1425, y: 35, width: 2010, height: 1345))
+    }
+
+    func testMinimumWidthOnTheRightKeepsFarEdge() {
+        let leading = CGRect(x: 5, y: 35, width: 2600, height: 1345)          // rechte Kante bis 2605
+        let wanted = CGRect(x: 2610, y: 35, width: 825, height: 1345)        // rechter Rand 3435
+        let actual = CGRect(x: 2610, y: 35, width: 1000, height: 1345)       // Mindestbreite 1000
+        let r = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual)
+        XCTAssertEqual(r?.neighbor, CGRect(x: 2435, y: 35, width: 1000, height: 1345))
+        XCTAssertEqual(r?.leading, CGRect(x: 5, y: 35, width: 2425, height: 1345))
+    }
+
+    func testNothingToResolveWhenNeighborObeyed() {
+        let w = CGRect(x: 1425, y: 35, width: 2010, height: 1345)
+        XCTAssertNil(Geometry.resolveMinimum(leading: CGRect(x: 5, y: 35, width: 1415, height: 1345), wanted: w, actual: w))
+    }
+
+    func testMinimumHeightBelow() {
+        let top = CGRect(x: 5, y: 35, width: 1713, height: 1100)
+        let wanted = CGRect(x: 5, y: 1140, width: 1713, height: 240)
+        let actual = CGRect(x: 5, y: 1140, width: 1713, height: 400)
+        let r = Geometry.resolveMinimum(leading: top, wanted: wanted, actual: actual)
+        XCTAssertEqual(r?.neighbor, CGRect(x: 5, y: 980, width: 1713, height: 400))
+        XCTAssertEqual(r?.leading, CGRect(x: 5, y: 35, width: 1713, height: 940))
+    }
+
     func testLinkCandidates() {
         XCTAssertTrue(Geometry.isLinkCandidate(rightWin, to: leftWin, gap: 5))
         XCTAssertFalse(Geometry.isLinkCandidate(CGRect(x: 2600, y: 40, width: 800, height: 600), to: leftWin, gap: 5))

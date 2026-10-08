@@ -41,8 +41,13 @@ final class DragController {
         var pending: (Command, Screens.Info)?
         /// Ursprüngliche Größe, falls beim Herausziehen wiederhergestellt.
         var restoredOriginal: CGRect?
-        var lastApply: CFAbsoluteTime = 0
         var linkEvents = 0
+        // Messpunkt (08.10., „Edge und Outlook haken“): unterscheidet „App meldet
+        // selten“ von „Nachstellen blockiert Seam“.
+        var mouseDrags = 0
+        var resizeNotifications = 0
+        var firstNotification: CFAbsoluteTime = 0
+        var lastNotification: CFAbsoluteTime = 0
         init(candidates: [(window: AXWindow, start: CGRect)], downPoint: CGPoint) {
             self.candidates = candidates
             self.downPoint = downPoint
@@ -51,8 +56,9 @@ final class DragController {
 
     private var gesture: Gesture?
 
-    /// Höchstens eine Nachstellung je ~8 ms (E6c). Die letzte kommt beim Loslassen immer.
-    private static let minInterval: CFAbsoluteTime = 0.008
+    /// Nachstellen auf eigener Warteschlange, neuester Wert gewinnt (E6c, ersetzt die
+    /// frühere 8-ms-Bremse, die den letzten Wert eines Meldungsstoßes verwarf).
+    private let writer = NeighborWriter()
     /// So weit um den Zeiger werden Fenster als Kandidaten gesucht.
     private static let grabRadius: CGFloat = 8
 
@@ -96,6 +102,7 @@ final class DragController {
     }
 
     private func mouseDragged() {
+        gesture?.mouseDrags += 1
         guard let g = gesture, g.mode == .moving, prefs.dragSnap else { return }
         let p = Screens.mouse
         guard let screen = Screens.containing(p) else { return }
@@ -129,6 +136,7 @@ final class DragController {
                         Self.log.notice("Ungepackte Kante zurückgesetzt: \(NSStringFromRect(raw), privacy: .public) → \(NSStringFromRect(now), privacy: .public)")
                     }
                     if prefs.linkEdges { applyLink(g, now: now, final: true) }
+                    logResizeStats(g, leading: w)
                 }
             case .undecided:
                 break
@@ -152,11 +160,23 @@ final class DragController {
 
         if !Geometry.movedEdges(from: g.start, to: now).isEmpty {
             if g.mode == .undecided { g.mode = .resizing }
+            let t = CFAbsoluteTimeGetCurrent()
+            if g.resizeNotifications == 0 { g.firstNotification = t }
+            g.resizeNotifications += 1
+            g.lastNotification = t
             if g.mode == .resizing, prefs.linkEdges { applyLink(g, now: now, final: false) }
         } else if now.origin != g.start.origin, g.mode == .undecided {
             g.mode = .moving
             restoreSizeIfSnapped(g, w: w, now: now)
         }
+    }
+
+    private func logResizeStats(_ g: Gesture, leading w: AXWindow) {
+        func app(_ pid: pid_t) -> String { NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? "\(pid)" }
+        let neighbors = Set(g.neighborWindows.values.map { app($0.pid) }).sorted().joined(separator: ",")
+        let dur = g.lastNotification - g.firstNotification
+        let st = writer.takeStats()
+        Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), gesetzt \(st.count, privacy: .public), Setzen Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms")
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,
@@ -185,19 +205,31 @@ final class DragController {
             Self.log.notice("Mitziehen: \(found.count, privacy: .public) Nachbar(n) an der Kante")
         }
         guard let neighbors = g.neighbors, !neighbors.isEmpty else { return }
-        let t = CFAbsoluteTimeGetCurrent()
-        guard final || t - g.lastApply >= Self.minInterval else { return }
-        g.lastApply = t
         g.linkEvents += 1
         let frames = Geometry.linkedFrames(start: g.start, now: now, neighbors: neighbors, gap: CGFloat(prefs.gap))
-        for (id, r) in frames {
-            // E6d: Ein Nachbar, der dabei unter eine Mindestgröße fiele, bleibt stehen.
-            guard r.width >= 80, r.height >= 60, let nw = g.neighborWindows[id] else { continue }
-            if final {
-                let ist = nw.setFrame(r)
-                Self.log.notice("Mitziehen Ende: Soll \(NSStringFromRect(r), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public), Nachstellungen \(g.linkEvents, privacy: .public)")
+            .filter { $0.value.width >= 80 && $0.value.height >= 60 }   // E6d: nie auf Splitter zusammendrücken
+
+        guard final else {
+            // Während des Ziehens: auf eigener Warteschlange, neuester Wert gewinnt.
+            var batch: [Int: (AXWindow, CGRect)] = [:]
+            for (id, r) in frames { if let nw = g.neighborWindows[id] { batch[id] = (nw, r) } }
+            writer.submit(batch)
+            return
+        }
+
+        // Ende: Zwischenstände abwarten, dann setzen und zurücklesen.
+        writer.flush()
+        var leading = now
+        for (id, wanted) in frames.sorted(by: { $0.key < $1.key }) {
+            guard let nw = g.neighborWindows[id], let actual = nw.setFrame(wanted) else { continue }
+            if let fix = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual) {
+                // Mindestgröße des Nachbarn: Kante bleibt dort stehen, nichts überlappt.
+                nw.setFrame(fix.neighbor)
+                leading = fix.leading
+                w.setFrame(leading)
+                Self.log.notice("Mindestgröße: Nachbar Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public) → Kante gehalten, gezogenes Fenster \(NSStringFromRect(leading), privacy: .public)")
             } else {
-                nw.setFrameLive(r)
+                Self.log.notice("Mitziehen Ende: Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public)")
             }
         }
     }

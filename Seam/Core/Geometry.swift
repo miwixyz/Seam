@@ -212,6 +212,45 @@ enum Geometry {
         return opposite || stacked
     }
 
+    /// Ein Nachbar hat eine Mindestgröße und wurde nicht so klein wie verlangt.
+    ///
+    /// Gemessen 2026-10-08: Outlook blieb bei 1415 statt 1175 px Breite stehen, danach
+    /// lagen die Fenster 240 px übereinander und das Mitziehen fand keine Nachbarn mehr.
+    /// Lösung: Die gemeinsame Kante bleibt an der Mindestgröße des Nachbarn stehen.
+    /// Der Nachbar behält seine abgewandte Kante, das führende Fenster wird so
+    /// gesetzt, dass der ursprüngliche Abstand erhalten bleibt.
+    ///
+    /// - Returns: korrigierter Rahmen des führenden Fensters und des Nachbarn,
+    ///   oder nil, wenn nichts zu korrigieren ist.
+    static func resolveMinimum(leading l: CGRect, wanted w: CGRect, actual a: CGRect) -> (leading: CGRect, neighbor: CGRect)? {
+        let e: CGFloat = 1
+        if a.width > w.width + e {
+            if w.minX >= l.maxX - e {                         // Nachbar rechts: rechte Kante bleibt
+                let n = CGRect(x: w.maxX - a.width, y: w.minY, width: a.width, height: w.height)
+                let gap = w.minX - l.maxX
+                return (CGRect(x: l.minX, y: l.minY, width: n.minX - gap - l.minX, height: l.height), n)
+            }
+            if w.maxX <= l.minX + e {                         // Nachbar links: linke Kante bleibt
+                let n = CGRect(x: w.minX, y: w.minY, width: a.width, height: w.height)
+                let gap = l.minX - w.maxX
+                return (CGRect(x: n.maxX + gap, y: l.minY, width: l.maxX - (n.maxX + gap), height: l.height), n)
+            }
+        }
+        if a.height > w.height + e {
+            if w.minY >= l.maxY - e {                         // Nachbar unten: untere Kante bleibt
+                let n = CGRect(x: w.minX, y: w.maxY - a.height, width: w.width, height: a.height)
+                let gap = w.minY - l.maxY
+                return (CGRect(x: l.minX, y: l.minY, width: l.width, height: n.minY - gap - l.minY), n)
+            }
+            if w.maxY <= l.minY + e {                         // Nachbar oben: obere Kante bleibt
+                let n = CGRect(x: w.minX, y: w.minY, width: w.width, height: a.height)
+                let gap = l.minY - w.maxY
+                return (CGRect(x: l.minX, y: n.maxY + gap, width: l.width, height: l.maxY - (n.maxY + gap)), n)
+            }
+        }
+        return nil
+    }
+
     // MARK: - Bildschirmwechsel
 
     /// Überträgt ein Fenster proportional vom sichtbaren Bereich `from` nach `to`.
