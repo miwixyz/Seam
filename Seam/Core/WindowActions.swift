@@ -7,6 +7,7 @@ final class WindowActions {
 
     private static let log = Logger(subsystem: "dev.mwlr.seam", category: "aktion")
     private let prefs: Preferences
+    private let writer = NeighborWriter()
 
     /// Rahmen vor dem ersten Andocken. Nur im Speicher, an die AX-Referenz
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
@@ -44,9 +45,15 @@ final class WindowActions {
             target = Geometry.rect(for: cells, in: screen.visible, screen.orientation, gap: gap)
         }
         guard let target else { return }
-        let result = w.setFrame(Geometry.clamp(target, to: screen.visible))
-        // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
-        Self.log.notice("\(cmd.rawValue, privacy: .public): Soll \(NSStringFromRect(target), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
+        let goal = Geometry.clamp(target, to: screen.visible)
+        let log = Self.log, name = cmd.rawValue
+        // Mit Nachprüfung auf der Warteschlange: Edge landete beim ersten ⌃⌥→ auf
+        // x 2449 / Breite 991 statt x 1723 / 1712 (gemessen 08.10.).
+        writer.run {
+            let result = NeighborWriter.setVerified(w, goal)
+            // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
+            log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(goal), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
+        }
     }
 
     func wasSnapped(_ w: AXWindow) -> CGRect? { original[w] }

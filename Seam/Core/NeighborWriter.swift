@@ -56,6 +56,38 @@ final class NeighborWriter: @unchecked Sendable {
         queue.sync {}
     }
 
+    // MARK: - Setzen mit Nachprüfung
+
+    /// Setzt einen Rahmen und prüft nach, bis er sitzt (höchstens `attempts` Mal).
+    ///
+    /// Gemessen 2026-10-08 an Edge und Outlook: Ein einmaliges Setzen landete bei
+    /// ⌃⌥→ auf x 2449 / Breite 991 oder x 880 statt x 1723 / 1712; erst ein zweiter
+    /// Tastendruck saß. Vermutlich ziehen die Apps ihre eigene Größenänderung nach.
+    /// Läuft auf der Warteschlange: Seam bleibt währenddessen bedienbar.
+    /// - Returns: der zuletzt gelesene Ist-Rahmen.
+    static func setVerified(_ w: AXWindow, _ r: CGRect, attempts: Int = 4) -> CGRect? {
+        var actual: CGRect?
+        for i in 0..<attempts {
+            actual = w.setFrame(r)
+            usleep(50_000)
+            actual = w.frame
+            guard let a = actual else { return nil }
+            if close(a, r) { return a }
+            if i == attempts - 1 { break }
+        }
+        return actual
+    }
+
+    /// Mehrere Schritte nacheinander auf der Warteschlange (nach allen Zwischenständen).
+    func run(_ work: @escaping @Sendable () -> Void) {
+        queue.async(execute: work)
+    }
+
+    static func close(_ a: CGRect, _ b: CGRect) -> Bool {
+        abs(a.minX - b.minX) <= 2 && abs(a.minY - b.minY) <= 2
+            && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
+    }
+
     struct Stats { let count: Int, avgMs: Int, maxMs: Int }
 
     /// Messwerte abholen und zurücksetzen.

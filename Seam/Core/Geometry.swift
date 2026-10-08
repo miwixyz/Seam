@@ -80,7 +80,9 @@ enum Geometry {
 
     /// Wie weit zwei Kanten auseinanderliegen dürfen, um als „gemeinsam“ zu gelten,
     /// über den eigentlichen Abstand hinaus.
-    static let linkTolerance: CGFloat = 6
+    /// 16 statt anfangs 6 (08.10.): Edge landete nach dem Nachstellen 9 px neben dem
+    /// Soll, danach galten die Fenster nicht mehr als Nachbarn.
+    static let linkTolerance: CGFloat = 16
 
     struct Neighbor: Equatable, Sendable {
         let id: Int          // frei wählbare Kennung des Aufrufers

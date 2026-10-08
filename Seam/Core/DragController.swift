@@ -42,6 +42,8 @@ final class DragController {
         /// Ursprüngliche Größe, falls beim Herausziehen wiederhergestellt.
         var restoredOriginal: CGRect?
         var linkEvents = 0
+        /// Endrahmen der Nachbarn, berechnet beim Loslassen.
+        var finalFrames: [Int: CGRect] = [:]
         // Messpunkt (08.10., „Edge und Outlook haken“): unterscheidet „App meldet
         // selten“ von „Nachstellen blockiert Seam“.
         var mouseDrags = 0
@@ -130,13 +132,9 @@ final class DragController {
             case .resizing:
                 if let raw = w.frame {
                     let now = effectiveFrame(g, raw)
-                    // macOS hat eine nicht gepackte Kante an den Bildschirmrand gezogen: zurück.
-                    if now != raw {
-                        w.setFrame(now)
-                        Self.log.notice("Ungepackte Kante zurückgesetzt: \(NSStringFromRect(raw), privacy: .public) → \(NSStringFromRect(now), privacy: .public)")
-                    }
                     if prefs.linkEdges { applyLink(g, now: now, final: true) }
                     logResizeStats(g, leading: w)
+                    finish(leading: w, raw: raw, now: now, frames: g.finalFrames, windows: g.neighborWindows)
                 }
             case .undecided:
                 break
@@ -217,19 +215,35 @@ final class DragController {
             return
         }
 
-        // Ende: Zwischenstände abwarten, dann setzen und zurücklesen.
+        // Ende: Zwischenstände abwarten; gesetzt wird in `finish` mit Nachprüfung.
         writer.flush()
-        var leading = now
-        for (id, wanted) in frames.sorted(by: { $0.key < $1.key }) {
-            guard let nw = g.neighborWindows[id], let actual = nw.setFrame(wanted) else { continue }
-            if let fix = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual) {
-                // Mindestgröße des Nachbarn: Kante bleibt dort stehen, nichts überlappt.
-                nw.setFrame(fix.neighbor)
-                leading = fix.leading
-                w.setFrame(leading)
-                Self.log.notice("Mindestgröße: Nachbar Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public) → Kante gehalten, gezogenes Fenster \(NSStringFromRect(leading), privacy: .public)")
-            } else {
-                Self.log.notice("Mitziehen Ende: Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public)")
+        g.finalFrames = frames
+    }
+
+    /// Abschluss einer Größen-Geste, nacheinander auf der Warteschlange, jeder Endwert
+    /// mit Nachprüfung (Edge/Outlook übernehmen ein einmaliges Setzen oft nicht).
+    /// 1. Ungepackte Kante zurück, falls macOS sie an den Bildschirmrand gezogen hat.
+    /// 2. Nachbarn auf ihre Endrahmen.
+    /// 3. Hat ein Nachbar eine Mindestgröße: Kante dort halten, gezogenes Fenster anpassen.
+    private func finish(leading w: AXWindow, raw: CGRect, now: CGRect,
+                        frames: [Int: CGRect], windows: [Int: AXWindow]) {
+        let log = Self.log
+        writer.run {
+            var leading = now
+            if !NeighborWriter.close(raw, now) {
+                let ist = NeighborWriter.setVerified(w, now)
+                log.notice("Ungepackte Kante zurück: \(NSStringFromRect(raw), privacy: .public) → Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
+            }
+            for (id, wanted) in frames.sorted(by: { $0.key < $1.key }) {
+                guard let nw = windows[id], let actual = NeighborWriter.setVerified(nw, wanted) else { continue }
+                if let fix = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual) {
+                    let nIst = NeighborWriter.setVerified(nw, fix.neighbor)
+                    leading = fix.leading
+                    let lIst = NeighborWriter.setVerified(w, leading)
+                    log.notice("Mindestgröße: Nachbar Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public) → Nachbar \(nIst.map(NSStringFromRect) ?? "–", privacy: .public), gezogenes Fenster Soll \(NSStringFromRect(leading), privacy: .public) Ist \(lIst.map(NSStringFromRect) ?? "–", privacy: .public)")
+                } else {
+                    log.notice("Mitziehen Ende: Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public)")
+                }
             }
         }
     }
