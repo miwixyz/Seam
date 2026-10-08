@@ -105,6 +105,12 @@ final class DragController {
 
     private func mouseDragged() {
         gesture?.mouseDrags += 1
+        // Größeziehen: Nachbarn folgen dem Mausweg, nicht den Meldungen der App
+        // (Outlook: 13 Meldungen bei 75 Mausschritten, gemessen 08.10.).
+        if let g = gesture, g.mode == .resizing, prefs.linkEdges, !g.grabbed.isEmpty {
+            applyLink(g, now: mousePredicted(g), final: false)
+            return
+        }
         guard let g = gesture, g.mode == .moving, prefs.dragSnap else { return }
         let p = Screens.mouse
         guard let screen = Screens.containing(p) else { return }
@@ -162,7 +168,11 @@ final class DragController {
             if g.resizeNotifications == 0 { g.firstNotification = t }
             g.resizeNotifications += 1
             g.lastNotification = t
-            if g.mode == .resizing, prefs.linkEdges { applyLink(g, now: now, final: false) }
+            // Erste Meldung schaltet auf „Größeziehen“; danach treibt der Mausweg das
+            // Mitziehen. Ohne erkannte Kante bleiben die Meldungen der Taktgeber.
+            if g.mode == .resizing, prefs.linkEdges {
+                applyLink(g, now: g.grabbed.isEmpty ? now : mousePredicted(g), final: false)
+            }
         } else if now.origin != g.start.origin, g.mode == .undecided {
             g.mode = .moving
             restoreSizeIfSnapped(g, w: w, now: now)
@@ -175,6 +185,12 @@ final class DragController {
         let dur = g.lastNotification - g.firstNotification
         let st = writer.takeStats()
         Self.log.notice("Messung Größeziehen: gezogen \(app(w.pid), privacy: .public) → Nachbarn \(neighbors.isEmpty ? "–" : neighbors, privacy: .public) | Mausschritte \(g.mouseDrags, privacy: .public), Meldungen \(g.resizeNotifications, privacy: .public) in \(Int(dur * 1000), privacy: .public) ms, eingereicht \(g.linkEvents, privacy: .public), gesetzt \(st.count, privacy: .public), Setzen Ø \(st.avgMs, privacy: .public) ms max \(st.maxMs, privacy: .public) ms")
+    }
+
+    private func mousePredicted(_ g: Gesture) -> CGRect {
+        let p = Screens.mouse
+        return Geometry.predictedFrame(start: g.start, grabbed: g.grabbed,
+                                       delta: CGPoint(x: p.x - g.downPoint.x, y: p.y - g.downPoint.y))
     }
 
     /// Rahmen, wie der Nutzer ihn gezogen hat: Kanten, die er nicht gepackt hat,

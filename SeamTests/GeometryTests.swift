@@ -185,6 +185,33 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.keepUngrabbedEdges(now: now, start: start, grabbed: [.left], slack: 10), now)
     }
 
+    // MARK: Rahmen aus dem Mausweg (Outlook meldet beim Ziehen zu selten)
+
+    func testPredictedFrameMovesOnlyGrabbedEdge() {
+        let s = CGRect(x: 5, y: 35, width: 1713, height: 1345)
+        let r = Geometry.predictedFrame(start: s, grabbed: [.right], delta: CGPoint(x: -300, y: 12))
+        XCTAssertEqual(r, CGRect(x: 5, y: 35, width: 1413, height: 1345))   // y-Wackeln ignoriert
+    }
+
+    func testPredictedFrameLeftEdge() {
+        let s = CGRect(x: 1723, y: 35, width: 1712, height: 1345)
+        XCTAssertEqual(Geometry.predictedFrame(start: s, grabbed: [.left], delta: CGPoint(x: -300, y: 0)),
+                       CGRect(x: 1423, y: 35, width: 2012, height: 1345))
+    }
+
+    func testPredictedFrameNeverCollapses() {
+        let s = CGRect(x: 100, y: 100, width: 500, height: 400)
+        XCTAssertEqual(Geometry.predictedFrame(start: s, grabbed: [.right], delta: CGPoint(x: -900, y: 0)).width, 80)
+    }
+
+    func testPredictedFrameMatchesLinkedNeighbor() {
+        // Mausweg −300 an der rechten Kante links → Nachbar rechts beginnt 300 früher
+        let s = CGRect(x: 0, y: 40, width: 1720, height: 1400)
+        let now = Geometry.predictedFrame(start: s, grabbed: [.right], delta: CGPoint(x: -300, y: 0))
+        let out = Geometry.linkedFrames(start: s, now: now, neighbors: [.init(id: 1, frame: rightWin)], gap: 5)
+        XCTAssertEqual(out[1], CGRect(x: 1425, y: 40, width: 2015, height: 1400))
+    }
+
     // MARK: Mindestgröße des Nachbarn (gemessen an Outlook, 08.10.)
 
     func testOutlookMinimumWidthStopsSeamOnTheLeft() {

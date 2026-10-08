@@ -58,22 +58,27 @@ final class NeighborWriter: @unchecked Sendable {
 
     // MARK: - Setzen mit Nachprüfung
 
-    /// Setzt einen Rahmen und prüft nach, bis er sitzt (höchstens `attempts` Mal).
+    /// Setzt einen Rahmen und prüft nach, bis er sitzt.
     ///
     /// Gemessen 2026-10-08 an Edge und Outlook: Ein einmaliges Setzen landete bei
     /// ⌃⌥→ auf x 2449 / Breite 991 oder x 880 statt x 1723 / 1712; erst ein zweiter
     /// Tastendruck saß. Vermutlich ziehen die Apps ihre eigene Größenänderung nach.
     /// Läuft auf der Warteschlange: Seam bleibt währenddessen bedienbar.
     /// - Returns: der zuletzt gelesene Ist-Rahmen.
-    static func setVerified(_ w: AXWindow, _ r: CGRect, attempts: Int = 4) -> CGRect? {
+    ///
+    /// Wachsende Pausen, zusammen ~1,5 s: Edge nahm direkt nach dem Größeziehen eine
+    /// neue Position nicht an (4 Versuche in 200 ms blieben bei x 404), ein Tastendruck
+    /// kurz danach saß sofort. Die Sperre dauert also länger als 200 ms.
+    static let retryDelays: [useconds_t] = [50_000, 100_000, 200_000, 400_000, 800_000]
+
+    static func setVerified(_ w: AXWindow, _ r: CGRect) -> CGRect? {
         var actual: CGRect?
-        for i in 0..<attempts {
-            actual = w.setFrame(r)
-            usleep(50_000)
+        for delay in retryDelays {
+            w.setFrame(r)
+            usleep(delay)
             actual = w.frame
             guard let a = actual else { return nil }
             if close(a, r) { return a }
-            if i == attempts - 1 { break }
         }
         return actual
     }
