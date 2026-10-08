@@ -64,6 +64,8 @@ struct MenuContent: View {
                 }
             }
             .keyboardShortcut(shortcut)
+            // macOS 27 blendet Menübilder sonst aus (Michael, 08.10.: keine Piktogramme sichtbar).
+            .labelStyle(.titleAndIcon)
         }
     }
 }
