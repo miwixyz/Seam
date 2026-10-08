@@ -30,6 +30,7 @@ targets:
     resources:
       - path: Seam/Resources/HILFE.md
       - path: Seam/Resources/CHANGELOG.md
+      - path: Seam/Resources/AppIcon.icns
     settings:
       base:
         INFOPLIST_FILE: Seam/Resources/Info.plist

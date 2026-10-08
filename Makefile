@@ -1,4 +1,4 @@
-.PHONY: docs gen build test lint dev clean
+.PHONY: docs gen build test lint dev install clean
 
 APP = Seam
 CONFIG ?= Debug
@@ -37,3 +37,7 @@ dev:
 
 clean:
 	rm -rf $(DERIVED) $(APP).xcodeproj
+
+# Für den Alltag vor dem ersten Release: signiert nach /Applications.
+install:
+	@sh scripts/install-signed.sh
