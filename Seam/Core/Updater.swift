@@ -25,6 +25,12 @@ final class Updater {
 
     /// Version eines Updates, das eine automatische Prüfung gefunden hat.
     private(set) var pendingVersion: String?
+    /// Spiegel von Sparkles `canCheckForUpdates` per KVO. Vorher eine berechnete Eigenschaft:
+    /// SwiftUI beobachtet Sparkle nicht, das Menü zeigte den Wert vom Aufbauzeitpunkt
+    /// (Michael, 09.10.: „Nach Updates suchen“ in 0.1.0 dauerhaft ausgegraut).
+    private(set) var canCheck = false
+    @ObservationIgnored private var canCheckObservation: NSKeyValueObservation?
+    private static let log = Logger(subsystem: "dev.mwlr.seam", category: "update")
 
     private let controller: SPUStandardUpdaterController
     /// Sparkle hält den Delegate nur schwach.
@@ -35,6 +41,14 @@ final class Updater {
         reminder = r
         controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: r)
         r.onChange = { [weak self] version in self?.pendingVersion = version }
+        canCheckObservation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
+            let value = updater.canCheckForUpdates
+            let state = "Sitzung läuft: \(updater.sessionInProgress), automatisch prüfen/laden: \(updater.automaticallyChecksForUpdates)/\(updater.automaticallyDownloadsUpdates)"
+            Task { @MainActor in
+                self?.canCheck = value
+                Self.log.notice("Nach Updates suchen: \(value ? "möglich" : "gesperrt", privacy: .public) (\(state, privacy: .public))")
+            }
+        }
     }
 
     /// Auf Anforderung. Sparkle zeigt selbst an, was es gefunden hat, auch „kein Update“.
@@ -42,7 +56,6 @@ final class Updater {
         controller.updater.checkForUpdates()
     }
 
-    var canCheck: Bool { controller.updater.canCheckForUpdates }
 }
 
 /// Entscheidet nur, WIE ein gefundenes Update gezeigt wird. Signaturprüfung, Feed und

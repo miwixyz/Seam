@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.2.1] — 2026-10-09
+
+### Behoben
+
+- **„Nach Updates suchen …“ blieb ausgegraut.** Beim Start prüft Seam kurz selbst auf Updates,
+  in dieser Zeit ist der Eintrag gesperrt. Das Menü merkte sich diesen Zustand und gab den
+  Eintrag danach nicht mehr frei. Jetzt folgt der Eintrag dem tatsächlichen Zustand.
+  Wer 0.1.x oder 0.2.0 nutzt, installiert 0.2.1 einmal von Hand (ZIP laden, Seam.app in
+  *Programme* ersetzen), danach klappt das Update über das Menü wieder.
+
 ## [0.2.0] — 2026-10-09
 
 ### Neu

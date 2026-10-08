@@ -51,6 +51,9 @@ Seam aktualisiert sich über [Sparkle](https://sparkle-project.org). Beim ersten
 es automatisch suchen darf. Von Hand: Menü → „Einstellungen“ → „Nach Updates suchen …“. Updates sind mit EdDSA
 signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
+**Von 0.1.x oder 0.2.0 kommend:** Dort blieb „Nach Updates suchen …“ teils ausgegraut (behoben in
+0.2.1). Einmal von Hand aktualisieren: neuestes Release laden, `Seam.app` in *Programme* ersetzen.
+
 ## Datenschutz und Berechtigung
 
 Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
