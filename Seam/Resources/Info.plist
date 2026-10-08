@@ -25,6 +25,20 @@
 	<!-- Menüleisten-App: kein Dock-Symbol, kein Hauptfenster. -->
 	<key>LSUIElement</key>
 	<true/>
+	<!-- Sparkle (docs/SECURE-DESIGN.md E9, Muster Kalli). Appcast IM REPO: jede Änderung
+	     ist ein öffentlicher, datierter Commit. SUPublicEDKey ist der ÖFFENTLICHE Teil des
+	     Signierschlüssels (derselbe wie Kalli/Tippi); der private liegt nur im
+	     Login-Schlüsselbund des Entwickler-Macs.
+	     SUEnableAutomaticChecks fehlt ABSICHTLICH: Sparkle fragt beim ersten Mal, ob es
+	     automatisch suchen darf. Netzzugriff wird erteilt, nicht geerbt.
+	     SUVerifyUpdateBeforeExtraction: EdDSA-Signatur ist vor dem Entpacken Pflicht,
+	     sonst genügt Sparkle EINE der beiden Prüfungen (Kalli-Audit K-S4). -->
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/miwixyz/Seam/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>iE2bazGoslgGEsgo2MJUwphVYlEKkeRcsWdzwbGge4w=</string>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 	<!-- Bewusst KEIN URL-Schema, KEIN AppleScript (NSAppleScriptEnabled),
 	     KEINE NSServices: Niemand außer dem Nutzer soll Seam steuern können,
 	     sonst könnten andere Programme Seams Bedienungshilfen-Freigabe benutzen.

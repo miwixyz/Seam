@@ -1,4 +1,4 @@
-.PHONY: docs gen build test lint dev install clean
+.PHONY: docs gen lock build test lint dev install release release-dry-run clean
 
 APP = Seam
 CONFIG ?= Debug
@@ -9,13 +9,24 @@ DERIVED = build
 docs:
 	cp CHANGELOG.md Seam/Resources/CHANGELOG.md
 
+# Lockfile lebt im Repo, das Projekt ist generiert (gitignoriert). Ohne Einspielen
+# wäre Sparkles Commit-SHA nicht versioniert (Kalli-Muster).
+SPM_DIR = $(APP).xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+
 gen: docs
 	xcodegen generate
+	@mkdir -p "$(SPM_DIR)"
+	@cp Package.resolved "$(SPM_DIR)/Package.resolved"
+
+# Nach einem bewussten Abhängigkeits-Update: Lockfile zurückschreiben.
+lock:
+	@cp "$(SPM_DIR)/Package.resolved" Package.resolved
+	@git diff --stat Package.resolved
 
 build: gen
 	xcodebuild -project $(APP).xcodeproj -scheme $(APP) \
 		-configuration $(CONFIG) -derivedDataPath $(DERIVED) \
-		CODE_SIGNING_ALLOWED=NO build
+		-onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO build
 
 # MIT Signatur (wie Kalli): Der Test-Host ist die App selbst. Ad hoc signiert
 # entstünde eine zweite Identität in den Bedienungshilfen-Einstellungen.
@@ -24,7 +35,7 @@ test: gen
 	xcodebuild -project $(APP).xcodeproj -scheme $(APP) \
 		-destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) \
-		-allowProvisioningUpdates test
+		-onlyUsePackageVersionsFromResolvedFile -allowProvisioningUpdates test
 
 lint:
 	@command -v swiftlint >/dev/null || { echo "swiftlint fehlt -> brew install swiftlint"; exit 1; }
@@ -34,6 +45,15 @@ lint:
 # Developer ID, damit die Bedienungshilfen-Freigabe über Builds hinweg hält.
 dev:
 	@bash scripts/dev-signed.sh
+
+# lint zuerst: Ein Release mit Linter-Verstoß geht gar nicht erst los.
+release: lint
+	@bash scripts/release.sh
+
+release-dry-run:
+	@echo "VERSION:      $$(awk -F'\"' '/MARKETING_VERSION:/ { print $$2; exit }' project.yml)"
+	@printf "DEVELOPER_ID: "; security find-identity -v -p codesigning | awk -F'\"' '/Developer ID Application/ { print $$2; exit }'
+	@[ -z "$$(git status --porcelain)" ] && echo "Arbeitsbaum:  sauber" || echo "Arbeitsbaum:  NICHT sauber"
 
 clean:
 	rm -rf $(DERIVED) $(APP).xcodeproj

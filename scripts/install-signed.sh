@@ -21,7 +21,14 @@ IDENTITY=$(security find-identity -v -p codesigning \
 
 STAGE=$(mktemp -d /tmp/seam-install.XXXXXX)
 ditto build-dev/Build/Products/Release/Seam.app "$STAGE/Seam.app"
-codesign --force --deep --options runtime --timestamp \
+# Von innen nach außen, ohne --deep (Sparkle rät davon ab; Rafter-Fund F3): Sparkles
+# Hilfsprogramme behalten ihre eigenen Berechtigungen, nur die App bekommt Seams.
+SPK="$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework/Versions/B"
+for part in "$SPK"/XPCServices/*.xpc "$SPK/Autoupdate" "$SPK/Updater.app" "$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework"; do
+    codesign --force --options runtime --timestamp --preserve-metadata=entitlements \
+        --sign "$IDENTITY" "$part"
+done
+codesign --force --options runtime --timestamp \
     --entitlements Seam/Resources/Seam.entitlements --sign "$IDENTITY" "$STAGE/Seam.app"
 codesign --verify --deep --strict "$STAGE/Seam.app"
 

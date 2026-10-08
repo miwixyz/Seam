@@ -16,10 +16,15 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 
-# Bewusst noch ohne Abhängigkeiten. Sparkle kommt mit dem ersten Release dazu
-# (gleiche Vorlage wie Kalli, docs/SECURE-DESIGN.md E9). Tastenkürzel ohne
-# Fremdbibliothek (E-Abhängigkeiten): weniger Fremdcode in einer App mit
-# Bedienungshilfen-Freigabe.
+# Genau EINE Abhängigkeit: Sparkle für Updates (docs/SECURE-DESIGN.md E9, gleiche
+# Vorlage wie Kalli). `exactVersion` statt `from:` und `Package.resolved` im Repo:
+# Bei einem Updater darf nicht der Auflösungszeitpunkt entscheiden, welche Fassung
+# ausgeliefert wird. Tastenkürzel ohne Fremdbibliothek: weniger Fremdcode in einer
+# App mit Bedienungshilfen-Freigabe.
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
 
 targets:
   Seam:
@@ -31,6 +36,10 @@ targets:
       - path: Seam/Resources/HILFE.md
       - path: Seam/Resources/CHANGELOG.md
       - path: Seam/Resources/AppIcon.icns
+      - path: Seam/Resources/THIRD-PARTY-LICENSES.md
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         INFOPLIST_FILE: Seam/Resources/Info.plist
@@ -39,6 +48,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
         COMBINE_HIDPI_IMAGES: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
 
   # Prüft ausschließlich reine Rechenlogik (Raster, Andockzonen, Mitziehen).
   # Keine Bedienungshilfen, keine Fenster. Die App erkennt den Testlauf und

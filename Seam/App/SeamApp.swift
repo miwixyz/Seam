@@ -16,6 +16,15 @@ struct SeamApp: App {
             Image(systemName: engine.isTrusted ? "rectangle.split.2x1" : "rectangle.split.2x1.slash")
         }
         .menuBarExtraStyle(.menu)
+
+        // Hilfe, Änderungen, Fremdcode-Lizenzen (Sparkle verlangt, dass sein Lizenztext
+        // mit ausgeliefert und erreichbar ist).
+        Window("Seam", id: "hilfe") {
+            HelpView()
+                .padding(16)
+                .frame(width: 520)
+        }
+        .windowResizability(.contentSize)
     }
 }
 
@@ -30,6 +39,8 @@ final class Engine {
     let prefs = Preferences()
     private(set) var isTrusted = AXAccess.isTrusted
     private(set) var failedShortcuts: [KeyCombo] = []
+    /// Updates (Sparkle). Im Testlauf nicht gestartet: kein Netz aus dem Test-Host.
+    private(set) var updater: Updater?
 
     @ObservationIgnored private lazy var actions = WindowActions(prefs: prefs)
     @ObservationIgnored private lazy var drag = DragController(prefs: prefs, actions: actions)
@@ -45,6 +56,7 @@ final class Engine {
 
     init() {
         guard !Self.isRunningTests else { return }
+        updater = Updater()
         Task { @MainActor in self.boot() }
     }
 

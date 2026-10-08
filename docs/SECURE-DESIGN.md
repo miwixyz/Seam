@@ -103,6 +103,13 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
   `SUVerifyUpdateBeforeExtraction`, automatische Suche ab Werk aus und beim ersten Mal gefragt.
   Vollständige Begründung in Kallis `docs/AUTO-UPDATE-DESIGN.md`, gleiche Vorlage.
 - **Einziger Netzwerkzugriff** der App ist diese Update-Prüfung.
+- **Umgesetzt 2026-10-08 (0.1.0):** Sparkle 2.10.0 `exactVersion`, `Package.resolved` im Repo
+  (Sparkle-Revision `eef1a539`), `SUFeedURL` = `raw.githubusercontent.com/miwixyz/Seam/main/appcast.xml`,
+  `SUPublicEDKey` derselbe öffentliche Schlüssel wie Kalli/Tippi, `SUVerifyUpdateBeforeExtraction`
+  = YES, `SUEnableAutomaticChecks` nicht gesetzt. Abweichung von Kalli: keine Mitteilung bei
+  gefundenem Update (Seam fragt keine Mitteilungs-Erlaubnis an), stattdessen Menüeintrag; Sparkle
+  zeigt für automatische Prüfungen nie selbst ein Fenster. Im Testlauf startet der Updater nicht.
+  `release.sh` prüft die Appcast-Signatur kryptografisch gegen das ausgelieferte ZIP.
 
 ### E10 – Gespeicherte Daten
 - **Entschieden:** Nur Einstellungen in UserDefaults (Kürzel an/aus, Abstand, Schalter). Die

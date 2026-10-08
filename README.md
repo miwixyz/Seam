@@ -1,52 +1,82 @@
 # Seam
 
-Fensterverwaltung für macOS 27 in der Menüleiste: Ersatz für Magnet, mit einer Besonderheit.
-**Fenster, die aneinanderstoßen, bewegen sich an der gemeinsamen Kante gemeinsam.** Ziehst du den
-rechten Rand des linken Fensters nach links, wird das rechte Fenster im selben Zug breiter.
+Fensterverwaltung für macOS 27 in der Menüleiste. Seam ordnet Fenster per Tastenkürzel und
+per Ziehen an den Bildschirmrand an. Die Besonderheit ist die **Naht**: Zwei Fenster, die
+aneinanderstoßen, teilen sich eine Kante. Verschiebst du sie, gehen beide Fenster mit.
 
-Stand: in Entwicklung, noch kein Release.
+**Website:** <https://miwixyz.github.io/Seam/> · **Download:**
+[neueste Version](https://github.com/miwixyz/Seam/releases/latest) · Kurzvorstellung:
+[docs/ONE-PAGER.md](docs/ONE-PAGER.md)
+
+Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 
 ## Funktionen
 
-- **Zwei Fenster teilen** (⌃⌥S) und **Naht verschieben** (⌃⌥⇧←/→) in festen Stufen ⅓ · ⅜ · ½ ·
-  ⅝ · ⅔ — beide Fenster in einem Schritt, auch mit trägen Apps wie Outlook ruckelfrei.
-- **Mitziehen** an gemeinsamen Kanten beim Loslassen: links/rechts, oben/unten, gestapelte
-  Fenster auf derselben Seite inklusive; Mindestgrößen halten die Kante. Nur sichtbare Nachbarn.
-- **Kürzel setzen den Nachbarn mit**: das gegenüberliegende Fenster rückt an die Naht.
-- **Andocken per Ziehen** an den Bildschirmrand mit Vorschaufläche (Hälften, Viertel, Drittel,
-  zwei Drittel, maximieren), Magnets Rastermodell 24 × 12 (quer) bzw. 12 × 24 (hochkant).
-- **Tastenkürzel** wie in Michaels Magnet-Einstellung (Menü → „Tastenkürzel anzeigen“).
-- Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
+- **Zwei Fenster teilen** (⌃⌥S): das aktive und das zuletzt benutzte zweite Fenster, jedes bleibt
+  auf seiner Seite.
+- **Naht verschieben** (⌃⌥⇧← / ⌃⌥⇧→) in festen Stufen ⅓ · ⅜ · ½ · ⅝ · ⅔. Beide Fenster gehen in
+  einem Schritt mit.
+- **Kürzel setzen den Nachbarn mit:** Das gegenüberliegende Fenster rückt an die Naht.
+- **Mitziehen beim Loslassen:** Ziehst du die gemeinsame Kante mit der Maus, setzt Seam das
+  Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante. Nur sichtbare
+  Nachbarn ziehen mit.
+- **Tastenkürzel** für Hälften, Viertel, Drittel, zwei Drittel, maximieren, zentrieren,
+  ursprüngliche Größe und Bildschirmwechsel, mit eigenem Satz für Hochkant-Bildschirme.
+- **Andocken per Ziehen** an den Bildschirmrand mit Vorschaufläche, Raster 24 × 12 (quer) bzw.
+  12 × 24 (hochkant).
+- Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen, Menü mit allen Kürzeln.
+
+## Installieren
+
+1. [Neueste Version](https://github.com/miwixyz/Seam/releases/latest) laden (`Seam-x.y.z.zip`),
+   per Doppelklick entpacken und `Seam.app` in den Ordner Programme ziehen.
+2. Seam starten. Das Symbol erscheint in der Menüleiste.
+3. Systemeinstellungen → Datenschutz & Sicherheit → **Bedienungshilfen** → Seam einschalten.
+4. Im Seam-Menü „Bei Anmeldung starten“ anhaken.
+
+Läuft ein anderer Fenstermanager mit denselben Kürzeln, beende ihn oder schalte dort die Kürzel
+ab.
+
+## Aktualisieren
+
+Seam aktualisiert sich über [Sparkle](https://sparkle-project.org). Beim ersten Mal fragt es, ob
+es automatisch suchen darf. Von Hand: Menü → „Nach Updates suchen …“. Updates sind mit EdDSA
+signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
+
+## Datenschutz und Berechtigung
+
+Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
+Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
+Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
+werden nur Einstellungen. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
+Sicherheitsentwurf: [`docs/SECURE-DESIGN.md`](docs/SECURE-DESIGN.md).
 
 ## Bauen
 
 ```bash
-make build     # xcodegen + xcodebuild
-make test      # reine Rechenlogik (Raster, Andockzonen, Mitziehen)
+make build     # xcodegen + xcodebuild (Sparkle fest auf Commit-SHA, Package.resolved)
+make test      # reine Rechenlogik (Raster, Andockzonen, Mitziehen, Naht)
 make lint      # SwiftLint, inkl. Sicherheitsregel ax_nur_ueber_allowlist
-make dev       # Testversion mit Developer ID signiert starten (Freigabe bleibt über Builds)
+make dev       # Testversion mit Developer ID signiert aus /tmp starten
+make install   # signiert nach /Applications (für den Entwickler-Mac)
+make release   # notarisiertes ZIP, GitHub-Release, signierter Appcast
 ```
 
 Voraussetzungen: macOS 27, Xcode, `xcodegen`, `swiftlint`.
-
-## Berechtigung
-
-Seam braucht die **Bedienungshilfen**-Freigabe (Systemeinstellungen → Datenschutz & Sicherheit →
-Bedienungshilfen), sonst kann es fremde Fenster nicht bewegen. Mehr nicht: keine
-Eingabeüberwachung, keine Bildschirmaufnahme. Seam liest von fremden Fenstern nur Lage und Größe,
-nie Titel oder Inhalte. Begründung: [`docs/SECURE-DESIGN.md`](docs/SECURE-DESIGN.md).
 
 ## Aufbau
 
 | Datei | Was |
 |---|---|
-| `Seam/Core/Layout.swift` | Magnets Raster, Kommandos, Kürzel |
-| `Seam/Core/Geometry.swift` | reine Rechenlogik: Zielflächen, Andockzonen, Mitziehen |
+| `Seam/Core/Layout.swift` | Raster, Kommandos, Kürzel |
+| `Seam/Core/Geometry.swift` | reine Rechenlogik: Zielflächen, Andockzonen, Mitziehen, Naht |
 | `Seam/Core/AXAccess.swift` | einziger Zugang zu den Bedienungshilfen, Positivliste |
+| `Seam/Core/WindowActions.swift` | Kürzel ausführen, Teilen, Naht verschieben |
 | `Seam/Core/DragController.swift` | Maus-Gesten: Andocken und Mitziehen |
 | `Seam/Core/Hotkeys.swift` | Tastenkürzel über `RegisterEventHotKey` |
+| `Seam/Core/Updater.swift` | Sparkle |
 | `spike/` | Machbarkeits-Prototyp vom 2026-10-08 mit Messwerten |
 
 ## Lizenz
 
-Noch offen.
+MIT, siehe [LICENSE](LICENSE). Fremdcode: [THIRD-PARTY-LICENSES](Seam/Resources/THIRD-PARTY-LICENSES.md).

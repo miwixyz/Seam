@@ -5,6 +5,7 @@ import SwiftUI
 struct MenuContent: View {
     @Environment(Engine.self) private var engine
     @Environment(Preferences.self) private var prefs
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         @Bindable var prefs = prefs
@@ -43,6 +44,21 @@ struct MenuContent: View {
             get: { LoginItem.state == .on },
             set: { LoginItem.set($0) }
         ))
+
+        Divider()
+
+        if let updater = engine.updater {
+            if let version = updater.pendingVersion {
+                Button("Update \(version) verfügbar …") { updater.checkForUpdates() }
+            }
+            Button("Nach Updates suchen …") { updater.checkForUpdates() }
+                .disabled(!updater.canCheck)
+        }
+        Button("Hilfe …") {
+            openWindow(id: "hilfe")
+            // Menüleisten-App ohne Dock-Symbol: sonst öffnet das Fenster hinter der aktiven App.
+            NSApp.activate()
+        }
 
         Divider()
         Button("Seam beenden") { NSApp.terminate(nil) }
