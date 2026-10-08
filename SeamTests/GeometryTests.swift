@@ -267,6 +267,40 @@ final class GeometryTests: XCTestCase {
         XCTAssertTrue(Geometry.isOpposite(bottomLeft, to: topLeft, gap: 5, grabbed: [.bottom]))
     }
 
+    // MARK: Kürzel setzen den Nachbarn mit (gemessen 08.10.: Outlook/Edge nicht bündig)
+
+    private let v = CGRect(x: 0, y: 30, width: 3440, height: 1355)
+    private let leftHalf = CGRect(x: 5, y: 35, width: 1713, height: 1345)
+
+    func testInnerEdgesOfLeftHalf() {
+        XCTAssertEqual(Geometry.innerEdges(of: leftHalf, in: v, gap: 5), [.right])
+    }
+
+    func testOverlappingEdgeIsPushedToSeam() {
+        // gemessen: Edge bei x 1455 (263 px Überlappung)
+        let edge = CGRect(x: 1455, y: 35, width: 1980, height: 1337)
+        XCTAssertEqual(Geometry.complement(of: edge, target: leftHalf, edge: .right, gap: 5),
+                       CGRect(x: 1723, y: 35, width: 1712, height: 1337))
+    }
+
+    func testGapIsClosed() {
+        // gemessen: Lücke 156 px (Outlook bis 1448, Edge ab 1604)
+        let edge = CGRect(x: 1604, y: 35, width: 1836, height: 1345)
+        XCTAssertEqual(Geometry.complement(of: edge, target: leftHalf, edge: .right, gap: 5)?.minX, 1723)
+    }
+
+    func testFarAwayOrSameSideWindowIsLeftAlone() {
+        let far = CGRect(x: 2600, y: 35, width: 800, height: 600)      // 877 px weg
+        XCTAssertNil(Geometry.complement(of: far, target: leftHalf, edge: .right, gap: 5))
+        let sameSide = CGRect(x: 100, y: 100, width: 900, height: 700)  // Mitte links der Naht
+        XCTAssertNil(Geometry.complement(of: sameSide, target: leftHalf, edge: .right, gap: 5))
+    }
+
+    func testSmallWindowBesideOnlyPartlyIsLeftAlone() {
+        let small = CGRect(x: 1700, y: 1100, width: 600, height: 250)  // deckt < 50 % der Höhe
+        XCTAssertNil(Geometry.complement(of: small, target: leftHalf, edge: .right, gap: 5))
+    }
+
     // MARK: Mindestgröße des Nachbarn (gemessen an Outlook, 08.10.)
 
     func testOutlookMinimumWidthStopsSeamOnTheLeft() {

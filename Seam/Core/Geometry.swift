@@ -317,6 +317,55 @@ enum Geometry {
         return nil
     }
 
+    // MARK: - Kürzel setzen den Nachbarn mit (Michael, 08.10.)
+
+    /// Wie weit ein Nachbar von der Naht entfernt sein darf (Lücke oder Überlappung),
+    /// damit ein Kürzel ihn mitsetzt. Gemessen 08.10.: 156 px Lücke bzw. 263 px
+    /// Überlappung zwischen Outlook und Edge nach einzelnen Kürzeln.
+    static let complementReach: CGFloat = 400
+
+    /// Innere Kanten einer Zielfläche: die nicht am Rand des sichtbaren Bereichs liegen.
+    static func innerEdges(of t: CGRect, in visible: CGRect, gap: CGFloat) -> [Edge] {
+        let e = gap + 2
+        var out: [Edge] = []
+        if t.minX - visible.minX > e { out.append(.left) }
+        if visible.maxX - t.maxX > e { out.append(.right) }
+        if t.minY - visible.minY > e { out.append(.top) }
+        if visible.maxY - t.maxY > e { out.append(.bottom) }
+        return out
+    }
+
+    /// Neuer Rahmen für ein Fenster `w` auf der anderen Seite der Kante `edge` der
+    /// Zielfläche `t`: zugewandte Kante an die Naht (mit Abstand), abgewandte bleibt.
+    /// nil, wenn `w` dieser Kante nicht gegenübersteht.
+    static func complement(of w: CGRect, target t: CGRect, edge: Edge, gap: CGFloat) -> CGRect? {
+        let r: CGRect
+        switch edge {
+        case .right:
+            guard w.midX > t.maxX, overlapRatioY(w, t) >= 0.5, abs(w.minX - (t.maxX + gap)) <= complementReach else { return nil }
+            r = CGRect(x: t.maxX + gap, y: w.minY, width: w.maxX - (t.maxX + gap), height: w.height)
+        case .left:
+            guard w.midX < t.minX, overlapRatioY(w, t) >= 0.5, abs(w.maxX - (t.minX - gap)) <= complementReach else { return nil }
+            r = CGRect(x: w.minX, y: w.minY, width: (t.minX - gap) - w.minX, height: w.height)
+        case .bottom:
+            guard w.midY > t.maxY, overlapRatioX(w, t) >= 0.5, abs(w.minY - (t.maxY + gap)) <= complementReach else { return nil }
+            r = CGRect(x: w.minX, y: t.maxY + gap, width: w.width, height: w.maxY - (t.maxY + gap))
+        case .top:
+            guard w.midY < t.minY, overlapRatioX(w, t) >= 0.5, abs(w.maxY - (t.minY - gap)) <= complementReach else { return nil }
+            r = CGRect(x: w.minX, y: w.minY, width: w.width, height: (t.minY - gap) - w.minY)
+        }
+        return r.width >= 80 && r.height >= 60 ? r : nil
+    }
+
+    /// Anteil der Zielfläche, den `w` senkrecht bzw. waagrecht abdeckt.
+    static func overlapRatioY(_ w: CGRect, _ t: CGRect) -> CGFloat {
+        max(0, min(w.maxY, t.maxY) - max(w.minY, t.minY)) / max(t.height, 1)
+    }
+
+    static func overlapRatioX(_ w: CGRect, _ t: CGRect) -> CGFloat {
+        max(0, min(w.maxX, t.maxX) - max(w.minX, t.minX)) / max(t.width, 1)
+    }
+
     // MARK: - Nur sichtbare Nachbarn (Michael, 08.10.)
 
     /// Der Streifen eines Nachbarn an der Kante zum führenden Fenster: Dort sieht man,

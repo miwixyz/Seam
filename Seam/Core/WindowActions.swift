@@ -44,6 +44,15 @@ final class WindowActions {
             if original[w] == nil { original[w] = before }
             target = Geometry.rect(for: cells, in: screen.visible, screen.orientation, gap: gap)
         }
+        // Nachbarn mitsetzen: nur bei festen Flächen (Hälften, Viertel, Drittel), nicht
+        // beim Zentrieren, Wiederherstellen oder Bildschirmwechsel.
+        let partners: [(AXWindow, CGRect)]
+        if let t = target, Layout.spec(cmd, screen.orientation)?.target != nil {
+            partners = WindowFinder.complements(target: Geometry.clamp(t, to: screen.visible), visible: screen.visible,
+                                                moving: w, movingFrame: f, gap: gap)
+        } else {
+            partners = []
+        }
         guard let target else { return }
         let goal = Geometry.clamp(target, to: screen.visible)
         let log = Self.log, name = cmd.rawValue
@@ -53,6 +62,11 @@ final class WindowActions {
             let result = NeighborWriter.setVerified(w, goal)
             // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
             log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(goal), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
+            for (pw, pr) in partners {
+                let ist = NeighborWriter.setVerified(pw, pr)
+                let app = NSRunningApplication(processIdentifier: pw.pid)?.bundleIdentifier ?? "?"
+                log.notice("\(name, privacy: .public): Nachbar \(app, privacy: .public) mitgesetzt, Soll \(NSStringFromRect(pr), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
+            }
         }
     }
 

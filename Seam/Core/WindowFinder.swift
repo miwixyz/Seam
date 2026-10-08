@@ -49,6 +49,39 @@ enum WindowFinder {
         return out
     }
 
+    /// Für Kürzel (Michael, 08.10.: „Kürzel setzen den Nachbarn mit“): je innerer Kante
+    /// der Zielfläche das VORDERSTE sichtbare Fenster auf der anderen Seite, das ihr
+    /// zugewandt ist, auch mit Lücke oder Überlappung, und sein neuer Rahmen.
+    static func complements(target t: CGRect, visible: CGRect, moving: AXWindow, movingFrame: CGRect,
+                            gap: CGFloat) -> [(AXWindow, CGRect)] {
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                                    kCGNullWindowID) as? [[String: Any]] else { return [] }
+        var entries: [Entry] = []
+        for info in list {
+            guard (info[kCGWindowLayer as String] as? Int) == 0,
+                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
+                  let b = info[kCGWindowBounds as String] as? NSDictionary,
+                  let bounds = CGRect(dictionaryRepresentation: b),
+                  NSRunningApplication(processIdentifier: pid)?.activationPolicy == .regular,
+                  !same(bounds, movingFrame),                    // das gesetzte Fenster selbst
+                  bounds.intersects(visible) else { continue }
+            entries.append(Entry(pid: pid, bounds: bounds, regular: true))
+        }
+        var out: [(AXWindow, CGRect)] = []
+        for edge in Geometry.innerEdges(of: t, in: visible, gap: gap) {
+            // Von vorn nach hinten: das erste passende Fenster gewinnt.
+            for e in entries {
+                guard let r = Geometry.complement(of: e.bounds, target: t, edge: edge, gap: gap),
+                      let w = AXAccess.windows(of: e.pid).first(where: { $0.frame.map { same($0, e.bounds) } ?? false }),
+                      w != moving, !out.contains(where: { $0.0 == w }) else { continue }
+                out.append((w, r))
+                break
+            }
+        }
+        return out
+    }
+
     private static func mostlyOverlaps(_ a: CGRect, _ b: CGRect) -> Bool {
         let i = a.intersection(b)
         guard !i.isNull, b.width > 0, b.height > 0 else { return false }
