@@ -53,6 +53,16 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Layout.spec(.restore, .landscape)?.key.label, "⌃⌥⌫")
     }
 
+    /// Mittlere zwei Drittel: Tastencode 16 wie in Magnet. Die Beschriftung folgt der
+    /// Belegung (deutsch „Z“, US „Y“), nicht einer festen US-Tabelle (08.10.: Menü zeigte Y).
+    func testLabelFollowsKeyboardLayout() throws {
+        let key = try XCTUnwrap(Layout.spec(.centerTwoThirds, .landscape)?.key)
+        XCTAssertEqual(key.keyCode, 16)
+        let letter = try XCTUnwrap(KeyboardLayout.character(for: 16))
+        XCTAssertEqual(key.label, "⌃⌘" + letter)
+        if letter == "Z" { XCTAssertEqual(KeyboardLayout.character(for: 6), "Y") }
+    }
+
     func testSameKeyMeansDifferentCommandPerOrientation() {
         let e = KeyCombo(keyCode: 14, modifiers: KeyCombo.ctrlOpt)
         XCTAssertEqual(Layout.command(for: e, .landscape), .firstTwoThirds)   // links zwei Drittel

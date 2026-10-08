@@ -52,11 +52,19 @@ struct KeyCombo: Equatable, Hashable, Sendable {
         if modifiers & 2048 != 0 { s += "⌥" }
         if modifiers & 512 != 0 { s += "⇧" }
         if modifiers & 256 != 0 { s += "⌘" }
-        return s + (Self.keyNames[keyCode] ?? "#\(keyCode)")
+        if let name = Self.specialNames[keyCode] { return s + name }
+        // Buchstaben nach der eingestellten Tastaturbelegung beschriften: Tastencodes sind
+        // Positionen, keine Buchstaben. Code 16 ist auf US-Tastaturen „Y“, auf deutschen
+        // „Z“ (Michael, 08.10.: Menü zeigte ⌃⌘Y, die Taste war aber ⌃⌘Z).
+        return s + (KeyboardLayout.character(for: keyCode) ?? Self.usNames[keyCode] ?? "#\(keyCode)")
     }
 
-    private static let keyNames: [UInt32: String] = [
+    private static let specialNames: [UInt32: String] = [
         123: "←", 124: "→", 125: "↓", 126: "↑", 36: "↩", 51: "⌫", 115: "↖",
+    ]
+
+    /// Rückfall, falls die Belegung nicht lesbar ist (US-Beschriftung).
+    private static let usNames: [UInt32: String] = [
         1: "S", 2: "D", 3: "F", 5: "G", 8: "C", 14: "E", 15: "R", 16: "Y", 17: "T",
         32: "U", 34: "I", 37: "L", 38: "J", 40: "K",
     ]
