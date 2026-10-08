@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Erst erhöhen, wenn diese Seite gegen das Release gelesen wurde. -->
-<meta name="seam:documented-version" content="0.1.1">
+<meta name="seam:documented-version" content="0.2.0">
 <title>Seam: Fenster anordnen auf dem Mac, mit einer Naht zwischen zwei Fenstern</title>
 <meta name="description" content="Seam ordnet Fenster auf deinem Mac per Tastenkürzel oder durch Ziehen an. Zwei Fenster teilen sich eine Kante, und wenn du sie verschiebst, gehen beide mit. Kostenlos und Open Source.">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -48,6 +48,8 @@
   <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
   <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-pair" viewBox="0 0 24 24"><rect x="2" y="5" width="8.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="8.5" height="14" rx="1.5"/><path d="M8 12h8"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><rect x="7" y="8" width="10" height="8" rx="1.5"/><path d="M2 8h3M2 13h3M19 8h3M19 13h3"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></symbol>
 
   <!-- Lage-Piktogramme: Bildschirm mit Zielfläche, wie im Menü von Seam -->
@@ -178,6 +180,10 @@
         <h3><svg class="ico" aria-hidden="true"><use href="#i-pointer"/></svg>Mit der Maus ziehen</h3>
         <p>Ziehst du die gemeinsame Kante mit der Maus, bewegt sich zunächst nur dein Fenster. Beim Loslassen setzt Seam das Nachbarfenster bündig an die neue Kante, sein äußerer Rand bleibt dabei stehen.</p>
       </div>
+      <div class="point wide">
+        <h3><svg class="ico" aria-hidden="true"><use href="#i-pair"/></svg>Geteilt bleibt zusammen <span class="tag">Neu in 0.2</span></h3>
+        <p>Holst du eines der beiden Fenster nach vorn, kommt das andere mit, auch wenn ein drittes darüber lag. Der Fokus bleibt dort, wo du geklickt hast. Minimierst du eines, folgt das andere, und beim Zurückholen kommen beide wieder.</p>
+      </div>
     </div>
     <p class="mock-note">Nur sichtbare Nachbarn ziehen mit. Verdeckte Fenster bleiben, wo sie sind, und stößt ein Fenster an seine Mindestgröße, bleibt die Kante dort stehen.</p>
   </div>
@@ -227,6 +233,11 @@
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-gap"/></svg></div>
         <h3>Abstand nach Wahl</h3>
         <p>Zwischen den Fenstern lässt Seam 5 Punkt frei. Im Menü unter „Einstellungen“ stellst du 0, 10 oder 20 Punkt ein.</p>
+      </div>
+      <div class="feature card wide">
+        <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-focus"/></svg></div>
+        <h3>Hintergrund abdunkeln <span class="tag">Neu in 0.2</span></h3>
+        <p>Alle Fenster außer dem aktiven treten zurück, so siehst du sofort, wo du gerade tippst. Hast du zwei Fenster geteilt, bleiben beide hell. Ab Werk ist es aus, einschalten kannst du es unter „Einstellungen“, in drei Stärken.</p>
       </div>
     </div>
   </div>
@@ -310,9 +321,9 @@
     <h2>Seam sieht deine Fenster, nicht ihren Inhalt</h2>
     <p class="lead">Um Fenster anderer Apps zu bewegen, braucht Seam die Bedienungshilfen-Freigabe von macOS. Diese Freigabe erlaubt sehr viel, doch Seam nutzt davon nur einen kleinen Teil.</p>
     <div class="privacy-grid">
-      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fenstertitel und Inhalte liest es nicht.</p></div>
+      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt. Fenstertitel und Inhalte liest es nicht, eine Bildschirmaufnahme-Freigabe braucht es nicht.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span><p><strong>Keine Tastatur mitlesen</strong>Seam meldet seine Kürzel bei macOS an und bekommt nur diese Kombinationen mitgeteilt. Die Maus beobachtet es nur, um das Ziehen zu erkennen, und verändert keine Klicks.</p></div>
-      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-cloudoff"/></svg></span><p><strong>Kein Konto, keine Analyse</strong>Gespeichert werden nur deine Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters hält Seam nur im Arbeitsspeicher, und nach einem Neustart ist sie weg.</p></div>
+      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-cloudoff"/></svg></span><p><strong>Kein Konto, keine Analyse</strong>Gespeichert werden nur deine Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters und welche Fenster ein Paar bilden, hält Seam nur im Arbeitsspeicher. Nach einem Neustart ist beides weg.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></span><p><strong>Updates nur mit deinem Ja</strong>Der einzige Netzwerkzugriff ist die Suche nach Updates bei GitHub. Beim ersten Mal fragt Seam, ob es selbst suchen darf. Jedes Update ist signiert, und Seam prüft die Signatur vor dem Installieren.</p></div>
     </div>
     <p class="mock-note">Den Quellcode und die Begründung jeder dieser Entscheidungen findest du auf <a href="https://github.com/miwixyz/Seam">GitHub</a>.</p>
@@ -339,8 +350,9 @@
       <details><summary>Warum braucht Seam die Bedienungshilfen?</summary><p>Ohne diese Freigabe darf keine App die Fenster anderer Apps verschieben. Weitere Freigaben braucht Seam nicht, also weder Eingabeüberwachung noch Bildschirmaufnahme.</p></details>
       <details><summary>Warum folgt das Nachbarfenster erst beim Loslassen?</summary><p>Manche Apps brauchen für jede Größenänderung spürbar lange, Outlook in Messungen bis zu 56 Millisekunden. Live mitgezogen hätte das geruckelt. Deshalb bewegt sich während des Ziehens nur dein Fenster, und beim Loslassen setzt Seam den Nachbarn in einem Schritt an die neue Kante.</p></details>
       <details><summary>Warum bleibt die Kante manchmal stehen?</summary><p>Viele Apps legen fest, wie klein ihr Fenster höchstens werden darf. Erreicht das Nachbarfenster diese Grenze, bleibt die Naht dort stehen, damit sich die Fenster nicht überlappen.</p></details>
-      <details><summary>Welche Fenster fasst Seam an?</summary><p>Seam bewegt nur normale App-Fenster. Dialoge, das Dock und andere Systemflächen lässt Seam in Ruhe, ebenso minimierte Fenster und Fenster im Vollbild.</p></details>
+      <details><summary>Welche Fenster fasst Seam an?</summary><p>Seam bewegt nur normale App-Fenster. Dialoge, das Dock und andere Systemflächen lässt Seam in Ruhe, ebenso Fenster im Vollbild. Minimierte Fenster verschiebt es nicht. Nur den Partner eines geteilten Paars minimiert es mit und holt ihn zurück.</p></details>
       <details><summary>Ein anderes Programm nutzt schon dieselben Kürzel. Was passiert dann?</summary><p>Belegen zwei Programme dasselbe Kürzel, reagiert nur eines von beiden. Schalte die Kürzel im anderen Programm ab oder beende es. Im Menü unter „Einstellungen“ schaltest du in Seam alle Kürzel auf einmal ab.</p></details>
+      <details><summary>Ich nutze schon HazeOver. Passt das zusammen?</summary><p>Ja, nur sollte eines von beiden abdunkeln, sonst wird es doppelt dunkel. Seams Abdunklung ist ab Werk aus. Der Unterschied: Bei Seam bleiben zwei geteilte Fenster gemeinsam hell.</p></details>
       <details><summary>Läuft Seam auf Intel-Macs oder älteren macOS-Versionen?</summary><p>Nein, Seam braucht einen Mac mit Apple Silicon und macOS 27.</p></details>
     </div>
   </div>

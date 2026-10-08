@@ -117,10 +117,11 @@
     kein Konto, keine Analyse, keine Kennungen, keine Werbung. Konkret:
   </p>
   <ul>
-    <li>Seam braucht die Bedienungshilfen-Freigabe von macOS, um Fenster anderer Apps zu bewegen. Von diesen Fenstern liest es nur Rolle und Unterrolle, Lage, Größe, ob das Fenster minimiert oder im Vollbild ist, und die Prozessnummer der App. Fenstertitel und Inhalte liest Seam nicht.</li>
+    <li>Seam braucht die Bedienungshilfen-Freigabe von macOS, um Fenster anderer Apps zu bewegen. Von diesen Fenstern liest es nur Rolle und Unterrolle, Lage, Größe, ob das Fenster minimiert oder im Vollbild ist, und die Prozessnummer der App. Für das Abdunkeln liest es aus der Fensterliste von macOS nur Fensternummer, Prozessnummer und Lage, um zu erkennen, welches Fenster vorn liegt. Fenstertitel und Inhalte liest Seam nicht, und eine Bildschirmaufnahme-Freigabe fragt es nicht an.</li>
+    <li>An Fenstern anderer Apps ändert Seam nur Lage und Größe. Bei zwei Fenstern, die du mit ⌃⌥S geteilt hast, hebt es zusätzlich den Partner an und minimiert ihn mit oder holt ihn zurück.</li>
     <li>Tastenkürzel meldet Seam bei macOS an und erhält nur diese Tastenkombinationen. Andere Tastatureingaben sieht es nicht, die Freigabe „Eingabeüberwachung“ braucht es nicht.</li>
     <li>Die Maus beobachtet Seam nur passiv (Taste gedrückt, Ziehen, Loslassen), um Andocken und Mitziehen zu erkennen. Es verändert oder erzeugt keine Maus- oder Tastaturereignisse.</li>
-    <li>Gespeichert werden nur deine Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters hält Seam nur im Arbeitsspeicher, und nach einem Neustart ist sie weg. Fensteranordnungen speichert Seam nicht.</li>
+    <li>Gespeichert werden nur deine Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters und welche Fenster ein Paar bilden, hält Seam nur im Arbeitsspeicher, und nach einem Neustart ist beides weg. Fensteranordnungen speichert Seam nicht.</li>
     <li>Ins Systemprotokoll von macOS schreibt Seam, was es getan hat: Aktion, Zielfläche, Bildschirm und die Kennung der betroffenen App. Titel oder Inhalte stehen dort nicht. Das Protokoll bleibt auf deinem Mac.</li>
   </ul>
   <p class="small">

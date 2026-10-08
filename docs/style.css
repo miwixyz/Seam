@@ -401,3 +401,22 @@ footer a:hover { color: var(--text); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Etikett „Neu in 0.2“ an Überschriften (0.2.0). Kontrast über --accent wie Links. */
+.tag {
+  display: inline-block;
+  margin-left: .4em;
+  padding: .1em .55em;
+  border-radius: 999px;
+  font-size: .72em;
+  font-weight: 600;
+  vertical-align: middle;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), .12);
+  border: 1px solid rgba(var(--accent-rgb), .35);
+  white-space: nowrap;
+}
+
+/* Neue Punkte/Karten (0.2.0) über die volle Rasterbreite: sonst stünden sie allein in einer
+   Zeile (5 Punkte im 2er-Raster, 9 Karten im 4er/2er-Raster). */
+.new-points .wide, .features .wide { grid-column: 1 / -1; }

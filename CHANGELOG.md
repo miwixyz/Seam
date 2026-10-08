@@ -2,6 +2,22 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.2.0] — 2026-10-09
+
+### Neu
+
+- **Geteilte Fenster bleiben zusammen:** Zwei Fenster, die du mit ⌃⌥S geteilt hast, gelten als
+  Paar. Holst du eines nach vorn, kommt das andere mit, auch wenn es von einem dritten Fenster
+  verdeckt war. Minimierst du eines oder holst es zurück, folgt das andere. Der Fokus bleibt
+  dabei auf dem Fenster, das du angeklickt hast.
+- Das Paar löst sich von selbst, wenn ein Fenster geschlossen wird, die App endet oder
+  ausgeblendet wird, ein neues ⌃⌥S eines der Fenster erfasst oder die beiden nicht mehr
+  nebeneinander stehen. Abschalten: „Einstellungen“ → „Geteilte Fenster bleiben zusammen“.
+- **Hintergrund abdunkeln:** Seam dunkelt alle Fenster außer dem aktiven ab, damit du sofort
+  siehst, wo du tippst. Bei einem geteilten Paar bleiben beide hell. Stärke leicht, mittel oder
+  stark. Ab Werk aus: „Einstellungen“ → „Hintergrund abdunkeln“. Nutzt du HazeOver, beende es
+  vorher, sonst wird doppelt abgedunkelt.
+
 ## [0.1.1] — 2026-10-08
 
 ### Geändert

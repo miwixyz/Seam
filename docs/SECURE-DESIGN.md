@@ -123,6 +123,82 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
   Bildschirm und Bundle-ID der App (öffentlich). Keine Titel (gibt es nach E3 gar nicht), keine
   Mauskoordinaten in Dauerschleife (nur je Geste Anfang/Ende).
 
+### E12 – Geteiltes Paar folgt dem Nutzer (0.2, Durchgang 2026-10-09)
+
+Michael, 09.10., Ideen aus WindowGlue (MIT, nur gelesen, kein Code übernommen): Paar kommt
+gemeinsam nach vorn, wird gemeinsam minimiert, löst sich sauber auf.
+
+- **Ausnahme zu E5, eng gefasst:** Seam reagiert hier auf eine Handlung des Nutzers *in einer
+  anderen App* (Fenster anklicken, minimieren), nicht auf eine Seam-Geste. Erlaubt nur für Paare,
+  die der Nutzer selbst mit ⌃⌥S gebildet hat (Naht verschieben behält das Paar). Nicht für
+  Andocken per Ziehen und nicht für mitgesetzte Nachbarn. Schalter „Geteilte Fenster bleiben
+  zusammen“ (ab Werk an); aus = keine Paare, keine Beobachter.
+- **Was Seam dabei tun darf (Positivliste, Test + Lint-Regel wie E3):** genau eine Aktion,
+  `AXRaise` auf das Partnerfenster, und genau ein geschriebenes Attribut neben Lage/Größe,
+  `AXMinimized`. **Kein** App-Aktivieren, kein Fokuswechsel, keine Lage- oder Größenänderung,
+  keine synthetischen Ereignisse (E2 bleibt).
+- **Verworfen:** WindowGlues Weg, die Partner-App kurz zu aktivieren und den Fokus zurückzugeben.
+  Gemessen 09.10. (macOS 27, Spike mit Finder/Rechner/Systeminformationen/Aktivitätsanzeige):
+  `AXRaise` allein hebt das Fenster einer nicht aktiven App über ein verdeckendes Fenster, die
+  vordere App bleibt vorn (56–77 ms); Kontrolle ohne `AXRaise`: Reihenfolge unverändert. Der
+  Rechner meldete −25205 und wurde trotzdem gehoben → Rückgabewert nur protokollieren.
+- **Beobachtet (zusätzlich zu E2):** je Partner-App ein `AXObserver` für „Fokusfenster gewechselt“,
+  je Paarfenster „minimiert“, „wiederhergestellt“, „zerstört“; dazu `NSWorkspace`-Meldungen
+  „App aktiviert / beendet / ausgeblendet“. Beim Aktivieren liest Seam nur `AXFocusedWindow`
+  der App (steht schon auf der E3-Liste). Keine neuen Leseattribute.
+- **Auflösen:** Fenster zerstört, App beendet oder ausgeblendet, neues ⌃⌥S erfasst eines der
+  Fenster, Schalter aus, oder die beiden stehen beim nächsten Anlass nicht mehr Kante an Kante
+  (dann kein Anheben, Paar weg). So kann ein altes Paar nie ein Fenster an einer unerwarteten
+  Stelle nach vorn holen.
+- **Rückkopplung (E6):** Seam-eigene Schreibvorgänge erzeugen Meldungen (Minimieren des Partners,
+  bei Paaren derselben App auch Fokus). Jedes Fenster, auf das Seam gerade gewirkt hat, wird
+  0,5 s lang ignoriert; Minimieren nur, wenn der Ist-Zustand abweicht.
+- **Daten (E10):** Paare nur im Speicher, an AX-Referenzen gebunden, nach Neustart weg. Protokoll
+  (E11): Anlass + Bundle-IDs, keine Titel.
+- **STRIDE-Nachtrag:** *S* – eine App meldet einen Fokuswechsel, den es nicht gab → schlimmstenfalls
+  wird das Partnerfenster angehoben. *D* – hängende App: Aufrufe auf der Setz-Warteschlange mit
+  dem 0,25-s-Zeitlimit, nie auf dem Hauptthread. *E* – keine neue Steuerschnittstelle (E7 bleibt).
+
+- **Umsetzung 09.10. geprüft** (`rafter-code-review` gegen E12, Sichttest mit Testkopie):
+  Positivliste `AXActionName` = nur `AXRaise` (Test), Lint-Regel `ax_schreiben_nur_ueber_axaccess`
+  (Positivfall mit Attrappe ausgelöst). Gemessen: Partner liegt nach Klick bzw. Aktivieren über dem
+  verdeckenden Fenster (Fensterliste alle 20 ms, ~160 ms nach Klick); erster Entwurf hob zu früh an
+  (vor dem Umsortieren durch die Aktivierung) → Anheben nach 150 + 400 ms. Paar derselben App lief
+  zunächst 6 Runden hin und her → Echo-Sperre zusätzlich ab Ende der Abfolge, danach 1 Anheben.
+  Minimieren/Wiederherstellen je 1 Meldung. Auflösen bei „nicht mehr nebeneinander“, „Fenster
+  geschlossen“, „App beendet“ gemessen. Fund aus der Prüfung: Beobachter wurde im eigenen Rückruf
+  freigegeben → bis zum nächsten Durchlauf gehalten. `rafter run` steht aus (Kontingent bis 26.10.).
+
+### E13 – Hintergrund abdunkeln (0.2, Durchgang 2026-10-09)
+
+Michael, 09.10.: „so etwas wie HazeOver“, bei Paaren bleiben beide hell. Ab Werk **aus**.
+
+- **Entschieden:** je Bildschirm ein randloses, halbdurchsichtiges Fenster (Ebene `.normal`,
+  `ignoresMouseEvents`, kann nie Fokus bekommen), per `order(.below, relativeTo:)` direkt unter das
+  oberste Fenster der vorderen App bzw. unter den Paar-Partner (E12) einsortiert. Seam verändert
+  dabei **kein** fremdes Fenster: nur die Stapelposition des eigenen.
+- **Gelesen (neu):** aus der Fensterliste des Systems (`CGWindowListCopyWindowInfo`) nur Nummer,
+  Prozess-ID, Ebene und Lage. **Nie** `kCGWindowName`/`kCGWindowOwnerName` (Lint-Regel
+  `keine_fenstertitel`). Ohne Bildschirmaufnahme-Freigabe liefert macOS Titel ohnehin nicht, und
+  Seam fragt diese Freigabe nicht an. Dazu `AXFocusedWindow` der vorderen App (schon auf E3).
+- **Beobachtet:** App aktiviert, Space gewechselt, Bildschirme geändert, in der vorderen App
+  Fokus/Hauptfenster gewechselt und Fenster erzeugt (AX, passiv); Selbstheilung 1×/s
+  (Fensterliste lesen, nur bei Abweichung neu einsortieren).
+- **Verworfen:** Inhalte erkennen (Bildschirmaufnahme) — braucht eine weitere Freigabe, ohne Nutzen.
+- **Grenzfälle:** Schreibtisch vorn (kein Fokusfenster) → keine Abdunklung. Eigene Fenster
+  (Hilfe) bleiben hell. Abdunkel-Fenster gehören Seams Prozess und fallen damit aus jeder
+  Fenstersuche (`ownPID`-Filter in WindowFinder/DragController).
+- **STRIDE:** *I* – keine Titel/Inhalte, s. o. *D* – Fenster nimmt keine Ereignisse an; Fehler
+  im Einsortieren dunkelt schlimmstenfalls das falsche Fenster ab, Abhilfe: Schalter aus.
+  *E* – keine neue Berechtigung, keine Steuerschnittstelle.
+- **Umsetzung 09.10. geprüft** (`rafter-code-review`, Sichttest): Lint-Regel `keine_fenstertitel`
+  (Positivfall mit Attrappe ausgelöst), `DimPlan` getestet (10 Tests). Gemessen über die
+  Fensterliste: einzelnes Fenster vorn → Abdunklung direkt darunter; andere App vorn → Paar
+  dahinter abgedunkelt; Paar vorn → beide hell; Schalter über das Menü aus/an wirkt sofort;
+  Leerlauf 0,2 % (aus) bzw. 0,6 % CPU (an, Selbstheilung 1×/s). **Nicht gemessen:** Schreibtisch
+  vorn, mehrere Bildschirme, Space-/Vollbild-Wechsel. Kein fremdes Fenster wird verändert, keine
+  Titel gelesen (Fensterliste nur Nummer/Prozess/Ebene/Lage).
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |

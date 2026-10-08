@@ -36,6 +36,15 @@ struct MenuContent: View {
             Toggle("Fenster an gemeinsamen Kanten mitziehen", isOn: $prefs.linkEdges)
             Toggle("Andocken per Ziehen an den Bildschirmrand", isOn: $prefs.dragSnap)
             Toggle("Beim Herausziehen ursprüngliche Größe", isOn: $prefs.restoreOnDragOut)
+            Toggle("Geteilte Fenster bleiben zusammen", isOn: $prefs.keepPairs)
+                .onChange(of: prefs.keepPairs) { engine.applyPairSetting() }
+            Toggle("Hintergrund abdunkeln", isOn: $prefs.dimEnabled)
+                .onChange(of: prefs.dimEnabled) { engine.applyDimSetting() }
+            Picker("Stärke der Abdunklung", selection: $prefs.dimStrength) {
+                ForEach(Preferences.dimChoices, id: \.self) { Text(Self.dimLabel($0)).tag($0) }
+            }
+            .disabled(!prefs.dimEnabled)
+            .onChange(of: prefs.dimStrength) { engine.applyDimStrength() }
             Toggle("Tastenkürzel", isOn: $prefs.shortcuts)
                 .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
 
@@ -68,6 +77,14 @@ struct MenuContent: View {
         Divider()
         Button("Seam beenden") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    private static func dimLabel(_ p: Int) -> String {
+        switch p {
+        case 20: "Leicht"
+        case 50: "Stark"
+        default: "Mittel"
+        }
     }
 
     /// Anklickbar wie bei Magnet: wirkt auf das vorderste Fenster, das Kürzel steht

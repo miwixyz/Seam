@@ -56,6 +56,28 @@ custom_rules:
     message: "Fremde Fensterattribute nur über AXAccess.*  lesen (SECURE-DESIGN E3)."
     severity: error
 
+  # Seam, docs/SECURE-DESIGN.md E12: Aktionen auslösen und Attribute schreiben nur in
+  # AXAccess.swift, dort über die Positivlisten (AXActionName, setFrame, setMinimized).
+  ax_schreiben_nur_ueber_axaccess:
+    name: "AX-Aktionen/Schreiben nur in AXAccess"
+    regex: 'AXUIElementPerformAction|AXUIElementSetAttributeValue'
+    excluded: 'Seam/Core/AXAccess\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Aktionen und Schreibzugriffe auf fremde Fenster nur über AXAccess (SECURE-DESIGN E12)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E13: aus der Fensterliste nie Titel oder App-Namen lesen.
+  keine_fenstertitel:
+    name: "Keine Fenstertitel aus der Fensterliste"
+    regex: 'kCGWindowName|kCGWindowOwnerName'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Fensterliste nur Nummer/Prozess/Ebene/Lage lesen (SECURE-DESIGN E13)."
+    severity: error
+
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
   # SwiftUI-App mit @NSApplicationDelegateAdaptor ist NSApp.delegate NICHT die
   # eigene AppDelegate-Instanz — der Cast liefert immer nil, `?.` verschluckt es,

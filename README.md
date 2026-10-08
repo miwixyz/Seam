@@ -17,6 +17,14 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 - **Naht verschieben** (⌃⌥⇧← / ⌃⌥⇧→) in festen Stufen ⅓ · ⅜ · ½ · ⅝ · ⅔. Beide Fenster gehen in
   einem Schritt mit.
 - **Kürzel setzen den Nachbarn mit:** Das gegenüberliegende Fenster rückt an die Naht.
+- **Geteilte Fenster bleiben zusammen:** Nach ⌃⌥S kommen beide Fenster gemeinsam nach vorn und
+  werden gemeinsam minimiert. Seam hebt den Partner nur an, ohne den Fokus zu wechseln. Das Paar
+  löst sich, wenn ein Fenster schließt, die App endet oder ausgeblendet wird, oder die beiden
+  nicht mehr nebeneinander stehen. Idee aus [WindowGlue](https://github.com/Conxt/WindowGlue)
+  (MIT), eigener Code.
+- **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
+  beide hell. Stärke 20/35/50 %. Seam schiebt dafür ein eigenes Fenster unter das aktive, liest
+  nur Nummer, Prozess und Lage der Fenster und braucht keine Bildschirmaufnahme-Freigabe.
 - **Mitziehen beim Loslassen:** Ziehst du die gemeinsame Kante mit der Maus, setzt Seam das
   Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante. Nur sichtbare
   Nachbarn ziehen mit.
@@ -47,8 +55,10 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
 Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
+Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage. An
+fremden Fenstern ändert es Lage und Größe, hebt bei einem Paar den Partner an und minimiert ihn mit.
 Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
-werden nur Einstellungen. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
+werden nur Einstellungen; Fensterpaare liegen nur im Arbeitsspeicher. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
 Sicherheitsentwurf: [`docs/SECURE-DESIGN.md`](docs/SECURE-DESIGN.md).
 
 ## Bauen

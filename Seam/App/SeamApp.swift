@@ -44,6 +44,8 @@ final class Engine {
 
     @ObservationIgnored private lazy var actions = WindowActions(prefs: prefs)
     @ObservationIgnored private lazy var drag = DragController(prefs: prefs, actions: actions)
+    @ObservationIgnored private lazy var pairs = PairKeeper(prefs: prefs)
+    @ObservationIgnored private lazy var dimmer = Dimmer(prefs: prefs)
     @ObservationIgnored private let hotkeys = Hotkeys()
     @ObservationIgnored private var trustTimer: Timer?
     @ObservationIgnored private var running = false
@@ -92,6 +94,11 @@ final class Engine {
         }
         applyShortcutSetting()
         drag.start()
+        actions.onSplit = { [weak self] a, b in self?.pairs.pair(a, b) }
+        pairs.start()
+        dimmer.partnerOf = { [weak self] w in self?.pairs.partner(of: w) }
+        pairs.onRaised = { [weak self] in self?.dimmer.refresh() }
+        dimmer.apply()
     }
 
     /// Befehl aus dem Menü: wirkt wie das Kürzel auf das vorderste Fenster.
@@ -110,6 +117,23 @@ final class Engine {
             hotkeys.unregister()
             failedShortcuts = []
         }
+    }
+
+    /// Schalter „Geteilte Fenster bleiben zusammen“ (E12): aus = Paare und Beobachter weg.
+    func applyPairSetting() {
+        guard running else { return }
+        pairs.applySetting()
+    }
+
+    /// Schalter/Stärke „Hintergrund abdunkeln“ (E13).
+    func applyDimSetting() {
+        guard running else { return }
+        dimmer.apply()
+    }
+
+    func applyDimStrength() {
+        guard running else { return }
+        dimmer.strengthChanged()
     }
 
     func openAccessibilitySettings() {

@@ -22,6 +22,13 @@ enum AXAttribute: String, CaseIterable {
     case focusedWindow = "AXFocusedWindow"
 }
 
+/// **Positivliste der Aktionen (docs/SECURE-DESIGN.md E12):** die einzige Aktion, die Seam
+/// auf fremden Fenstern auslöst. Ein Test hält die Liste fest, die Lint-Regel
+/// `ax_schreiben_nur_ueber_axaccess` verbietet Aktionen außerhalb dieser Datei.
+enum AXActionName: String, CaseIterable {
+    case raise = "AXRaise"
+}
+
 /// Ein Fenster einer fremden App, identifiziert über die AX-Referenz (nicht
 /// über Titel oder Lage, Lehre aus dem Prototyp).
 struct AXWindow: Hashable, @unchecked Sendable {
@@ -68,6 +75,20 @@ struct AXWindow: Hashable, @unchecked Sendable {
         if let v = AXValueCreate(.cgPoint, &pt) { AXUIElementSetAttributeValue(element, "AXPosition" as CFString, v) }
         if let v = AXValueCreate(.cgSize, &sz) { AXUIElementSetAttributeValue(element, "AXSize" as CFString, v) }
         return frame
+    }
+
+    var isMinimized: Bool { AXAccess.bool(element, .minimized) == true }
+
+    /// E12: Partner eines geteilten Paars mit minimieren bzw. wiederherstellen.
+    func setMinimized(_ on: Bool) {
+        AXUIElementSetAttributeValue(element, AXAttribute.minimized.rawValue as CFString, on as CFBoolean)
+    }
+
+    /// E12: Fenster anheben, ohne seine App zu aktivieren (kein Fokuswechsel).
+    /// Rückgabe nur fürs Protokoll: Der Rechner meldete −25205 und wurde trotzdem gehoben.
+    @discardableResult
+    func perform(_ action: AXActionName) -> AXError {
+        AXUIElementPerformAction(element, action.rawValue as CFString)
     }
 
     /// Während einer Geste: Lage, dann Größe, ohne Zurücklesen (zwei Aufrufe statt
@@ -128,6 +149,13 @@ enum AXAccess {
               let win = element(app, .focusedWindow) else { return nil }
         let w = AXWindow(win)
         return w.isManageable ? w : nil
+    }
+
+    /// Fokusfenster einer bestimmten App (E12: App wurde aktiviert, gehört ihr Fenster zu einem Paar?).
+    static func focusedWindow(of pid: pid_t) -> AXWindow? {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        return element(app, .focusedWindow).map(AXWindow.init)
     }
 
     /// Fenster unter einem Bildschirmpunkt (für Ziehgesten).

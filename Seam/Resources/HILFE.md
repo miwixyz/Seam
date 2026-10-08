@@ -22,6 +22,18 @@ Programme. Beende das andere oder schalte dort die Kürzel ab.
   Beide Fenster gehen in einem Schritt mit. Auf einem Hochkant-Bildschirm geht die Naht nach
   oben und unten.
 - Setzt du ein Fenster per Kürzel auf eine Hälfte, rückt das Fenster daneben an die Naht.
+- **Mit ⌃⌥S geteilte Fenster bleiben zusammen:** Holst du eines nach vorn, kommt das andere mit,
+  auch wenn ein drittes Fenster darüber lag. Minimierst du eines, wird das andere mit minimiert,
+  und beim Zurückholen kommen beide wieder. Das Paar löst sich, sobald ein Fenster geschlossen
+  wird, die App endet oder ausgeblendet wird (⌘H), oder die beiden nicht mehr nebeneinander
+  stehen. Abschalten: „Einstellungen“ → „Geteilte Fenster bleiben zusammen“.
+
+## Hintergrund abdunkeln
+
+Unter „Einstellungen“ → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.
+Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Die Stärke stellst du darunter ein
+(leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Klicks gehen durch
+die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.
 
 ## Mitziehen mit der Maus
 
@@ -54,6 +66,6 @@ Jedes Update ist mit einem Schlüssel signiert, den Seam vor dem Entpacken prüf
 Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters, nie Titel oder Inhalte.
 Es beobachtet keine Tastatureingaben: Die Kürzel sind beim System angemeldet, Seam erfährt nur,
 dass eines gedrückt wurde. Die Maus beobachtet es nur, um Ziehen und Loslassen zu erkennen.
-Gespeichert werden nur die Einstellungen. Die ursprüngliche Größe eines Fensters liegt nur im
-Arbeitsspeicher und ist nach dem Beenden weg. Der einzige Netzzugriff ist die Update-Prüfung
+Gespeichert werden nur die Einstellungen. Die ursprüngliche Größe eines Fensters und welche
+Fenster ein Paar bilden, liegen nur im Arbeitsspeicher und sind nach dem Beenden weg. Der einzige Netzzugriff ist die Update-Prüfung
 bei GitHub.

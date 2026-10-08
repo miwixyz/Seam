@@ -13,6 +13,9 @@ final class WindowActions {
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
     private var original: [AXWindow: CGRect] = [:]
 
+    /// ⌃⌥S hat ein Paar gebildet (E12). Gesetzt von der Engine (`PairKeeper.pair`).
+    var onSplit: ((AXWindow, AXWindow) -> Void)?
+
     init(prefs: Preferences) { self.prefs = prefs }
 
     /// Tastenkürzel: wirkt auf das fokussierte Fenster.
@@ -52,6 +55,7 @@ final class WindowActions {
         lastPair = (first, second)
         let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
         setPair((first, a), (second, b), name: "Teilen")
+        onSplit?(first, second)
     }
 
     /// ⌃⌥⇧← / → : Naht zur nächsten festen Stufe (⅓ ⅜ ½ ⅝ ⅔). Beide Fenster in einem

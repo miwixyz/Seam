@@ -14,6 +14,11 @@ final class AXAllowlistTests: XCTestCase {
         ])
     }
 
+    /// E12: genau eine Aktion auf fremden Fenstern. Wer hier ergänzt, ändert E12 mit.
+    func testActionAllowlistIsOnlyRaise() {
+        XCTAssertEqual(Set(AXActionName.allCases.map(\.rawValue)), ["AXRaise"])
+    }
+
     func testNoContentOrTitleAttributes() {
         let forbidden = ["AXTitle", "AXValue", "AXDescription", "AXSelectedText", "AXDocument", "AXURL"]
         for f in forbidden {
