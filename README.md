@@ -23,7 +23,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   nicht mehr nebeneinander stehen. Idee aus [WindowGlue](https://github.com/Conxt/WindowGlue)
   (MIT), eigener Code.
 - **Namen für Spaces:** Name des aktuellen Space neben dem Symbol (wahlweise ohne Symbol), Liste
-  aller Spaces im Fenster „Spaces benennen“. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
+  aller Spaces im Seam-Fenster (aktueller hervorgehoben), Fenster zum Benennen. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
   lesend über eine nicht dokumentierte macOS-Schnittstelle, ohne neue Berechtigung; kein Wechseln
   per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben

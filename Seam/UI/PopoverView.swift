@@ -31,10 +31,11 @@ struct PopoverView: View {
             header
             notices
             arrangeCard
+            if engine.spaces.available { spacesCard }
             footer
         }
         .padding(FamilyTheme.Space.l)
-        .frame(width: 348)
+        .frame(width: 364)   // 332 pt Inhalt: so breit ist die Zeile „Ganz“ (5 Kacheln)
         .tint(FamilyTheme.accent)
         .onAppear {
             // Kacheln passend zum Bildschirm des Zielfensters (Code-Audit 09.10., C1).
@@ -192,6 +193,54 @@ struct PopoverView: View {
             }
         }
         .frame(minHeight: 22)
+    }
+
+    // MARK: - Spaces
+
+    /// Alle Spaces, der aktuelle hervorgehoben (0.3 hatte die Liste im Menü, 0.4.0 nur noch unter
+    /// „Spaces benennen“; Michael 09.10.: „Spaces-Liste zurück ins Popover“). Ein Klick öffnet
+    /// „Spaces benennen“: Wechseln kann Seam nicht (E14, keine künstlichen Tastendrücke).
+    private var spacesCard: some View {
+        let spaces = engine.spaces.spaces.filter { !$0.isFullScreen }
+        let displays = spaces.map(\.display).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        return VStack(alignment: .leading, spacing: FamilyTheme.Space.s) {
+            Text("Spaces").font(FamilyTheme.font(.headline)).foregroundStyle(FamilyTheme.textPrimary)
+            ForEach(displays, id: \.self) { display in
+                if displays.count > 1 {
+                    Text("Bildschirm \((displays.firstIndex(of: display) ?? 0) + 1)")
+                        .font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 6)], alignment: .leading, spacing: 6) {
+                    ForEach(spaces.filter { $0.display == display }) { spaceChip($0) }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(FamilyTheme.Space.m)
+        .familyCard(radius: FamilyTheme.Radius.tile)
+    }
+
+    private func spaceChip(_ space: SpaceInfo) -> some View {
+        let title = SpaceNames.title(space, prefs.spaceNames)
+        return Button { openSpaces() } label: {
+            HStack(spacing: 5) {
+                Text("\(space.number)").font(FamilyTheme.font(.caption2, weight: .semibold)).monospacedDigit()
+                    .foregroundStyle(space.isCurrent ? FamilyTheme.onAccent : FamilyTheme.textSecondary)
+                Text(title).font(FamilyTheme.font(.callout, weight: space.isCurrent ? .semibold : .regular))
+                    .foregroundStyle(space.isCurrent ? FamilyTheme.onAccent : FamilyTheme.textPrimary)
+                    .lineLimit(1).truncationMode(.tail)
+            }
+            .padding(.horizontal, 9).frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(space.isCurrent ? FamilyTheme.accent : FamilyTheme.cardStroke.opacity(0.45))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(space.isCurrent ? "Aktueller Space – klicken zum Benennen"
+                              : "Wechseln mit ⌃← / ⌃→ oder Mission Control – klicken zum Benennen")
+        .accessibilityLabel(space.isCurrent ? "\(title), aktueller Space" : title)
     }
 
     // MARK: - Fuß

@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.4.1] — 2026-10-09
+
+### Geändert
+
+- **Spaces-Liste wieder im Seam-Fenster:** Unter den Kacheln stehen alle Spaces mit Nummer und
+  Namen, der aktuelle ist farbig hervorgehoben. Ein Klick öffnet „Spaces benennen“; wechseln geht
+  weiter mit ⌃← / ⌃→ oder Mission Control. Mit mehreren Bildschirmen gibt es je Bildschirm eine Zeile.
+- Das Seam-Fenster ist etwas breiter, damit alle Kacheln mit vollem Rand hineinpassen.
+
 ## [0.4.0] — 2026-10-09
 
 ### Neu

@@ -31,7 +31,7 @@ Programme. Beende das andere oder schalte dort die Kürzel ab.
 
 ## Namen für Spaces
 
-Über den Space-Namen oben im Seam-Fenster oder den Knopf „Spaces benennen“ gibst du jedem Schreibtisch einen Namen. Der Name
+Im Seam-Fenster stehen unter den Kacheln alle Spaces, der aktuelle ist hervorgehoben. Ein Klick darauf, auf den Space-Namen oben oder auf den Knopf „Spaces benennen“ öffnet das Fenster, in dem du jedem Schreibtisch einen Namen gibst. Der Name
 des aktuellen Space steht dann neben dem Seam-Symbol in der Menüleiste; Spaces ohne eigenen Namen
 zeigen nur das Symbol. In den Einstellungen → „Symbol ausblenden, wenn ein Space-Name steht“
 siehst du statt Symbol und Name nur noch den Namen. Die Namen hängen am Space selbst, nicht an seiner Position: Ordnet macOS
