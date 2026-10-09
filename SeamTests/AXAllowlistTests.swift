@@ -10,7 +10,7 @@ final class AXAllowlistTests: XCTestCase {
     func testAllowlistIsExactlyTheDesignedSet() {
         XCTAssertEqual(Set(AXAttribute.allCases.map(\.rawValue)), [
             "AXRole", "AXSubrole", "AXPosition", "AXSize", "AXMinimized", "AXFullScreen",
-            "AXWindow", "AXWindows", "AXFocusedApplication", "AXFocusedWindow",
+            "AXWindows", "AXFocusedApplication", "AXFocusedWindow",
         ])
     }
 

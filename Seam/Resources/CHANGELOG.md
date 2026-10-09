@@ -2,6 +2,49 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.4.0] — 2026-10-09
+
+### Neu
+
+- **Neues Design:** Ein Klick auf das Seam-Symbol öffnet statt des Systemmenüs ein Glas-Fenster
+  im Stil von macOS 27. Oben der aktuelle Space, darunter alle Anordnungen als Kacheln mit
+  Piktogramm (Quer/Hochkant umschaltbar, beim Überfahren Name und Kürzel), unten Knöpfe für
+  Abdunkeln, Spaces, Einstellungen, Hilfe und Beenden. Ein Klick auf eine Kachel wirkt auf das
+  vordere Fenster der App, die du zuletzt benutzt hast.
+- **Einstellungen im eigenen Fenster**, nach Themen gegliedert (Fenster, Tastenkürzel,
+  Abdunkeln, Spaces, Allgemein).
+- **Neues App-Symbol:** zwei Hälften mit Lichtnaht, als Ebenen-Symbol aus Icon Composer. macOS
+  zeigt es passend in Hell, Dunkel, Klar und Getönt.
+- Schrift Plus Jakarta Sans wie in den anderen Apps der Familie (Lizenz in „Hilfe“ → „Fremdcode“).
+- **Nur den Space-Namen zeigen:** Unter „Einstellungen“ → „Symbol ausblenden, wenn ein Space-Name
+  steht“ verschwindet das Seam-Symbol aus der Menüleiste, solange dort ein Name steht. Spaces ohne
+  eigenen Namen zeigen weiter das Symbol, damit Seam immer anklickbar bleibt. Fehlt die
+  Bedienungshilfen-Freigabe, bleibt das durchgestrichene Symbol als Warnung sichtbar.
+
+### Geändert
+
+- Die Liste aller Spaces steht nicht mehr im Menü, sondern unter „Spaces benennen“ (Knopf unten
+  im Seam-Fenster oder Klick auf den Space-Namen oben). Der aktuelle Space ist dort markiert.
+- „Nach Updates suchen …“ liegt in den Einstellungen (Zahnrad) unter „Allgemein“. Ein gefundenes
+  Update steht oben im Seam-Fenster.
+
+### Behoben (Code-Prüfung)
+
+- **Andocken per Ziehen ging manchmal nicht:** Packte man ein Fenster knapp unter der Oberkante
+  der Titelleiste, hielt Seam das Verschieben für ein Größeziehen. Dann erschien keine
+  Andockfläche, und bei kurzem Ziehen wurde das Fenster beim Loslassen niedriger.
+- **Kacheln auf Hochkant-Bildschirmen** taten teils nichts oder das Falsche. Jetzt passen sie
+  sich dem Bildschirm des Fensters an.
+- **Tastenkürzel verschoben Seams eigene Fenster** (Einstellungen, Spaces benennen). Jetzt nicht mehr.
+- **„Bei Anmeldung starten“** zeigt an, wenn macOS noch eine Freigabe braucht, mit Knopf dorthin,
+  und meldet Fehler, statt sie zu verschlucken.
+- **Entzieht man Seam die Bedienungshilfen** im laufenden Betrieb, zeigt es das jetzt an.
+- **Geteilte Fenster:** Ein Paar löst sich nicht mehr, nur weil eine App kurz nicht antwortet oder
+  man gleich nach dem Teilen klickt. Zweimal schnell die Naht verschieben verliert keine Stufe mehr.
+- **Weniger Last:** Beim Ziehen, bei jedem Mausklick und beim Abdunkeln fragt Seam andere Apps
+  deutlich seltener ab. Eine hängende App kann Seam nicht mehr sekundenlang einfrieren.
+- **Sicherheit:** Auch der Update-Feed ist jetzt signiert, nicht nur das Update selbst.
+
 ## [0.3.0] — 2026-10-09
 
 ### Neu

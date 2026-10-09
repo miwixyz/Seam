@@ -48,7 +48,9 @@ custom_rules:
 # an der Positivliste vorbei — z. B. einen Fenstertitel.
   ax_nur_ueber_allowlist:
     name: "AX-Lesen nur über die Positivliste"
-    regex: 'AXUIElementCopyAttributeValue'
+    # Code-Audit 09.10. (S4): auch die Mehrfach-, Parameter- und Namens-Varianten und Beobachter
+    # mit Info-Dictionary — sonst ließe sich die Positivliste umgehen.
+    regex: 'AXUIElementCopy(Multiple|Parameterized)?Attribute(Value|Values|Names)|AXObserverCreateWithInfoCallback'
     excluded: 'Seam/Core/AXAccess\.swift'
     excluded_match_kinds:
       - comment
@@ -87,6 +89,18 @@ custom_rules:
       - comment
       - doccomment
     message: "Nicht dokumentierte Funktionen nur in SpaceReader.swift deklarieren (SECURE-DESIGN E14)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E1/E2 maschinell (Code-Audit 09.10., S4): keine künstlichen
+  # Eingaben, keine Event-Taps, keine Tastatur-Beobachtung. Der passive Maus-Beobachter
+  # (addGlobalMonitorForEvents mit leftMouse…) ist erlaubt und wird nicht erfasst.
+  keine_synthetischen_ereignisse:
+    name: "Keine künstlichen Eingaben / Tastatur-Beobachtung"
+    regex: 'AXUIElementPostKeyboardEvent|CGEventPost|CGEventTapCreate|CGEvent\.tapCreate|\.post\(tap:|\.keyDown|\.keyUp|\.flagsChanged'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Seam erzeugt keine Eingaben und liest keine Tastatur mit (SECURE-DESIGN E1/E2)."
     severity: error
 
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer

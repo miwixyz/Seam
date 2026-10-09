@@ -18,9 +18,17 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.4
+
+**Neues Gesicht.** Ein Klick auf das Seam-Symbol öffnet ein Glas-Fenster im Stil von macOS 27: oben der aktuelle Space, darunter alle Anordnungen als Kacheln mit Piktogramm, unten Knöpfe für Abdunkeln, Spaces, Einstellungen und Hilfe. Die Einstellungen haben ein eigenes Fenster. Dazu ein neues App-Symbol aus zwei Hälften mit einer Lichtnaht, das macOS passend in Hell, Dunkel, Klar und Getönt zeigt.
+
+**Nur der Space-Name.** Wer mag, blendet das Seam-Symbol aus, solange ein Space-Name in der Menüleiste steht. Auf Spaces ohne Namen bleibt das Symbol, damit Seam immer erreichbar ist.
+
+---
+
 ## Neu in 0.3
 
-**Namen für Spaces.** Gib deinen Schreibtischen Namen wie „Arbeit“, „Privat“ oder „Grafik“. Der Name des aktuellen Space steht neben dem Seam-Symbol in der Menüleiste, im Menü unter „Spaces“ siehst du alle mit einem Häkchen beim aktuellen. Die Namen hängen am Space selbst, nicht an seiner Position. Ordnet macOS die Spaces neu an, stimmen sie weiter. Wechseln geht wie gewohnt mit ⌃← und ⌃→ oder über Mission Control.
+**Namen für Spaces.** Gib deinen Schreibtischen Namen wie „Arbeit“, „Privat“ oder „Grafik“. Der Name des aktuellen Space steht neben dem Seam-Symbol in der Menüleiste. Unter „Spaces benennen“ siehst du alle, der aktuelle ist markiert. Die Namen hängen am Space selbst, nicht an seiner Position. Ordnet macOS die Spaces neu an, stimmen sie weiter. Wechseln geht wie gewohnt mit ⌃← und ⌃→ oder über Mission Control.
 
 ---
 
@@ -59,7 +67,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Zwei Fenster gemeinsam nach vorn holen | Ein Klick auf eines der geteilten Fenster holt beide nach vorn, Minimieren gilt für beide |
 | Wissen, auf welchem Space du bist | Namen für Spaces: der Name des aktuellen Space steht in der Menüleiste |
 | Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück (ab Werk aus) |
-| Kürzel nachschlagen | Die Kürzel fürs Querformat stehen mit Piktogramm direkt im Menü, ein Klick wendet sie an. Die Beschriftung folgt deiner Tastaturbelegung. Die Kürzel für Hochkant liegen unter „Einstellungen“ |
+| Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 
 ---
 

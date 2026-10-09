@@ -1,5 +1,5 @@
 #!/bin/sh
-# install-signed.sh — Seam für den Alltag nach /Applications (vor dem ersten Release).
+# install-signed.sh — signierte Testfassung nach /Applications (zum Ausprobieren vor einem Release).
 #
 # Warum: Die Testkopien liegen unter /tmp (macOS leert das beim Neustart), und der
 # Autostart (SMAppService) braucht einen festen Ort. Release-Build, mit Developer ID und

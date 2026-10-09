@@ -10,8 +10,9 @@ import OSLog
 ///    des Fensters, beim Packen einer gemeinsamen Kante also im Spalt oder schon
 ///    über dem Nachbarn.
 /// 2. Das erste Kandidatenfenster, das „verschoben“ oder „Größe geändert“ meldet,
-///    wird **führend**. Nur seine Meldungen zählen ab dann (E6a: keine Rückkopplung
-///    über die nachgestellten Nachbarn, die ja ebenfalls beobachtet werden).
+///    wird **führend**. Nur seine Meldungen zählen ab dann (E6a). Ob verschoben oder
+///    Größe geändert, entscheidet die rohe Größe (`Geometry.gestureMode`); danach liest
+///    Seam bis zum Loslassen nichts mehr (Code-Audit 09.10., C2/P2).
 /// 3. Größe geändert → beim LOSLASSEN die Nachbarn an der bewegten Kante bündig setzen.
 ///    Verschoben → Andockzone am Bildschirmrand anzeigen, beim Loslassen andocken.
 ///
@@ -57,7 +58,8 @@ final class DragController {
     private var gesture: Gesture?
     /// Abschluss einer Geste auf eigener Warteschlange (Setzen mit Nachprüfung blockiert
     /// sonst den Hauptthread, Outlook antwortete bis 56 ms je Setzen).
-    private let writer = NeighborWriter()
+    /// Gemeinsame Warteschlange der App (R4), über `WindowActions`.
+    private var writer: NeighborWriter { actions.writer }
     /// So weit um den Zeiger werden Fenster als Kandidaten gesucht.
     private static let grabRadius: CGFloat = 8
 
@@ -81,16 +83,13 @@ final class DragController {
         Self.log.notice("Maus-Beobachter aktiv: \(self.monitors.count, privacy: .public)/3")
     }
 
-    func stop() {
-        monitors.forEach(NSEvent.removeMonitor)
-        monitors = []
-        endGesture()
-    }
-
     // MARK: - Maus
 
     private func mouseDown() {
         endGesture()
+        // Neue Geste: Seams eigene Nachsetz-Wiederholungen der letzten Geste abbrechen, sonst
+        // hielte diese Geste deren Setz-Meldungen für eine Bewegung des Nutzers (R3).
+        writer.cancelRetries()
         guard prefs.linkEdges || prefs.dragSnap || prefs.restoreOnDragOut else { return }
         let p = Screens.mouse
         let candidates = Self.windowsNear(p)
@@ -152,14 +151,15 @@ final class DragController {
             g.start = c.start
             g.grabbed = Geometry.grabbedEdges(at: g.downPoint, frame: c.start, radius: Self.grabRadius + 2)
         }
-        guard let w = g.leading, CFEqual(w.element, element), let raw = w.frame else { return }
-        let now = effectiveFrame(g, raw)
-
-        if !Geometry.movedEdges(from: g.start, to: now).isEmpty {
-            if g.mode == .undecided { g.mode = .resizing }
-        } else if now.origin != g.start.origin, g.mode == .undecided {
+        // Nach der Entscheidung wird nichts mehr gelesen: Der Rahmen zählt erst beim Loslassen
+        // (P2: vorher 2 AX-Aufrufe je Meldung, Dutzende pro Sekunde in die gezogene App).
+        guard g.mode == .undecided, let w = g.leading, CFEqual(w.element, element), let raw = w.frame else { return }
+        switch Geometry.gestureMode(start: g.start, raw: raw) {
+        case .resizing?: g.mode = .resizing
+        case .moving?:
             g.mode = .moving
-            restoreSizeIfSnapped(g, w: w, now: now)
+            restoreSizeIfSnapped(g, w: w, now: raw)
+        case nil: break
         }
     }
 
@@ -171,16 +171,22 @@ final class DragController {
 
     /// Magnet „ursprüngliche Größe wiederherstellen“: Ein angedocktes Fenster bekommt
     /// beim Herausziehen seine alte Größe, der Zeiger bleibt an derselben relativen Stelle.
+    /// Über die Warteschlange und auf den sichtbaren Bereich begrenzt (Code-Audit 09.10., C7/S2:
+    /// vorher synchron auf dem Hauptthread, bei hängender App bis ~1,25 s Stillstand mitten in der
+    /// Geste, entgegen E6b/E5). Einmal setzen ohne Nachprüfung: Der Nutzer zieht ja weiter.
     private func restoreSizeIfSnapped(_ g: Gesture, w: AXWindow, now: CGRect) {
         guard prefs.restoreOnDragOut, let orig = actions.wasSnapped(w) else { return }
         let p = Screens.mouse
         let rel = now.width > 0 ? (p.x - now.minX) / now.width : 0.5
-        w.setFrame(CGRect(x: p.x - rel * orig.width, y: now.minY, width: orig.width, height: orig.height))
+        var target = CGRect(x: p.x - rel * orig.width, y: now.minY, width: orig.width, height: orig.height)
+        if let screen = Screens.best(for: now) { target = Geometry.clamp(target, to: screen.visible) }
+        let goal = target
+        writer.run { w.setFrame(goal) }
         actions.forget(w)
         g.restoredOriginal = orig
     }
 
-    /// Nachbarn einmal je Geste suchen (beim ersten Größeziehen).
+    /// Nachbarn einmal je Geste suchen (beim Loslassen einer Größen-Geste).
     private func ensureNeighbors(_ g: Gesture) -> Bool {
         guard let w = g.leading else { return false }
         if g.neighbors == nil {
@@ -199,17 +205,20 @@ final class DragController {
     /// 3. Hat ein Nachbar eine Mindestgröße: Kante dort halten, gezogenes Fenster anpassen.
     private func finish(leading w: AXWindow, raw: CGRect, now: CGRect,
                         frames: [Int: CGRect], windows: [Int: AXWindow]) {
-        let log = Self.log
+        let log = Self.log, writer = self.writer
+        let m = writer.mark()
         writer.run {
+            // Bricht ab, sobald der Nutzer eine neue Geste beginnt (R3).
+            let stillWanted = { writer.isCurrent(m) }
             var leading = now
-            if !NeighborWriter.close(raw, now) {
-                let ist = NeighborWriter.setVerified(w, now)
+            if !Geometry.close(raw, now) {
+                let ist = NeighborWriter.setVerified(w, now, while: stillWanted)
                 log.notice("Ungepackte Kante zurück: \(NSStringFromRect(raw), privacy: .public) → Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
             }
             for (id, wanted) in frames.sorted(by: { $0.key < $1.key }) {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 guard let nw = windows[id] else { continue }
-                let (got, attempts) = NeighborWriter.setVerifiedCounting(nw, wanted)
+                let (got, attempts) = NeighborWriter.setVerifiedCounting(nw, wanted, while: stillWanted)
                 guard let actual = got else { continue }
                 log.notice("Endwert Nachbar: \(attempts, privacy: .public) Versuch(e), \(Int((CFAbsoluteTimeGetCurrent() - t0) * 1000), privacy: .public) ms")
                 if let fix = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual) {
@@ -259,29 +268,17 @@ final class DragController {
     /// nach hinten, höchstens drei. Lage und Prozess aus der Fensterliste des Systems,
     /// die AX-Referenz dann über den Rahmen.
     private static func windowsNear(_ p: CGPoint) -> [(window: AXWindow, start: CGRect)] {
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                    kCGNullWindowID) as? [[String: Any]] else { return [] }
-        var hits: [(pid_t, CGRect)] = []
-        for info in list {
-            guard (info[kCGWindowLayer as String] as? Int) == 0,
-                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
-                  let b = info[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: b),
-                  bounds.insetBy(dx: -grabRadius, dy: -grabRadius).contains(p) else { continue }
-            hits.append((pid, bounds))
-        }
+        let hits = WindowList.onScreen().filter { $0.bounds.insetBy(dx: -grabRadius, dy: -grabRadius).contains(p) }
         // Erst über die Bedienungshilfen zuordnen, DANN auf drei begrenzen: Überlagerungen
         // wie HazeOver (ein Fenster über den ganzen Bildschirm, gemessen 08.10.) liegen
         // vorn in der Liste, sind aber keine verwaltbaren App-Fenster und würden sonst
-        // einen Kandidatenplatz belegen.
+        // einen Kandidatenplatz belegen. Startrahmen bewusst aus den Bedienungshilfen, nicht
+        // aus der Fensterliste: `Geometry.gestureMode` vergleicht die Größe exakt, schon 1 pt
+        // Abweichung zwischen beiden Quellen wäre ein Fehlalarm „Größe geändert“.
         var out: [(window: AXWindow, start: CGRect)] = []
-        for (pid, bounds) in hits where out.count < 3 {
-            if let w = AXAccess.windows(of: pid).first(where: { win in
-                guard let f = win.frame else { return false }
-                return abs(f.minX - bounds.minX) <= 2 && abs(f.minY - bounds.minY) <= 2
-                    && abs(f.width - bounds.width) <= 2 && abs(f.height - bounds.height) <= 2
-            }), let f = w.frame, !out.contains(where: { $0.window == w }) {
+        for e in hits where out.count < 3 {
+            if let w = AXAccess.window(of: e.pid, matching: e.bounds), let f = w.frame,
+               !out.contains(where: { $0.window == w }) {
                 out.append((w, f))
             }
         }

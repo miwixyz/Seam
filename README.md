@@ -22,8 +22,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   löst sich, wenn ein Fenster schließt, die App endet oder ausgeblendet wird, oder die beiden
   nicht mehr nebeneinander stehen. Idee aus [WindowGlue](https://github.com/Conxt/WindowGlue)
   (MIT), eigener Code.
-- **Namen für Spaces:** Name des aktuellen Space neben dem Symbol, Liste im Menü, Fenster zum
-  Benennen. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
+- **Namen für Spaces:** Name des aktuellen Space neben dem Symbol (wahlweise ohne Symbol), Liste
+  aller Spaces im Fenster „Spaces benennen“. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
   lesend über eine nicht dokumentierte macOS-Schnittstelle, ohne neue Berechtigung; kein Wechseln
   per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
@@ -36,7 +36,10 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   ursprüngliche Größe und Bildschirmwechsel, mit eigenem Satz für Hochkant-Bildschirme.
 - **Andocken per Ziehen** an den Bildschirmrand mit Vorschaufläche, Raster 24 × 12 (quer) bzw.
   12 × 24 (hochkant).
-- Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen, Menü mit allen Kürzeln.
+- **Glas-Fenster in der Menüleiste** (0.4): alle Anordnungen als Kacheln mit Piktogramm, Quer/Hochkant
+  passend zum Bildschirm des Zielfensters, aktueller Space oben, Knöpfe für Abdunkeln, Spaces,
+  Einstellungen und Hilfe. Einstellungen im eigenen Fenster.
+- Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
 ## Installieren
 
@@ -44,7 +47,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
    per Doppelklick entpacken und `Seam.app` in den Ordner Programme ziehen.
 2. Seam starten. Das Symbol erscheint in der Menüleiste.
 3. Systemeinstellungen → Datenschutz & Sicherheit → **Bedienungshilfen** → Seam einschalten.
-4. Im Seam-Menü unter „Einstellungen“ „Bei Anmeldung starten“ anhaken.
+4. Seam-Symbol → Zahnrad (Einstellungen) → „Bei Anmeldung starten“ anhaken.
 
 Läuft ein anderer Fenstermanager mit denselben Kürzeln, beende ihn oder schalte dort die Kürzel
 ab.
@@ -52,7 +55,7 @@ ab.
 ## Aktualisieren
 
 Seam aktualisiert sich über [Sparkle](https://sparkle-project.org). Beim ersten Mal fragt es, ob
-es automatisch suchen darf. Von Hand: Menü → „Einstellungen“ → „Nach Updates suchen …“. Updates sind mit EdDSA
+es automatisch suchen darf. Von Hand: Seam-Symbol → Zahnrad → „Nach Updates suchen …“. Updates sind mit EdDSA
 signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 **Von 0.1.x oder 0.2.0 kommend:** Dort blieb „Nach Updates suchen …“ teils ausgegraut (behoben in

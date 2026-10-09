@@ -34,7 +34,7 @@ enum LoginItem {
     }
 
     /// Schaltet um. Gibt den Fehler zurück, statt ihn zu schlucken — ein still
-    /// fehlgeschlagener Autostart sieht aus wie ein funktionierender.
+    /// fehlgeschlagener Autostart sieht aus wie ein funktionierender. SettingsView zeigt ihn an.
     @discardableResult
     static func set(_ enabled: Bool) -> Error? {
         do {

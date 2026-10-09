@@ -3,19 +3,15 @@ import AppKit
 /// Zeigt beim Ziehen die Zielfläche an (Magnet: highlightActivationAreas).
 ///
 /// Ein randloses Fenster, das keine Mausereignisse annimmt und nie aktiv wird.
-/// Farbe: Familien-Akzent „Iris“ (App-Familie Design-System), bis Seam einen
-/// eigenen Akzent bekommt.
+/// Farbe: Seams Akzent Iris aus `FamilyTheme` (Code-Audit 09.10., Q9: vorher dieselben Werte
+/// hier ein zweites Mal von Hand). Dynamisch hell/dunkel, belegt in `ThemeTests`.
 @MainActor
 final class SnapOverlay {
 
     private var panel: NSPanel?
     private var shown: CGRect?
 
-    private static let accent = NSColor(name: nil) { a in
-        a.bestMatch(from: [.darkAqua]) == .darkAqua
-            ? NSColor(red: 0x98 / 255, green: 0xA9 / 255, blue: 0xE1 / 255, alpha: 1)
-            : NSColor(red: 0x3E / 255, green: 0x53 / 255, blue: 0x98 / 255, alpha: 1)
-    }
+    private static var accent: NSColor { NSColor(FamilyTheme.accent) }
 
     /// `rect` in Bedienungshilfen-Koordinaten.
     func show(_ rect: CGRect) {

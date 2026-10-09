@@ -13,38 +13,21 @@ import AppKit
 @MainActor
 enum WindowFinder {
 
-    private struct Entry { let pid: pid_t; let bounds: CGRect; let regular: Bool }
-
     static func neighbors(of leading: AXWindow, frame: CGRect, gap: CGFloat) -> [(AXWindow, CGRect)] {
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                    kCGNullWindowID) as? [[String: Any]] else { return [] }
         // Von vorn nach hinten. Überlagerungen wie HazeOver (keine normale App) decken nichts ab.
-        var entries: [Entry] = []
-        for info in list {
-            guard (info[kCGWindowLayer as String] as? Int) == 0,
-                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
-                  let b = info[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: b) else { continue }
-            let regular = NSRunningApplication(processIdentifier: pid)?.activationPolicy == .regular
-            entries.append(Entry(pid: pid, bounds: bounds, regular: regular))
-        }
-
+        let entries = WindowList.onScreen().map { ($0, WindowList.isRegularApp($0.pid)) }
         var out: [(AXWindow, CGRect)] = []
-        for (z, e) in entries.enumerated() where e.regular && Geometry.isLinkCandidate(e.bounds, to: frame, gap: gap) {
+        for (z, (e, regular)) in entries.enumerated() where regular && Geometry.isLinkCandidate(e.bounds, to: frame, gap: gap) {
             let inFront = entries.prefix(z)
                 // Das gezogene Fenster selbst nie als Abdeckung zählen. Nicht über exakte
-                // Gleichheit: Beim ersten Größeziehen hat es sich schon bewegt.
-                .filter { $0.regular && !Self.mostlyOverlaps($0.bounds, frame) }
-                .map(\.bounds)
+                // Gleichheit: Beim Loslassen hat es sich gegenüber dem Startrahmen schon bewegt.
+                .filter { $0.1 && !Self.mostlyOverlaps($0.0.bounds, frame) }
+                .map(\.0.bounds)
             let strip = Geometry.contactStrip(of: e.bounds, to: frame, gap: gap)
-            guard !Geometry.isHidden(strip, by: inFront) else { continue }
-            if let w = AXAccess.windows(of: e.pid).first(where: { win in
-                guard let f = win.frame else { return false }
-                return Self.same(f, e.bounds)
-            }), w != leading, !out.contains(where: { $0.0 == w }) {
-                out.append((w, e.bounds))
-            }
+            guard !Geometry.isHidden(strip, by: inFront),
+                  let w = AXAccess.window(of: e.pid, matching: e.bounds),
+                  w != leading, !out.contains(where: { $0.0 == w }) else { continue }
+            out.append((w, e.bounds))
         }
         return out
     }
@@ -54,26 +37,17 @@ enum WindowFinder {
     /// zugewandt ist, auch mit Lücke oder Überlappung, und sein neuer Rahmen.
     static func complements(target t: CGRect, visible: CGRect, moving: AXWindow, movingFrame: CGRect,
                             gap: CGFloat) -> [(AXWindow, CGRect)] {
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                    kCGNullWindowID) as? [[String: Any]] else { return [] }
-        var entries: [Entry] = []
-        for info in list {
-            guard (info[kCGWindowLayer as String] as? Int) == 0,
-                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
-                  let b = info[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: b),
-                  NSRunningApplication(processIdentifier: pid)?.activationPolicy == .regular,
-                  !same(bounds, movingFrame),                    // das gesetzte Fenster selbst
-                  bounds.intersects(visible) else { continue }
-            entries.append(Entry(pid: pid, bounds: bounds, regular: true))
+        let entries = WindowList.onScreen().filter {
+            WindowList.isRegularApp($0.pid)
+                && !Geometry.close($0.bounds, movingFrame)          // das gesetzte Fenster selbst
+                && $0.bounds.intersects(visible)
         }
         var out: [(AXWindow, CGRect)] = []
         for edge in Geometry.innerEdges(of: t, in: visible, gap: gap) {
             // Von vorn nach hinten: das erste passende Fenster gewinnt.
             for e in entries {
                 guard let r = Geometry.complement(of: e.bounds, target: t, edge: edge, gap: gap, visible: visible),
-                      let w = AXAccess.windows(of: e.pid).first(where: { $0.frame.map { same($0, e.bounds) } ?? false }),
+                      let w = AXAccess.window(of: e.pid, matching: e.bounds),
                       w != moving, !out.contains(where: { $0.0 == w }) else { continue }
                 // E5: auf den sichtbaren Bereich begrenzen. Ein Nachbar, dessen äußerer Rand
                 // außerhalb lag, wird dabei mit eingeholt (rafter-code-review, 08.10.).
@@ -89,21 +63,15 @@ enum WindowFinder {
     /// ⌃⌥S: das vorderste andere Fenster auf demselben Bildschirm (also meist das
     /// zuletzt benutzte), als Partner zum Teilen.
     static func nextWindow(after moving: AXWindow, frame: CGRect, on screen: CGRect) -> (AXWindow, CGRect)? {
-        let ownPID = ProcessInfo.processInfo.processIdentifier
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                    kCGNullWindowID) as? [[String: Any]] else { return nil }
-        for info in list {
-            guard (info[kCGWindowLayer as String] as? Int) == 0,
-                  let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != ownPID,
-                  let b = info[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: b),
-                  bounds.width >= 200, bounds.height >= 150,
-                  screen.contains(CGPoint(x: bounds.midX, y: bounds.midY)),
-                  !same(bounds, frame),
-                  NSRunningApplication(processIdentifier: pid)?.activationPolicy == .regular,
-                  let w = AXAccess.windows(of: pid).first(where: { $0.frame.map { same($0, bounds) } ?? false }),
+        for e in WindowList.onScreen() {
+            let b = e.bounds
+            guard b.width >= 200, b.height >= 150,
+                  screen.contains(CGPoint(x: b.midX, y: b.midY)),
+                  !Geometry.close(b, frame),
+                  WindowList.isRegularApp(e.pid),
+                  let w = AXAccess.window(of: e.pid, matching: b),
                   w != moving else { continue }
-            return (w, bounds)
+            return (w, b)
         }
         return nil
     }
@@ -112,10 +80,5 @@ enum WindowFinder {
         let i = a.intersection(b)
         guard !i.isNull, b.width > 0, b.height > 0 else { return false }
         return i.width * i.height >= 0.8 * b.width * b.height
-    }
-
-    private static func same(_ a: CGRect, _ b: CGRect) -> Bool {
-        abs(a.minX - b.minX) <= 2 && abs(a.minY - b.minY) <= 2
-            && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
     }
 }

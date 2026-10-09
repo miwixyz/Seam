@@ -1,17 +1,41 @@
 import Foundation
 
-/// Setzt Fensterrahmen auf einer eigenen Warteschlange, nicht auf dem Hauptthread,
-/// jeweils mit Nachprüfung (`setVerified`).
+/// Setzt Fensterrahmen (und hebt an / minimiert, E12) auf einer eigenen Warteschlange, nicht
+/// auf dem Hauptthread. Fensterrahmen jeweils mit Nachprüfung (`setVerified`).
 ///
 /// Gemessen 2026-10-08: Ein Setzen bei Outlook dauerte bis 56 ms, Edge übernahm Rahmen
 /// teils erst beim zweiten Versuch. Auf dem Hauptthread blockierte das Seam.
+///
+/// **Eine Instanz für die ganze App** (Code-Audit 09.10., R4): Vorher hatten WindowActions,
+/// DragController und PairKeeper je eine eigene Warteschlange; ein Kürzel und das Loslassen
+/// nach einem Ziehen setzten dasselbe Fenster dann parallel und abwechselnd.
 final class NeighborWriter: @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "dev.mwlr.seam.setzen", qos: .userInteractive)
+    private let lock = NSLock()
+    private var generation = 0
 
     /// Mehrere Schritte nacheinander auf der Warteschlange (nach allen Zwischenständen).
     func run(_ work: @escaping @Sendable () -> Void) {
         queue.async(execute: work)
+    }
+
+    /// Noch laufende Wiederholungen abbrechen (Code-Audit 09.10., R3): Beginnt der Nutzer eine
+    /// neue Geste, während Seam noch bis ~1,5 s nachsetzt, hielt die neue Geste Seams eigene
+    /// Setz-Meldungen für eine Bewegung des Nutzers. Aufruf bei jedem Mausklick.
+    func cancelRetries() {
+        lock.lock(); generation += 1; lock.unlock()
+    }
+
+    /// Marke für einen Auftrag; `isCurrent(marke)` ist false, sobald `cancelRetries` lief.
+    func mark() -> Int {
+        lock.lock(); defer { lock.unlock() }
+        return generation
+    }
+
+    func isCurrent(_ m: Int) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return generation == m
     }
 
     // MARK: - Setzen mit Nachprüfung
@@ -28,34 +52,32 @@ final class NeighborWriter: @unchecked Sendable {
     static let retryDelays: [useconds_t] = [50_000, 100_000, 200_000, 400_000, 800_000]
 
     @discardableResult
-    static func setVerified(_ w: AXWindow, _ r: CGRect) -> CGRect? {
-        setVerifiedCounting(w, r).frame
+    static func setVerified(_ w: AXWindow, _ r: CGRect, while stillWanted: () -> Bool = { true }) -> CGRect? {
+        setVerifiedCounting(w, r, while: stillWanted).frame
     }
 
     /// Wie `setVerified`, liefert zusätzlich die Zahl der Versuche (Messpunkt: Nach dem
     /// Loslassen vergingen am 08.10. bis zu 1,7 s bis zum Endzustand).
-    static func setVerifiedCounting(_ w: AXWindow, _ r: CGRect) -> (frame: CGRect?, attempts: Int) {
+    /// `stillWanted`: zwischen den Versuchen gefragt; false = abbrechen (neue Geste, R3).
+    static func setVerifiedCounting(_ w: AXWindow, _ r: CGRect,
+                                    while stillWanted: () -> Bool = { true }) -> (frame: CGRect?, attempts: Int) {
         var previous: CGRect?
         var attempts = 0
         for delay in retryDelays {
+            guard stillWanted() else { return (previous, attempts) }
             attempts += 1
             w.setFrame(r)
             usleep(delay)
             guard let a = w.frame else { return (nil, attempts) }
-            if close(a, r) { return (a, attempts) }
+            if Geometry.close(a, r) { return (a, attempts) }
             // Mindestgröße: Lage sitzt, nur die Größe weicht ab, und das zweimal gleich.
             // NICHT bei abweichender Lage: Das ist Edges kurze Positionssperre nach dem
             // Größeziehen, dort liefert die App ebenfalls zweimal denselben Wert, nimmt
             // die Position aber kurz danach an.
             let originOK = abs(a.minX - r.minX) <= 2 && abs(a.minY - r.minY) <= 2
-            if originOK, let p = previous, close(p, a) { return (a, attempts) }
+            if originOK, let p = previous, Geometry.close(p, a) { return (a, attempts) }
             previous = a
         }
         return (previous, attempts)
-    }
-
-    static func close(_ a: CGRect, _ b: CGRect) -> Bool {
-        abs(a.minX - b.minX) <= 2 && abs(a.minY - b.minY) <= 2
-            && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
     }
 }

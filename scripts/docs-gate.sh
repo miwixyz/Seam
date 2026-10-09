@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# docs-gate.sh — blockiert eine Installation, deren Doku nicht mitgewandert ist.
+# docs-gate.sh — blockiert ein Release (release.sh), dessen Doku nicht mitgewandert ist.
 #
 # Warum es das gibt (2026-09-21):
 #
@@ -74,7 +74,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
             note "❌ $CHANGED Swift-Datei(en) geändert, seit die Doku zuletzt angefasst wurde"
             git diff --name-only "$LAST_DOC"..HEAD -- '*.swift' 2>/dev/null | sed 's/^/     /' | head -8
             note "   → ZU TUN: CHANGELOG-Eintrag ergänzen, oder HILFE.md prüfen."
-            note "   → Oder bewusst übergehen: DOCS_WAIVER=\"Grund\" vor denselben Befehl (make release / make install)"
+            note "   → Oder bewusst übergehen: DOCS_WAIVER=\"Grund\" vor denselben Befehl (make release)"
             FAIL=1
         else
             note "✓ Doku ist so aktuell wie der Code"

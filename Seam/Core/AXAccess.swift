@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import Foundation
 import CoreGraphics
@@ -15,8 +16,6 @@ enum AXAttribute: String, CaseIterable {
     case size = "AXSize"
     case minimized = "AXMinimized"
     case fullScreen = "AXFullScreen"
-    /// Elternfenster eines Elements (für „welches Fenster liegt unter der Maus?“).
-    case window = "AXWindow"
     case windows = "AXWindows"
     case focusedApplication = "AXFocusedApplication"
     case focusedWindow = "AXFocusedWindow"
@@ -79,6 +78,11 @@ struct AXWindow: Hashable, @unchecked Sendable {
 
     var isMinimized: Bool { AXAccess.bool(element, .minimized) == true }
 
+    /// Bezeichnung fürs Protokoll: Bundle-ID der App, sonst die Prozessnummer (E11: keine Titel).
+    var logName: String {
+        NSRunningApplication(processIdentifier: pid)?.bundleIdentifier ?? "pid \(pid)"
+    }
+
     /// E12: Partner eines geteilten Paars mit minimieren bzw. wiederherstellen.
     func setMinimized(_ on: Bool) {
         AXUIElementSetAttributeValue(element, AXAttribute.minimized.rawValue as CFString, on as CFBoolean)
@@ -89,15 +93,6 @@ struct AXWindow: Hashable, @unchecked Sendable {
     @discardableResult
     func perform(_ action: AXActionName) -> AXError {
         AXUIElementPerformAction(element, action.rawValue as CFString)
-    }
-
-    /// Während einer Geste: Lage, dann Größe, ohne Zurücklesen (zwei Aufrufe statt
-    /// fünf je Mausschritt). So im Prototyp gemessen: 0 px Versatz. Zurückgelesen
-    /// wird einmal beim Loslassen über `setFrame`.
-    func setFrameLive(_ r: CGRect) {
-        var pt = r.origin, sz = r.size
-        if let v = AXValueCreate(.cgPoint, &pt) { AXUIElementSetAttributeValue(element, "AXPosition" as CFString, v) }
-        if let v = AXValueCreate(.cgSize, &sz) { AXUIElementSetAttributeValue(element, "AXSize" as CFString, v) }
     }
 }
 
@@ -141,14 +136,23 @@ enum AXAccess {
         (copy(e, a) as? [AXUIElement]) ?? []
     }
 
-    /// Das gerade fokussierte Fenster (für Tastenkürzel).
+    /// Zeitlimit für ALLE Bedienungshilfen-Aufrufe dieses Prozesses, einmal beim Start.
+    /// Code-Audit 09.10.: Vorher wurde es global erst beim ersten Tastenkürzel gesetzt (als
+    /// Nebenwirkung von `focusedWindow()`); bis dahin galt für frisch erzeugte App-Elemente
+    /// (Beobachter-Anmeldung in Dimmer/PairKeeper) der Systemwert von mehreren Sekunden.
+    static func setGlobalTimeout() {
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), AXWindow.timeout)
+    }
+
+    /// Das gerade fokussierte Fenster (für Tastenkürzel). Nie ein Fenster von Seam selbst (E4):
+    /// sonst setzte ⌃⌥← bei offenem Einstellungsfenster Seams eigenes Fenster (Code-Audit 09.10.).
     static func focusedWindow() -> AXWindow? {
         let system = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(system, AXWindow.timeout)
         guard let app = element(system, .focusedApplication),
               let win = element(app, .focusedWindow) else { return nil }
         let w = AXWindow(win)
-        return w.isManageable ? w : nil
+        return w.pid != ProcessInfo.processInfo.processIdentifier && w.isManageable ? w : nil
     }
 
     /// Fokusfenster einer bestimmten App (E12: App wurde aktiviert, gehört ihr Fenster zu einem Paar?).
@@ -158,23 +162,17 @@ enum AXAccess {
         return element(app, .focusedWindow).map(AXWindow.init)
     }
 
-    /// Fenster unter einem Bildschirmpunkt (für Ziehgesten).
-    static func window(at p: CGPoint) -> AXWindow? {
-        let system = AXUIElementCreateSystemWide()
-        AXUIElementSetMessagingTimeout(system, AXWindow.timeout)
-        var hit: AXUIElement?
-        guard AXUIElementCopyElementAtPosition(system, Float(p.x), Float(p.y), &hit) == .success,
-              let hit else { return nil }
-        let win = string(hit, .role) == "AXWindow" ? hit : element(hit, .window)
-        guard let win else { return nil }
-        let w = AXWindow(win)
-        return w.isManageable ? w : nil
-    }
-
-    /// Alle verwaltbaren Fenster einer App.
-    static func windows(of pid: pid_t) -> [AXWindow] {
+    /// Das verwaltbare Fenster einer App, das an `bounds` liegt (aus der Fensterliste des Systems).
+    /// Erst die Lage vergleichen, dann nur den Treffer auf „verwaltbar“ prüfen. Code-Audit 09.10.:
+    /// vorher wurde jedes Fenster der App zuerst voll geprüft (4 AX-Aufrufe je Fenster, bei jedem Klick).
+    static func window(of pid: pid_t, matching bounds: CGRect) -> AXWindow? {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
-        return elements(app, .windows).map(AXWindow.init).filter(\.isManageable)
+        for el in elements(app, .windows) {
+            let w = AXWindow(el)
+            guard let f = w.frame, Geometry.close(f, bounds) else { continue }
+            return w.isManageable ? w : nil
+        }
+        return nil
     }
 }

@@ -7,24 +7,53 @@ final class WindowActions {
 
     private static let log = Logger(subsystem: "dev.mwlr.seam", category: "aktion")
     private let prefs: Preferences
-    private let writer = NeighborWriter()
+    /// Gemeinsame Schreib-Warteschlange der App (R4), auch von DragController genutzt.
+    let writer = NeighborWriter()
 
     /// Rahmen vor dem ersten Andocken. Nur im Speicher, an die AX-Referenz
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
     private var original: [AXWindow: CGRect] = [:]
 
-    /// ⌃⌥S hat ein Paar gebildet (E12). Gesetzt von der Engine (`PairKeeper.pair`).
+    /// ⌃⌥S hat ein Paar gebildet (E12). Gesetzt von der Engine (`PairKeeper.pair`). Aufgerufen
+    /// erst, NACHDEM beide Rahmen gesetzt sind (Code-Audit 09.10., C6: vorher sofort, ein
+    /// Aktivierungs-Anlass dazwischen sah die alten Rahmen und löste das Paar gleich wieder auf).
     var onSplit: ((AXWindow, AXWindow) -> Void)?
+
+    /// Zuletzt in Auftrag gegebene Soll-Rahmen, bis der Writer sie gesetzt hat (Code-Audit 09.10.,
+    /// R5: zweimal schnell ⌃⌥⇧→ las beim zweiten Druck noch den alten Rahmen, eine Stufe ging verloren).
+    private var planned: [AXWindow: CGRect] = [:]
 
     init(prefs: Preferences) { self.prefs = prefs }
 
-    /// Tastenkürzel: wirkt auf das fokussierte Fenster.
+    /// Rahmen fürs Rechnen: der noch nicht gesetzte Soll-Rahmen, sonst der gelesene.
+    private func frame(of w: AXWindow) -> CGRect? { planned[w] ?? w.frame }
+
+    /// Tastenkürzel: wirkt auf das fokussierte Fenster. Den Befehl bestimmt die Ausrichtung des
+    /// Bildschirms, auf dem das Fenster liegt (Kürzel gibt es je Ausrichtung).
     func perform(_ key: KeyCombo) {
-        guard let w = AXAccess.focusedWindow(), let f = w.frame, let screen = Screens.best(for: f) else {
+        guard let w = AXAccess.focusedWindow(), let f = frame(of: w), let screen = Screens.best(for: f) else {
             Self.log.notice("Kürzel \(key.label, privacy: .public): kein verwaltbares Fenster im Fokus")
             return
         }
-        guard let cmd = Layout.command(for: key, screen.orientation) else { return }
+        guard let cmd = Layout.command(for: key, screen.orientation) else {
+            Self.log.notice("Kürzel \(key.label, privacy: .public): auf diesem Bildschirm nicht belegt")
+            return
+        }
+        run(cmd, on: w, frame: f, screen: screen)
+    }
+
+    /// Befehl aus dem Popover (0.4): direkt der Befehl, nicht das Kürzel. Code-Audit 09.10., C1:
+    /// vorher wurde das Kürzel nach der Bildschirmausrichtung aufgelöst, auf einem Hochkant-
+    /// Bildschirm taten manche Kacheln nichts oder etwas anderes.
+    func perform(_ cmd: Command, on w: AXWindow) {
+        guard let f = frame(of: w), let screen = Screens.best(for: f) else {
+            Self.log.notice("\(cmd.rawValue, privacy: .public): Rahmen von \(w.logName, privacy: .public) nicht lesbar")
+            return
+        }
+        run(cmd, on: w, frame: f, screen: screen)
+    }
+
+    private func run(_ cmd: Command, on w: AXWindow, frame f: CGRect, screen: Screens.Info) {
         switch cmd {
         case .split: split(w, f, screen)
         case .seamLeft: moveSeam(w, f, screen, direction: -1)
@@ -54,8 +83,7 @@ final class WindowActions {
         let (first, second) = wFirst ? (w, partner) : (partner, w)
         lastPair = (first, second)
         let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
-        setPair((first, a), (second, b), name: "Teilen")
-        onSplit?(first, second)
+        setPair((first, a), (second, b), name: "Teilen") { [weak self] in self?.onSplit?(first, second) }
     }
 
     /// ⌃⌥⇧← / → : Naht zur nächsten festen Stufe (⅓ ⅜ ½ ⅝ ⅔). Beide Fenster in einem
@@ -91,20 +119,23 @@ final class WindowActions {
         let side: [Geometry.Edge] = o == .landscape ? [.left, .right] : [.top, .bottom]
         for (n, nf) in WindowFinder.neighbors(of: w, frame: f, gap: gap)
         where side.contains(where: { Geometry.isFacing(nf, to: f, gap: gap, edge: $0) }) {
-            return (n, nf)
+            return (n, planned[n] ?? nf)
         }
         if let (a, b) = lastPair, a == w || b == w {
             let other = a == w ? b : a
-            if let of = other.frame { return (other, of) }
+            if let of = frame(of: other) { return (other, of) }
         }
         return nil
     }
 
     /// Setzt zwei Fenster nacheinander mit Nachprüfung. Hat eines eine Mindestgröße,
     /// bleibt die Naht dort stehen und das andere passt sich an (wie beim Ziehen).
-    private func setPair(_ first: (AXWindow, CGRect), _ second: (AXWindow, CGRect), name: String) {
+    private func setPair(_ first: (AXWindow, CGRect), _ second: (AXWindow, CGRect), name: String,
+                         done: (@MainActor @Sendable () -> Void)? = nil) {
         let log = Self.log
-        writer.run {
+        let jobs = [first, second]
+        plan(jobs)
+        writer.run { [weak self] in
             let a1 = NeighborWriter.setVerified(first.0, first.1)
             let a2 = NeighborWriter.setVerified(second.0, second.1)
             if let a2, let fix = Geometry.resolveMinimum(leading: first.1, wanted: second.1, actual: a2) {
@@ -116,9 +147,21 @@ final class WindowActions {
                 NeighborWriter.setVerified(second.0, fix.leading)
                 log.notice("\(name, privacy: .public): Mindestgröße links/oben, Naht gehalten")
             }
-            func app(_ w: AXWindow) -> String { NSRunningApplication(processIdentifier: w.pid)?.bundleIdentifier ?? "\(w.pid)" }
-            log.notice("\(name, privacy: .public): \(app(first.0), privacy: .public) + \(app(second.0), privacy: .public) | Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
+            log.notice("\(name, privacy: .public): \(first.0.logName, privacy: .public) + \(second.0.logName, privacy: .public) | Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
+            Task { @MainActor in
+                self?.unplan(jobs)
+                done?()
+            }
         }
+    }
+
+    private func plan(_ jobs: [(AXWindow, CGRect)]) {
+        for (w, r) in jobs { planned[w] = r }
+    }
+
+    /// Nur entfernen, was noch von DIESEM Auftrag stammt (ein neuerer hat Vorrang).
+    private func unplan(_ jobs: [(AXWindow, CGRect)]) {
+        for (w, r) in jobs where planned[w] == r { planned[w] = nil }
     }
 
     /// `before` = Rahmen vor der Geste (beim Andocken per Ziehen der Rahmen vor dem Ziehen).
@@ -128,15 +171,22 @@ final class WindowActions {
         switch cmd {
         case .restore:
             target = original.removeValue(forKey: w).map { Geometry.clamp($0, to: screen.visible) }
+            if target == nil { Self.log.notice("restore: keine ursprüngliche Größe gemerkt für \(w.logName, privacy: .public)") }
         case .center:
             target = Geometry.centered(f, in: screen.visible)
         case .nextDisplay, .previousDisplay:
             let all = Screens.ordered()
-            guard all.count > 1, let i = all.firstIndex(of: screen) else { return }
+            guard all.count > 1, let i = all.firstIndex(of: screen) else {
+                Self.log.notice("\(cmd.rawValue, privacy: .public): nur ein Bildschirm")
+                return
+            }
             let j = (i + (cmd == .nextDisplay ? 1 : all.count - 1)) % all.count
             target = Geometry.transfer(f, from: screen.visible, to: all[j].visible)
         default:
-            guard let cells = Layout.spec(cmd, screen.orientation)?.target else { return }
+            guard let cells = Layout.spec(cmd, screen.orientation)?.target else {
+                Self.log.notice("\(cmd.rawValue, privacy: .public): keine Zielfläche für diese Ausrichtung")
+                return
+            }
             if original[w] == nil { original[w] = before }
             target = Geometry.rect(for: cells, in: screen.visible, screen.orientation, gap: gap)
         }
@@ -152,17 +202,19 @@ final class WindowActions {
         guard let target else { return }
         let goal = Geometry.clamp(target, to: screen.visible)
         let log = Self.log, name = cmd.rawValue
+        let jobs = [(w, goal)] + partners
+        plan(jobs)
         // Mit Nachprüfung auf der Warteschlange: Edge landete beim ersten ⌃⌥→ auf
         // x 2449 / Breite 991 statt x 1723 / 1712 (gemessen 08.10.).
-        writer.run {
+        writer.run { [weak self] in
             let result = NeighborWriter.setVerified(w, goal)
             // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
             log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(goal), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
             for (pw, pr) in partners {
                 let ist = NeighborWriter.setVerified(pw, pr)
-                let app = NSRunningApplication(processIdentifier: pw.pid)?.bundleIdentifier ?? "?"
-                log.notice("\(name, privacy: .public): Nachbar \(app, privacy: .public) mitgesetzt, Soll \(NSStringFromRect(pr), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
+                log.notice("\(name, privacy: .public): Nachbar \(pw.logName, privacy: .public) mitgesetzt, Soll \(NSStringFromRect(pr), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
             }
+            Task { @MainActor in self?.unplan(jobs) }
         }
     }
 

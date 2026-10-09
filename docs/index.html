@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Erst erhöhen, wenn diese Seite gegen das Release gelesen wurde. -->
-<meta name="seam:documented-version" content="0.3.0">
+<meta name="seam:documented-version" content="0.4.0">
 <title>Seam: Fenster anordnen auf dem Mac, mit einer Naht zwischen zwei Fenstern</title>
 <meta name="description" content="Seam ordnet Fenster auf deinem Mac per Tastenkürzel oder durch Ziehen an. Zwei Fenster teilen sich eine Kante, und wenn du sie verschiebst, gehen beide mit. Kostenlos und Open Source.">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -53,7 +53,7 @@
   <symbol id="i-spaces" viewBox="0 0 24 24"><rect x="2" y="8" width="15" height="12" rx="1.5"/><path d="M6 5h13.5A1.5 1.5 0 0 1 21 6.5V16"/><path d="M5.5 12.5h8"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></symbol>
 
-  <!-- Lage-Piktogramme: Bildschirm mit Zielfläche, wie im Menü von Seam -->
+  <!-- Lage-Piktogramme: Bildschirm mit Zielfläche, wie die Kacheln im Seam-Fenster -->
   <symbol id="p-left" viewBox="0 0 26 18"><rect x="1" y="1" width="24" height="16" rx="2.5"/><rect x="2.5" y="2.5" width="10.2" height="13" rx="1" fill="currentColor" fill-opacity=".4" stroke="none"/></symbol>
   <symbol id="p-right" viewBox="0 0 26 18"><rect x="1" y="1" width="24" height="16" rx="2.5"/><rect x="13.3" y="2.5" width="10.2" height="13" rx="1" fill="currentColor" fill-opacity=".4" stroke="none"/></symbol>
   <symbol id="p-up" viewBox="0 0 26 18"><rect x="1" y="1" width="24" height="16" rx="2.5"/><rect x="2.5" y="2.5" width="21" height="6.2" rx="1" fill="currentColor" fill-opacity=".4" stroke="none"/></symbol>
@@ -110,7 +110,7 @@
     </div>
     <small>Für macOS 27 auf Macs mit Apple Silicon · Open Source (MIT) · kein Konto, keine Analyse</small>
 
-    <figure class="stage" aria-label="Vereinfachte Darstellung: zwei Fenster an einer Naht, daneben das Menü von Seam mit den Tastenkürzeln">
+    <figure class="stage" aria-label="Vereinfachte Darstellung: zwei Fenster an einer Naht, daneben das Seam-Fenster mit den Anordnungen als Kacheln">
       <div class="desk">
         <div class="menubar" aria-hidden="true">
           <span class="mb-item open"><svg class="ico"><use href="#i-split"/></svg></span>
@@ -122,19 +122,18 @@
           <div class="win b"><div class="bar"><i></i><i></i><i></i></div><span class="ln"></span><span class="ln"></span><span class="ln"></span></div>
           <div class="seam-line"></div>
         </div>
-        <div class="menu" aria-hidden="true">
-          <div class="sec">Querformat</div>
-          <div class="item"><svg class="pic"><use href="#p-split"/></svg><span>Zwei Fenster teilen</span><span class="key">⌃⌥S</span></div>
-          <div class="item"><svg class="pic"><use href="#p-seamL"/></svg><span>Naht nach links</span><span class="key">⌃⌥⇧←</span></div>
-          <div class="item hl"><svg class="pic"><use href="#p-seamR"/></svg><span>Naht nach rechts</span><span class="key">⌃⌥⇧→</span></div>
-          <hr>
-          <div class="item"><svg class="pic"><use href="#p-left"/></svg><span>Linke Hälfte</span><span class="key">⌃⌥←</span></div>
-          <div class="item"><svg class="pic"><use href="#p-right"/></svg><span>Rechte Hälfte</span><span class="key">⌃⌥→</span></div>
-          <div class="item"><svg class="pic"><use href="#p-t1"/></svg><span>Linkes Drittel</span><span class="key">⌃⌘L</span></div>
-          <div class="item"><svg class="pic"><use href="#p-max"/></svg><span>Maximieren</span><span class="key">⌃⌘↩</span></div>
+        <div class="pop" aria-hidden="true">
+          <div class="pop-head"><svg class="ico"><use href="#i-split"/></svg><b>Seam</b><span class="cap"><svg class="ico"><use href="#i-spaces"/></svg>Arbeit <em>1/4</em></span></div>
+          <div class="pop-card">
+            <div class="pop-title"><b>Anordnen</b><span class="seg"><i class="on">Quer</i><i>Hochkant</i></span></div>
+            <div class="row"><span>Naht</span><i class="t"><svg class="pic"><use href="#p-split"/></svg></i><i class="t"><svg class="pic"><use href="#p-seamL"/></svg></i><i class="t hl"><svg class="pic"><use href="#p-seamR"/></svg></i></div>
+            <div class="row"><span>Hälften</span><i class="t"><svg class="pic"><use href="#p-left"/></svg></i><i class="t"><svg class="pic"><use href="#p-right"/></svg></i><i class="t"><svg class="pic"><use href="#p-up"/></svg></i><i class="t"><svg class="pic"><use href="#p-down"/></svg></i></div>
+            <div class="row"><span>Drittel</span><i class="t"><svg class="pic"><use href="#p-t1"/></svg></i><i class="t"><svg class="pic"><use href="#p-t2"/></svg></i><i class="t"><svg class="pic"><use href="#p-t3"/></svg></i></div>
+            <div class="info"><span>Naht nach rechts</span><span class="key">⌃⌥⇧→</span></div>
+          </div>
         </div>
       </div>
-      <figcaption class="mock-note">Die Darstellung ist vereinfacht. Das Menü zeigt alle Kürzel mit Piktogramm, ein Klick wendet sie auf das vorderste Fenster an.</figcaption>
+      <figcaption class="mock-note">Die Darstellung ist vereinfacht. Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln; ein Klick auf eine Kachel wirkt auf das vordere Fenster.</figcaption>
     </figure>
   </div>
 </header>
@@ -193,8 +192,13 @@
 <section id="funktionen">
   <div class="wrap">
     <h2>Was Seam außerdem kann</h2>
-    <p class="lead">Einzelne Fenster ordnet Seam per Kürzel, über das Menü oder durch Ziehen an den Bildschirmrand an.</p>
+    <p class="lead">Einzelne Fenster ordnet Seam per Kürzel, über die Kacheln im Seam-Fenster oder durch Ziehen an den Bildschirmrand an.</p>
     <div class="features">
+      <div class="feature card wide">
+        <div class="icon"><svg class="pic" aria-hidden="true"><use href="#p-split"/></svg></div>
+        <h3>Alles mit einem Klick <span class="tag">Neu in 0.4</span></h3>
+        <p>Ein Klick auf das Seam-Symbol öffnet ein Glas-Fenster mit allen Anordnungen als Kacheln. Fährst du über eine Kachel, siehst du ihr Kürzel, ein Klick wirkt auf das vordere Fenster. Die Einstellungen haben jetzt ein eigenes Fenster, und das App-Symbol zeigt zwei Hälften mit einer Lichtnaht.</p>
+      </div>
       <div class="feature card">
         <div class="icon"><svg class="pic" aria-hidden="true"><use href="#p-left"/></svg></div>
         <h3>Hälften und Viertel</h3>
@@ -233,17 +237,17 @@
       <div class="feature card">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-gap"/></svg></div>
         <h3>Abstand nach Wahl</h3>
-        <p>Zwischen den Fenstern lässt Seam 5 Punkt frei. Im Menü unter „Einstellungen“ stellst du 0, 10 oder 20 Punkt ein.</p>
+        <p>Zwischen den Fenstern lässt Seam 5 Punkt frei. In den Einstellungen (Zahnrad) stellst du 0, 10 oder 20 Punkt ein.</p>
       </div>
       <div class="feature card wide">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-focus"/></svg></div>
         <h3>Hintergrund abdunkeln <span class="tag">Neu in 0.2</span></h3>
-        <p>Alle Fenster außer dem aktiven treten zurück, so siehst du sofort, wo du gerade tippst. Hast du zwei Fenster geteilt, bleiben beide hell. Ab Werk ist es aus, einschalten kannst du es unter „Einstellungen“, in drei Stärken.</p>
+        <p>Alle Fenster außer dem aktiven treten zurück, so siehst du sofort, wo du gerade tippst. Hast du zwei Fenster geteilt, bleiben beide hell. Ab Werk ist es aus. Einschalten geht mit dem Halbkreis-Knopf im Seam-Fenster, die Stärke (drei Stufen) stellst du unter „Einstellungen“ ein.</p>
       </div>
       <div class="feature card wide">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-spaces"/></svg></div>
         <h3>Namen für Spaces <span class="tag">Neu in 0.3</span></h3>
-        <p>Gib deinen Schreibtischen Namen wie „Arbeit“ oder „Grafik“. Der Name des aktuellen Space steht neben dem Seam-Symbol in der Menüleiste, im Menü siehst du alle auf einen Blick. Ordnet macOS die Spaces neu an, bleiben die Namen trotzdem richtig.</p>
+        <p>Gib deinen Schreibtischen Namen wie „Arbeit“ oder „Grafik“. Der Name des aktuellen Space steht neben dem Seam-Symbol in der Menüleiste, oben im Seam-Fenster siehst du ihn mit Nummer. Ordnet macOS die Spaces neu an, bleiben die Namen trotzdem richtig. Seit 0.4 kannst du das Seam-Symbol ausblenden, solange ein Name dasteht. Dann bleibt in der Menüleiste nur der Name.</p>
       </div>
     </div>
   </div>
@@ -252,7 +256,7 @@
 <section id="kuerzel">
   <div class="wrap">
     <h2>Alle Kürzel auf einen Blick</h2>
-    <p class="lead">Dieselbe Liste steht direkt im Menü von Seam, mit Piktogramm und zum Anklicken. Die Beschriftung folgt deiner Tastaturbelegung.</p>
+    <p class="lead">Dieselben Anordnungen stehen im Seam-Fenster als Kacheln zum Anklicken; fährst du darüber, zeigt Seam Name und Kürzel. Die Beschriftung folgt deiner Tastaturbelegung.</p>
     <div class="keygroups">
       <div class="keygroup card">
         <table>
@@ -307,7 +311,7 @@
         </table>
       </div>
     </div>
-    <p class="keys-note">Die Tabelle zeigt das Querformat mit deutscher Tastatur. ↩ ist die Eingabetaste, ⌫ die Rückschritttaste und ↖ die Taste Pos1. Für hochkant gestellte Bildschirme gilt ein eigener Satz. Du findest ihn im Menü unter „Einstellungen“ → „Kürzel für Hochkant-Bildschirme“. Die Kürzel sind fest belegt, du kannst sie unter „Einstellungen“ aber gesammelt abschalten.</p>
+    <p class="keys-note">Die Tabelle zeigt das Querformat mit deutscher Tastatur. ↩ ist die Eingabetaste, ⌫ die Rückschritttaste und ↖ die Taste Pos1. Für hochkant gestellte Bildschirme gilt ein eigener Satz. Im Seam-Fenster schaltest du die Kacheln oben zwischen „Quer“ und „Hochkant“ um. Die Kürzel sind fest belegt, du kannst sie unter „Einstellungen“ aber gesammelt abschalten.</p>
   </div>
 </section>
 
@@ -343,7 +347,7 @@
     <div class="steps">
       <div class="step card"><div class="n">1</div><h3>Laden</h3><p>Lade die ZIP-Datei des neuesten Release von <a href="https://github.com/miwixyz/Seam/releases/latest">GitHub</a> herunter.</p></div>
       <div class="step card"><div class="n">2</div><h3>Auspacken</h3><p>Öffne die ZIP-Datei per Doppelklick und zieh <strong>Seam.app</strong> in den Ordner <em>Programme</em>.</p></div>
-      <div class="step card"><div class="n">3</div><h3>Freigeben</h3><p>Starte Seam und schalte es in den Systemeinstellungen unter <em>Datenschutz &amp; Sicherheit → Bedienungshilfen</em> ein. Das Menü von Seam öffnet dir die Stelle direkt.</p></div>
+      <div class="step card"><div class="n">3</div><h3>Freigeben</h3><p>Starte Seam und schalte es in den Systemeinstellungen unter <em>Datenschutz &amp; Sicherheit → Bedienungshilfen</em> ein. Fehlt die Freigabe, zeigt das Seam-Fenster einen Knopf, der die Stelle direkt öffnet.</p></div>
     </div>
   </div>
 </section>
@@ -357,7 +361,7 @@
       <details><summary>Warum folgt das Nachbarfenster erst beim Loslassen?</summary><p>Manche Apps brauchen für jede Größenänderung spürbar lange, Outlook in Messungen bis zu 56 Millisekunden. Live mitgezogen hätte das geruckelt. Deshalb bewegt sich während des Ziehens nur dein Fenster, und beim Loslassen setzt Seam den Nachbarn in einem Schritt an die neue Kante.</p></details>
       <details><summary>Warum bleibt die Kante manchmal stehen?</summary><p>Viele Apps legen fest, wie klein ihr Fenster höchstens werden darf. Erreicht das Nachbarfenster diese Grenze, bleibt die Naht dort stehen, damit sich die Fenster nicht überlappen.</p></details>
       <details><summary>Welche Fenster fasst Seam an?</summary><p>Seam bewegt nur normale App-Fenster. Dialoge, das Dock und andere Systemflächen lässt Seam in Ruhe, ebenso Fenster im Vollbild. Minimierte Fenster verschiebt es nicht. Nur den Partner eines geteilten Paars minimiert es mit und holt ihn zurück.</p></details>
-      <details><summary>Ein anderes Programm nutzt schon dieselben Kürzel. Was passiert dann?</summary><p>Belegen zwei Programme dasselbe Kürzel, reagiert nur eines von beiden. Schalte die Kürzel im anderen Programm ab oder beende es. Im Menü unter „Einstellungen“ schaltest du in Seam alle Kürzel auf einmal ab.</p></details>
+      <details><summary>Ein anderes Programm nutzt schon dieselben Kürzel. Was passiert dann?</summary><p>Belegen zwei Programme dasselbe Kürzel, reagiert nur eines von beiden. Schalte die Kürzel im anderen Programm ab oder beende es. In den Einstellungen (Zahnrad) schaltest du in Seam alle Kürzel auf einmal ab.</p></details>
       <details><summary>Woher kennt Seam meine Spaces?</summary><p>Die Liste der Spaces und welcher gerade aktiv ist, gibt macOS nur über eine Schnittstelle heraus, die Apple nicht offiziell dokumentiert. Seam liest dort nur, ändert nichts und braucht dafür keine zusätzliche Freigabe. Liefert macOS die Liste nach einem Update nicht mehr, blendet Seam die Space-Namen aus, deine Namen bleiben gespeichert.</p></details>
       <details><summary>Ich nutze schon HazeOver. Passt das zusammen?</summary><p>Ja, nur sollte eines von beiden abdunkeln, sonst wird es doppelt dunkel. Seams Abdunklung ist ab Werk aus. Der Unterschied: Bei Seam bleiben zwei geteilte Fenster gemeinsam hell.</p></details>
       <details><summary>Läuft Seam auf Intel-Macs oder älteren macOS-Versionen?</summary><p>Nein, Seam braucht einen Mac mit Apple Silicon und macOS 27.</p></details>

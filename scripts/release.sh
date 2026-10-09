@@ -187,7 +187,13 @@ echo "${SIGN_INFO}" | grep -q "Authority=Developer ID Application" \
     || fail "Nicht mit Developer ID signiert. Ein ad-hoc signiertes Release würde auf dem anderen Mac scheitern."
 echo "${SIGN_INFO}" | grep -q "flags=.*runtime" \
     || fail "Hardened Runtime fehlt — Apple würde die Notarisierung ablehnen"
-echo "  ✓ Developer ID + Hardened Runtime bestätigt"
+echo "${SIGN_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" \
+    || fail "Falsches Team in der Signatur (erwartet LTKJ6Z2VYB)"
+# E8 maschinell (Code-Audit 09.10., S3): Seam trägt KEINE Berechtigungen. Jede Ausnahme wie
+# disable-library-validation würde Code-Einschleusung erlauben, samt Bedienungshilfen-Freigabe.
+ENTS="$(codesign -d --entitlements - --xml "${APP_PATH}" 2>/dev/null | grep -o '<key>[^<]*</key>' || true)"
+[ -z "${ENTS}" ] || fail "Unerwartete Berechtigungen in der App: ${ENTS} (SECURE-DESIGN E8)"
+echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen"
 
 # ---------------------------------------------------------------------------
 # 4. Notarisieren
@@ -329,16 +335,19 @@ PY
 # KRYPTOGRAFISCHE Gegenpruefung: Passt die Signatur im Appcast zum ARCHIV, das
 # ausgeliefert wird? Das ist die Frage, auf die es ankommt.
 #
-# Achtung, hier stand zuerst `sign_update --verify appcast.xml` — und das ist
-# etwas ANDERES: Es prueft eine *Feed*-Signatur, ein separates, optionales
-# Sparkle-Merkmal, das `generate_appcast` gar nicht erzeugt. Der Lauf fuer
-# v0.4.0 scheiterte daran, obwohl der Appcast korrekt war. Das Gate prueefte
-# das Falsche; gut, dass es ueberhaupt prueefte. (2026-09-22.)
+# (Kalli-Lehre 2026-09-22: `sign_update --verify appcast.xml` prueft etwas ANDERES, naemlich
+# die Feed-Signatur. Die gibt es bei Seam seit 0.4.0 zusaetzlich, Pruefung direkt danach.)
 APPCAST_SIG="$(cat .appcast-sig)"
 rm -f .appcast-sig
 "${SPARKLE_BIN}/sign_update" --verify "${ZIP}" "${APPCAST_SIG}" \
     || fail "Die Signatur im Appcast passt NICHT zum ausgelieferten Archiv"
 echo "  ✓ Appcast-Signatur gegen das ausgelieferte Archiv verifiziert"
+
+# Feed-Signatur (Code-Audit 09.10., S1): Die App verlangt sie (SURequireSignedFeed). Fehlt sie,
+# nähme Seam 0.4.0+ KEIN Update mehr an. Darum hart prüfen, bevor der Appcast veröffentlicht wird.
+"${SPARKLE_BIN}/sign_update" --verify appcast.xml \
+    || fail "Der Appcast trägt keine gültige Feed-Signatur, Seam würde ihn ablehnen"
+echo "  ✓ Feed-Signatur des Appcasts verifiziert"
 
 # Der Appcast liegt IM REPO, nicht in einem Gist: Jede Änderung daran ist damit
 # ein öffentlicher, datierter Commit. Billigste Manipulationserkennung, die zu

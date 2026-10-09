@@ -58,6 +58,6 @@ release-dry-run:
 clean:
 	rm -rf $(DERIVED) $(APP).xcodeproj
 
-# Für den Alltag vor dem ersten Release: signiert nach /Applications.
+# Testfassung lokal: signiert nach /Applications, Build-Nummer wie ein Release. Ohne Doku-Gate.
 install:
 	@sh scripts/install-signed.sh

@@ -54,6 +54,13 @@ final class SpaceWatcher {
         }
     }
 
+    /// Symbol in der Menüleiste zeigen? Nur weglassen, wenn ein Name dasteht, der Nutzer es so will
+    /// und die Bedienungshilfen-Freigabe da ist (sonst ginge die Warnung verloren). Ohne Namen bleibt
+    /// das Symbol immer, sonst wäre Seam in der Menüleiste unsichtbar.
+    nonisolated static func showsIcon(title: String?, hideWhenNamed: Bool, trusted: Bool) -> Bool {
+        title == nil || !hideWhenNamed || !trusted
+    }
+
     /// Text neben dem Symbol in der Menüleiste: nur ein selbst vergebener Name, sonst nichts.
     func menuBarTitle(_ prefs: Preferences) -> String? {
         guard prefs.showSpaceName, let c = current, let n = prefs.spaceNames[c.key], !n.isEmpty else { return nil }

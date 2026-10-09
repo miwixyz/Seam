@@ -18,6 +18,7 @@ final class Preferences {
         static let dimStrength = "dimStrength"
         static let showSpaceName = "showSpaceName"
         static let spaceNames = "spaceNames"
+        static let hideIconWithSpaceName = "hideIconWithSpaceName"
     }
 
     private let defaults: UserDefaults
@@ -41,6 +42,8 @@ final class Preferences {
     var showSpaceName: Bool { didSet { defaults.set(showSpaceName, forKey: Key.showSpaceName) } }
     /// Namen der Spaces: Space-Schlüssel (UUID) → Name. Nur Eingaben des Nutzers (E14).
     var spaceNames: [String: String] { didSet { defaults.set(spaceNames, forKey: Key.spaceNames) } }
+    /// Seam-Symbol weglassen, solange ein Space-Name in der Menüleiste steht (Michael, 09.10.).
+    var hideIconWithSpaceName: Bool { didSet { defaults.set(hideIconWithSpaceName, forKey: Key.hideIconWithSpaceName) } }
 
     static let gapChoices = [0, 5, 10, 20]
     static let dimChoices = [20, 35, 50]
@@ -65,6 +68,7 @@ final class Preferences {
         let s = defaults.object(forKey: Key.dimStrength) as? Int ?? 35
         dimStrength = Self.dimChoices.contains(s) ? s : 35
         showSpaceName = defaults.object(forKey: Key.showSpaceName) as? Bool ?? true
+        hideIconWithSpaceName = defaults.object(forKey: Key.hideIconWithSpaceName) as? Bool ?? false
         // Von außen veränderte Werte bereinigen (STRIDE T): nur Text, gekürzt, ohne Steuerzeichen.
         let raw = defaults.dictionary(forKey: Key.spaceNames) as? [String: String] ?? [:]
         spaceNames = raw.reduce(into: [:]) { r, e in

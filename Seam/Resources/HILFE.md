@@ -1,7 +1,8 @@
 # Seam – Hilfe
 
 Seam ordnet Fenster an und hält Fenster zusammen, die aneinanderstoßen. Es lebt in der
-Menüleiste und hat kein Fenster außer diesem.
+Menüleiste. Ein Klick auf das Symbol öffnet ein Fenster mit allen Anordnungen als Kacheln, unten
+liegen Knöpfe für Abdunkeln, Spaces, Einstellungen (Zahnrad), Hilfe und Beenden.
 
 ## Einrichten
 
@@ -9,7 +10,7 @@ Seam braucht die Freigabe für die **Bedienungshilfen**, sonst darf es fremde Fe
 bewegen. Öffne Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen und schalte
 Seam ein. Seam merkt die Freigabe selbst, ein Neustart ist nicht nötig.
 
-Damit Seam nach dem Anmelden läuft, setze im Menü unter „Einstellungen“ den Haken bei „Bei Anmeldung starten“.
+Damit Seam nach dem Anmelden läuft, setze in den Einstellungen (Zahnrad) den Haken bei „Bei Anmeldung starten“.
 
 Läuft noch ein anderer Fenstermanager mit denselben Kürzeln, gewinnt eines der beiden
 Programme. Beende das andere oder schalte dort die Kürzel ab.
@@ -26,20 +27,21 @@ Programme. Beende das andere oder schalte dort die Kürzel ab.
   auch wenn ein drittes Fenster darüber lag. Minimierst du eines, wird das andere mit minimiert,
   und beim Zurückholen kommen beide wieder. Das Paar löst sich, sobald ein Fenster geschlossen
   wird, die App endet oder ausgeblendet wird (⌘H), oder die beiden nicht mehr nebeneinander
-  stehen. Abschalten: „Einstellungen“ → „Geteilte Fenster bleiben zusammen“.
+  stehen. Abschalten: Einstellungen → „Geteilte Fenster bleiben zusammen“.
 
 ## Namen für Spaces
 
-Im Menü unter „Spaces“ → „Spaces benennen …“ gibst du jedem Schreibtisch einen Namen. Der Name
+Über den Space-Namen oben im Seam-Fenster oder den Knopf „Spaces benennen“ gibst du jedem Schreibtisch einen Namen. Der Name
 des aktuellen Space steht dann neben dem Seam-Symbol in der Menüleiste; Spaces ohne eigenen Namen
-zeigen nur das Symbol. Die Namen hängen am Space selbst, nicht an seiner Position: Ordnet macOS
+zeigen nur das Symbol. In den Einstellungen → „Symbol ausblenden, wenn ein Space-Name steht“
+siehst du statt Symbol und Name nur noch den Namen. Die Namen hängen am Space selbst, nicht an seiner Position: Ordnet macOS
 die Spaces neu an, stimmen sie weiter. Wechseln geht wie gewohnt mit ⌃← / ⌃→ oder Mission
 Control. Seam liest dafür über eine nicht offiziell dokumentierte Schnittstelle von macOS nur die
 Liste der Spaces. Liefert macOS sie nach einem Update nicht mehr, blendet Seam die Funktion aus.
 
 ## Hintergrund abdunkeln
 
-Unter „Einstellungen“ → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.
+Mit dem Halbkreis-Knopf unten im Seam-Fenster oder in den Einstellungen → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.
 Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Die Stärke stellst du darunter ein
 (leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Klicks gehen durch
 die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.
@@ -60,15 +62,19 @@ wieder heraus, bekommt es seine ursprüngliche Größe zurück.
 
 ## Alle Tastenkürzel
 
-Die Kürzel stehen direkt im Menü. Ein Klick auf einen Eintrag wirkt wie das Kürzel auf das
-vorderste Fenster. Für hochkant gestellte Bildschirme gilt ein eigener Satz, zu finden unter
-„Einstellungen“ → „Kürzel für Hochkant-Bildschirme“.
+Im Seam-Fenster steht jede Anordnung als Kachel. Ein Klick wirkt wie das Kürzel auf das vordere
+Fenster der App, die du zuletzt benutzt hast; fährst du über eine Kachel, siehst du Name und
+Kürzel. Für hochkant gestellte Bildschirme gilt ein eigener Satz, oben umschaltbar mit
+„Quer“ / „Hochkant“.
 
 ## Updates
 
 Seam sucht über Sparkle nach neuen Versionen. Beim ersten Mal fragt es, ob es das automatisch
-tun darf. Von Hand: Menü → „Einstellungen“ → „Nach Updates suchen …“. Ein gefundenes Update steht oben im Menü.
-Jedes Update ist mit einem Schlüssel signiert, den Seam vor dem Entpacken prüft.
+tun darf. Von Hand: Einstellungen (Zahnrad) → „Nach Updates suchen …“. Ein gefundenes Update steht oben im
+Seam-Fenster.
+Jedes Update ist mit einem Schlüssel signiert, den Seam vor dem Entpacken prüft. Seit 0.4 ist
+auch die Liste der Versionen (der Update-Feed) signiert; eine veränderte Liste lehnt Seam ab.
+Was sich in jeder Version geändert hat, steht hier im Reiter „Änderungen“.
 
 ## Datenschutz
 

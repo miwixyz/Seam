@@ -78,3 +78,26 @@ final class SpaceReaderTests: XCTestCase {
         XCTAssertTrue(p.showSpaceName)
     }
 }
+
+/// Michael, 09.10.: Symbol ausblendbar, wenn ein Space-Name steht.
+final class MenuBarIconTests: XCTestCase {
+    func testIconHiddenOnlyWithNameOptionAndTrust() {
+        XCTAssertFalse(SpaceWatcher.showsIcon(title: "Arbeit", hideWhenNamed: true, trusted: true))
+    }
+    func testIconStaysWithoutName() {
+        // Ohne Namen wäre Seam sonst unsichtbar.
+        XCTAssertTrue(SpaceWatcher.showsIcon(title: nil, hideWhenNamed: true, trusted: true))
+    }
+    func testIconStaysWhenOptionOff() {
+        XCTAssertTrue(SpaceWatcher.showsIcon(title: "Arbeit", hideWhenNamed: false, trusted: true))
+    }
+    func testIconStaysWithoutAccessibility() {
+        // Durchgestrichenes Symbol = Freigabe fehlt; die Warnung darf nicht verschwinden.
+        XCTAssertTrue(SpaceWatcher.showsIcon(title: "Arbeit", hideWhenNamed: true, trusted: false))
+    }
+    @MainActor
+    func testDefaultOff() {
+        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        XCTAssertFalse(Preferences(defaults: d).hideIconWithSpaceName)
+    }
+}

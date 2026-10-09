@@ -48,8 +48,12 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
 
 ### E3 – Von fremden Fenstern nur Form und Lage lesen
 - **Entschieden:** Seam liest ausschließlich die Attribute Rolle, Unterrolle, Position, Größe,
-  minimiert, Vollbild sowie die Prozess-ID. Eine Positivliste im Code (`AXAttributes.allowed`),
-  ein Test prüft, dass kein anderer Lesezugriff existiert.
+  minimiert, Vollbild, die Fensterliste einer App (`AXWindows`), die fokussierte App und deren
+  Fokusfenster (`AXFocusedApplication`, `AXFocusedWindow`) sowie die Prozess-ID. Positivliste im
+  Code: `AXAttribute` in `AXAccess.swift`; `AXAllowlistTests` hält sie fest, die Lint-Regel
+  `ax_nur_ueber_allowlist` verbietet jeden Lesezugriff daran vorbei (seit Code-Audit 09.10. auch
+  die Mehrfach-, Parameter- und Namens-Varianten). *Nachgezogen 09.10.:* `AXWindow` (Elternfenster
+  unter dem Zeiger) entfernt, die Funktion dazu war seit Phase 1 ungenutzt.
 - **Verworfen:** Fenstertitel oder Inhalte (`AXValue`, `AXTitle`) lesen. Titel enthalten
   Mail-Betreffe, Dokumentnamen, Chat-Partner. Für Seam ist der Titel nie nötig, die AX-Referenz
   identifiziert das Fenster (Lehre aus dem Prototyp: Auswahl über die Referenz, nicht über die Lage).
@@ -79,7 +83,7 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
   Konturen ist ausgebaut). Damit gibt es während einer Geste keine Schreibvorgänge auf Nachbarn
   und keine Echo-Schleife.
 - **Weiterhin:** (a) Nur das führende Fenster (das zuerst Bewegung meldet) zählt; Meldungen der
-  anderen Kandidaten werden ignoriert. (b) Alle Setzvorgänge laufen auf einer eigenen
+  anderen Kandidaten werden ignoriert. (b) Alle Setzvorgänge laufen auf EINER gemeinsamen
   Warteschlange (`NeighborWriter`), nie auf dem Hauptthread: Outlook antwortete bis 56 ms je
   Setzen. (c) Kann ein Fenster nicht folgen (Mindestgröße), bleibt die Kante an dieser Stelle
   (`Geometry.resolveMinimum`), statt dass Fenster überlappen. (d) Nachprüfung höchstens
@@ -151,13 +155,16 @@ gemeinsam nach vorn, wird gemeinsam minimiert, löst sich sauber auf.
   (dann kein Anheben, Paar weg). So kann ein altes Paar nie ein Fenster an einer unerwarteten
   Stelle nach vorn holen.
 - **Rückkopplung (E6):** Seam-eigene Schreibvorgänge erzeugen Meldungen (Minimieren des Partners,
-  bei Paaren derselben App auch Fokus). Jedes Fenster, auf das Seam gerade gewirkt hat, wird
-  0,5 s lang ignoriert; Minimieren nur, wenn der Ist-Zustand abweicht.
+  bei Paaren derselben App auch Fokus). Jedes Fenster, auf das Seam gerade wirkt, wird ignoriert,
+  solange die Abfolge läuft (`inFlight`), und danach noch 0,6 s; Minimieren nur, wenn der
+  Ist-Zustand abweicht. Ein nicht lesbarer Rahmen (AX-Zeitlimit) löst das Paar NICHT auf.
 - **Daten (E10):** Paare nur im Speicher, an AX-Referenzen gebunden, nach Neustart weg. Protokoll
   (E11): Anlass + Bundle-IDs, keine Titel.
 - **STRIDE-Nachtrag:** *S* – eine App meldet einen Fokuswechsel, den es nicht gab → schlimmstenfalls
-  wird das Partnerfenster angehoben. *D* – hängende App: Aufrufe auf der Setz-Warteschlange mit
-  dem 0,25-s-Zeitlimit, nie auf dem Hauptthread. *E* – keine neue Steuerschnittstelle (E7 bleibt).
+  wird das Partnerfenster angehoben. *D* – hängende App: Anheben/Minimieren auf der Setz-Warteschlange.
+  Die Lesezugriffe zur Entscheidung (Fokusfenster, Rahmen, minimiert) laufen synchron auf dem
+  Hauptthread, je auf 0,25 s begrenzt (globales Zeitlimit beim Start, Code-Audit 09.10.). *E* –
+  keine neue Steuerschnittstelle (E7 bleibt).
 
 - **Umsetzung 09.10. geprüft** (`rafter-code-review` gegen E12, Sichttest mit Testkopie):
   Positivliste `AXActionName` = nur `AXRaise` (Test), Lint-Regel `ax_schreiben_nur_ueber_axaccess`
@@ -221,7 +228,8 @@ Plugin im Dock, braucht abgeschalteten Systemschutz SIP).
 - **Daten (E10, erweitert):** Namen sind Eingaben des Nutzers, gespeichert in UserDefaults
   (UUID → Name, höchstens 40 Zeichen, Steuerzeichen entfernt). Nichts von fremden Apps.
 - **STRIDE:** *T* – Namen in UserDefaults verändert (gleicher Nutzer) → zeigt nur anderen Text.
-  *D* – private Schnittstelle hängt/ändert sich → Aufruf nur bei Space-Wechsel/Menü, Ausfall s. o.
+  *D* – private Schnittstelle hängt/ändert sich → Aufruf nur bei Space-Wechsel, App-Aktivierung,
+  Bildschirmänderung und beim Öffnen von „Spaces benennen“ (gemessen 0,05 ms), Ausfall s. o.
   *E* – keine neue Berechtigung; die Schnittstelle liest nur Kennungen, keine Inhalte.
 - **Umsetzung 09.10. geprüft** (`rafter-code-review`, Sichttest): Rohdaten nur über `as?` gelesen,
   fremde Strukturen ergeben eine leere Liste statt Absturz (Test). Namen beim Laden und Setzen
@@ -230,6 +238,31 @@ Plugin im Dock, braucht abgeschalteten Systemschutz SIP).
   beim aktuellen, Fenster „Spaces benennen“ mit 4 Feldern, Eingabe landet bereinigt unter der UUID.
   Nicht gemessen: mehrere Bildschirme, Neustart (UUID-Beständigkeit nur aus `com.apple.spaces.plist`
   geschlossen), Vollbild-Spaces.
+
+### E15 – Befehle aus dem Popover (0.4, Durchgang 2026-10-09 nach Code-Audit)
+
+0.4 ersetzt das Systemmenü durch ein Glas-Popover mit Kacheln.
+
+- **Ziel:** Ein Kachel-Klick wirkt auf das Fokusfenster der vorderen fremden App, sonst der
+  zuletzt vorderen (`lastTargetPID`). Gemessen 09.10.: Bei offenem Popover bleibt laut
+  `NSWorkspace` die App davor vorn, für die Bedienungshilfen hat aber das Popover den Fokus.
+- **App-Aktivierung (Ausnahme zu E12, eng):** Nur wenn die Ziel-App nicht ohnehin vorn ist,
+  aktiviert Seam sie, damit der Nutzer nach dem Klick dort weiterarbeitet. Nur auf einen Klick
+  des Nutzers, nie selbsttätig.
+- **Befehl statt Kürzel:** Das Popover übergibt den Befehl selbst (Code-Audit C1). Seine
+  Ausrichtung Quer/Hochkant stellt sich beim Öffnen auf den Bildschirm des Zielfensters.
+- **Beendete App:** `lastTargetPID` wird bei „App beendet“ gelöscht, eine wiederverwendete
+  Prozessnummer trifft nie eine andere App.
+- **Eigene Fenster:** weder Kürzel noch Popover wirken auf Seams Fenster (E4, `focusedWindow()`
+  schließt die eigene Prozess-ID aus, seit Code-Audit 09.10.).
+
+### Code-Audit 2026-10-09 (`/code-audit --deep`)
+
+5 Prüfer, 55 Kandidaten, je 2 Skeptiker, 37 bestätigt, alle behoben. Sicherheitsrelevant:
+Feed-Signatur (`SURequireSignedFeed`, E9), Release prüft Team und Berechtigungen (E8), Lint-Regeln
+gegen AX-Lese-Umgehung und künstliche Eingaben (E1/E2/E3), eigene Fenster ausgeschlossen (E4),
+Zurücksetzen beim Herausziehen über die Warteschlange und begrenzt (E5/E6b), globales AX-Zeitlimit
+ab Start, Freigabe wird laufend überwacht (Negativraum 4), E15 neu. `rafter run` steht aus.
 
 ## Abhängigkeiten
 

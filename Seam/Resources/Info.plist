@@ -6,7 +6,7 @@
 	<string>de</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIconFile</key>
+	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
@@ -38,6 +38,11 @@
 	<key>SUPublicEDKey</key>
 	<string>iE2bazGoslgGEsgo2MJUwphVYlEKkeRcsWdzwbGge4w=</string>
 	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+	<!-- Code-Audit 09.10. (S1): auch der Feed selbst ist signiert, nicht nur das Archiv.
+	     generate_appcast signiert ihn, sobald dieser Schlüssel in der App steht (gemessen 09.10.:
+	     Feed-Signatur geschrieben, sign_update verifiziert, manipulierter Feed abgelehnt). -->
+	<key>SURequireSignedFeed</key>
 	<true/>
 	<!-- Bewusst KEIN URL-Schema, KEIN AppleScript (NSAppleScriptEnabled),
 	     KEINE NSServices: Niemand außer dem Nutzer soll Seam steuern können,

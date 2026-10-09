@@ -41,12 +41,14 @@ final class Updater {
         reminder = r
         controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: r)
         r.onChange = { [weak self] version in self?.pendingVersion = version }
+        // Sparkle ändert `canCheckForUpdates` auf dem Hauptthread (SPUUpdater ist eine Hauptthread-
+        // Klasse), KVO meldet auf demselben Thread. Daher zugesichert statt per Task verschoben
+        // (Compiler-Warnung beim Code-Audit-Fix 09.10.).
         canCheckObservation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
-            let value = updater.canCheckForUpdates
-            let state = "Sitzung läuft: \(updater.sessionInProgress), automatisch prüfen/laden: \(updater.automaticallyChecksForUpdates)/\(updater.automaticallyDownloadsUpdates)"
-            Task { @MainActor in
+            MainActor.assumeIsolated {
+                let value = updater.canCheckForUpdates
                 self?.canCheck = value
-                Self.log.notice("Nach Updates suchen: \(value ? "möglich" : "gesperrt", privacy: .public) (\(state, privacy: .public))")
+                Self.log.notice("Nach Updates suchen: \(value ? "möglich" : "gesperrt", privacy: .public) (Sitzung läuft: \(updater.sessionInProgress, privacy: .public), automatisch prüfen/laden: \(updater.automaticallyChecksForUpdates, privacy: .public)/\(updater.automaticallyDownloadsUpdates, privacy: .public))")
             }
         }
     }

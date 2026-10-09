@@ -89,6 +89,27 @@ enum Geometry {
         let frame: CGRect
     }
 
+    /// Zwei Rahmen gelten als gleich, wenn jede Kante höchstens 2 pt abweicht. Einziger
+    /// Vergleich dieser Art (Code-Audit 09.10.: vorher vier Kopien unter drei Namen).
+    static func close(_ a: CGRect, _ b: CGRect) -> Bool {
+        abs(a.minX - b.minX) <= 2 && abs(a.minY - b.minY) <= 2
+            && abs(a.width - b.width) <= 2 && abs(a.height - b.height) <= 2
+    }
+
+    /// Was tut der Nutzer gerade mit dem Fenster? Entschieden an der ROHEN Größe, die macOS
+    /// meldet: Beim Verschieben bleibt sie gleich, beim Größeziehen ändert sie sich.
+    /// Code-Audit 09.10. (C2): Vorher galt eine Kante als „gepackt“, wenn der Klick bis 10 px
+    /// von ihr entfernt lag. Wer die Titelleiste knapp unter der Oberkante packte, löste beim
+    /// Verschieben ein Größeziehen aus: kein Andocken, Fenster beim Loslassen niedriger.
+    /// nil = noch nichts entschieden (nur ein Lese-Echo ohne Bewegung).
+    enum GestureMode: Equatable { case moving, resizing }
+    static func gestureMode(start s: CGRect, raw r: CGRect) -> GestureMode? {
+        let e: CGFloat = 0.5
+        if abs(r.width - s.width) > e || abs(r.height - s.height) > e { return .resizing }
+        if abs(r.minX - s.minX) > e || abs(r.minY - s.minY) > e { return .moving }
+        return nil
+    }
+
     /// Welche Kanten hat der Nutzer gepackt? Die Kanten des Startrahmens, die
     /// höchstens `radius` vom Klickpunkt entfernt sind (Ecken: zwei Kanten).
     static func grabbedEdges(at p: CGPoint, frame f: CGRect, radius: CGFloat) -> [Edge] {
