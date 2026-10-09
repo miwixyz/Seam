@@ -1,7 +1,17 @@
-<?xml version="1.0" standalone="yes"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+<?xml version="1.0" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Seam</title>
+        <item>
+            <title>0.4.0</title>
+            <pubDate>Fri, 09 Oct 2026 02:10:34 +0200</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>33</sparkle:version>
+            <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.4.0/Seam-0.4.0.zip" length="3343790" type="application/octet-stream" sparkle:edSignature="0C/RixY3lFYXQO5YZPSjkaYSFWt6xanxkK3MyXBzzWCgmA9YNR+gwDlrEKIUPXu6xdwJhi3/JVsRYh2dPYUNBw=="></enclosure>
+        </item>
         <item>
             <title>0.3.0</title>
             <pubDate>Fri, 09 Oct 2026 01:13:56 +0200</pubDate>
@@ -9,7 +19,7 @@
             <sparkle:version>31</sparkle:version>
             <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.3.0/Seam-0.3.0.zip" length="1516116" type="application/octet-stream" sparkle:edSignature="SPWhE5mZnWAMkNNlpEx0qCtNZFx0Zf6hvUOVXQA2JZWQOCvq3viYhcTp2qfpmWB3Vt42U0JazoEeILjXDtI5AQ=="/>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.3.0/Seam-0.3.0.zip" length="1516116" type="application/octet-stream" sparkle:edSignature="SPWhE5mZnWAMkNNlpEx0qCtNZFx0Zf6hvUOVXQA2JZWQOCvq3viYhcTp2qfpmWB3Vt42U0JazoEeILjXDtI5AQ=="></enclosure>
         </item>
         <item>
             <title>0.2.1</title>
@@ -18,16 +28,10 @@
             <sparkle:version>28</sparkle:version>
             <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.2.1/Seam-0.2.1.zip" length="1492163" type="application/octet-stream" sparkle:edSignature="P7x17z1LpKJ/RrX/f3JOXCHFTBjfnArRpBVYw5EAj6qxhWrNv9yxKVCDF+ZtdD4vkFvhTAwijtExsy0Sz8YNDw=="/>
-        </item>
-        <item>
-            <title>0.2.0</title>
-            <pubDate>Fri, 09 Oct 2026 00:43:34 +0200</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>26</sparkle:version>
-            <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.2.0/Seam-0.2.0.zip" length="1489315" type="application/octet-stream" sparkle:edSignature="f/IAnn8tzHuQm0qDhiG0Nu01GDyInusMgtG8c14z3Y+m9ng96jqtNVT74MgkIU9nek/7TjouaanmxcsHWAOACQ=="/>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.2.1/Seam-0.2.1.zip" length="1492163" type="application/octet-stream" sparkle:edSignature="P7x17z1LpKJ/RrX/f3JOXCHFTBjfnArRpBVYw5EAj6qxhWrNv9yxKVCDF+ZtdD4vkFvhTAwijtExsy0Sz8YNDw=="></enclosure>
         </item>
     </channel>
-</rss>
+</rss><!-- sparkle-signatures:
+edSignature: nedu7QLGgj0GQHNo120xlrh/jYI6d5zA23Mf3C7a8VbAE3lY2XbBRqPNBlwD6SL+jhR+7Ehq6N/ZWuo7hNa7Cw==
+length: 2408
+-->
