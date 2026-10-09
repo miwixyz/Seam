@@ -22,7 +22,7 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 **Neues Gesicht.** Ein Klick auf das Seam-Symbol öffnet ein Glas-Fenster im Stil von macOS 27: oben der aktuelle Space, darunter alle Anordnungen als Kacheln mit Piktogramm, unten Knöpfe für Abdunkeln, Spaces, Einstellungen und Hilfe. Die Einstellungen haben ein eigenes Fenster. Dazu ein neues App-Symbol aus zwei Hälften mit einer Lichtnaht, das macOS passend in Hell, Dunkel, Klar und Getönt zeigt.
 
-**Nur der Space-Name.** Wer mag, blendet das Seam-Symbol aus, solange ein Space-Name in der Menüleiste steht. Auf Spaces ohne Namen bleibt das Symbol, damit Seam immer erreichbar ist. Seit 0.4.1 stehen im Seam-Fenster unter den Kacheln wieder alle Spaces, der aktuelle ist hervorgehoben.
+**Nur der Space-Name.** Wer mag, blendet das Seam-Symbol aus, solange ein Space-Name in der Menüleiste steht. Auf Spaces ohne Namen bleibt das Symbol, damit Seam immer erreichbar ist. Seit 0.4.1 stehen im Seam-Fenster unter den Kacheln wieder alle Spaces, der aktuelle ist hervorgehoben. Seit 0.4.2 sehen die Einstellungen aus wie das Seam-Fenster und öffnen sich im Space, in dem du gerade bist.
 
 ---
 

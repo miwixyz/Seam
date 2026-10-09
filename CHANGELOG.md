@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.4.2] — 2026-10-09
+
+### Geändert
+
+- **Einstellungen im Seam-Look:** Das Einstellungsfenster hat jetzt dieselben Karten, Farben und
+  die Schrift wie das Seam-Fenster. Die Schalter sind in Seams Farbe und werden nicht mehr grau,
+  wenn du in ein anderes Fenster klickst.
+
+### Behoben
+
+- **Einstellungen, Hilfe und „Spaces benennen“ erscheinen im Space, in dem du gerade bist.**
+  Vorher sprang macOS beim erneuten Öffnen in den Space, in dem das Fenster zuerst aufging.
+
 ## [0.4.1] — 2026-10-09
 
 ### Geändert

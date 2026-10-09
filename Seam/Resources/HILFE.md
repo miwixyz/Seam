@@ -2,7 +2,8 @@
 
 Seam ordnet Fenster an und hält Fenster zusammen, die aneinanderstoßen. Es lebt in der
 Menüleiste. Ein Klick auf das Symbol öffnet ein Fenster mit allen Anordnungen als Kacheln, unten
-liegen Knöpfe für Abdunkeln, Spaces, Einstellungen (Zahnrad), Hilfe und Beenden.
+liegen Knöpfe für Abdunkeln, Spaces, Einstellungen (Zahnrad), Hilfe und Beenden. Einstellungen,
+Hilfe und „Spaces benennen“ öffnen sich immer im Space, in dem du gerade bist.
 
 ## Einrichten
 

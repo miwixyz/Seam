@@ -32,6 +32,7 @@ struct SeamApp: App {
             SettingsView()
                 .environment(engine)
                 .environment(engine.prefs)
+                .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
 
@@ -41,6 +42,7 @@ struct SeamApp: App {
             HelpView()
                 .padding(16)
                 .frame(width: 520)
+                .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
 
@@ -50,6 +52,7 @@ struct SeamApp: App {
                 .environment(engine.prefs)
                 .padding(16)
                 .frame(width: 380)
+                .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
     }
@@ -261,6 +264,21 @@ final class Engine {
     func openAccessibilitySettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
+        }
+    }
+}
+
+/// Fenster (Einstellungen, Hilfe, Spaces benennen) kommen in den Space, in dem man gerade ist.
+/// Ohne das holt macOS beim zweiten Öffnen den Space nach vorn, in dem das Fenster zuerst
+/// aufging — Michael 09.10.: „Die Einstellungen müssen im selben Space angezeigt werden!“
+struct MoveToActiveSpace: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { Hook() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+
+    private final class Hook: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            window?.collectionBehavior.insert(.moveToActiveSpace)
         }
     }
 }

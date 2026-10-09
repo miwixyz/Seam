@@ -38,7 +38,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   12 × 24 (hochkant).
 - **Glas-Fenster in der Menüleiste** (0.4): alle Anordnungen als Kacheln mit Piktogramm, Quer/Hochkant
   passend zum Bildschirm des Zielfensters, aktueller Space oben, Knöpfe für Abdunkeln, Spaces,
-  Einstellungen und Hilfe. Einstellungen im eigenen Fenster.
+  Einstellungen und Hilfe. Einstellungen im eigenen Fenster im selben Look, erscheinen im aktuellen Space (0.4.2).
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
 ## Installieren
