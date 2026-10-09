@@ -2,6 +2,15 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.4.3] — 2026-10-09
+
+### Behoben
+
+- **Space-Name in der Menüleiste überlappte manchmal mit dem Symbol daneben.** Wurde der Name nach
+  einem Space-Wechsel länger (z. B. von „Arbeit“ zu „Produktivität“), behielt das Seam-Symbol seine
+  alte Breite und der Text lief unter das nächste Symbol. Jetzt passt sich die Breite bei jedem
+  Wechsel an (gemessen: 59 → 100 pt für „Produktivität“).
+
 ## [0.4.2] — 2026-10-09
 
 ### Geändert

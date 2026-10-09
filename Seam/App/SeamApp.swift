@@ -18,13 +18,19 @@ struct SeamApp: App {
             let name = engine.spaces.menuBarTitle(engine.prefs)
             let icon = SpaceWatcher.showsIcon(title: name, hideWhenNamed: engine.prefs.hideIconWithSpaceName,
                                               trusted: engine.isTrusted)
-            if let name, icon {
-                Label(name, systemImage: symbol).labelStyle(.titleAndIcon)
-            } else if let name {
-                Text(name)
-            } else {
-                Image(systemName: symbol)
+            Group {
+                if let name, icon {
+                    Label(name, systemImage: symbol).labelStyle(.titleAndIcon)
+                } else if let name {
+                    Text(name)
+                } else {
+                    Image(systemName: symbol)
+                }
             }
+            // Neu aufbauen, wenn sich der Inhalt ändert: sonst behielt das Menüleisten-Symbol
+            // die Breite des ersten Namens, ein längerer lief über den Rand (Michael 09.10.:
+            // „Produktivität“ 77 pt Text in 59 pt Symbol, Nachbar zeichnete darüber).
+            .id("\(name ?? "")|\(icon)|\(symbol)")
         }
         .menuBarExtraStyle(.window)
 
