@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.5
+
+**Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick die Fn-Taste, wählst du den Browser selbst. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten.
+
+---
+
 ## Neu in 0.4
 
 **Neues Gesicht.** Ein Klick auf das Seam-Symbol öffnet ein Glas-Fenster im Stil von macOS 27: oben der aktuelle Space, darunter alle Anordnungen als Kacheln mit Piktogramm, unten Knöpfe für Abdunkeln, Spaces, Einstellungen und Hilfe. Die Einstellungen haben ein eigenes Fenster. Dazu ein neues App-Symbol aus zwei Hälften mit einer Lichtnaht, das macOS passend in Hell, Dunkel, Klar und Getönt zeigt.
@@ -66,6 +72,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Etwas Luft zwischen den Fenstern | Abstand wählbar: 0, 5, 10 oder 20 Punkt |
 | Zwei Fenster gemeinsam nach vorn holen | Ein Klick auf eines der geteilten Fenster holt beide nach vorn, Minimieren gilt für beide |
 | Wissen, auf welchem Space du bist | Namen für Spaces: der Name des aktuellen Space steht in der Menüleiste |
+| Links im passenden Browser öffnen | Seam als Standardbrowser: Regeln nach Website oder Quell-App, Fn beim Klick zeigt eine Auswahl |
 | Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück (ab Werk aus) |
 | Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 
@@ -84,6 +91,7 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 - Seam braucht die Bedienungshilfen-Freigabe von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
 - Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv.
 - Gespeichert werden nur deine Einstellungen. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
+- Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.
 - Den einzigen Netzwerkzugriff, die Suche nach Updates bei GitHub, erlaubst du beim ersten Mal selbst. Jedes Update ist signiert.
 
 ---

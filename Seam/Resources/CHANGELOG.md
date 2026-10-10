@@ -2,6 +2,30 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.0] — 2026-10-10
+
+### Neu
+
+- **Links an den richtigen Browser.** Seam kann dein Standardbrowser sein und gibt jeden Link an
+  den Browser weiter, den du dafür bestimmt hast: nach Website (`cineweb.de` → Chrome, gilt auch
+  für `www.cineweb.de`) oder nach der App, aus der der Link kommt. Hältst du beim Klick die
+  Fn-Taste, erscheint ein kleines Fenster mit deinen Browsern: Ziffer 1–9 oder Klick öffnet,
+  mit ⌘ merkt sich Seam die Website als Regel, Esc bricht ab. Bekannte Tracking-Anhänge wie
+  `utm_source` oder `fbclid` schneidet Seam vorher ab (abschaltbar). HTML-Dateien öffnet Seam im
+  Standard-Browser. Einschalten unter Einstellungen → „Links“. Seam lädt keine Seite selbst,
+  schreibt keine Adresse ins Protokoll und führt keinen Verlauf.
+
+### Geändert
+
+- **Einstellungen in zwei Spalten.** Mit dem neuen Bereich „Links“ wäre das Fenster höher als
+  ein MacBook-Bildschirm geworden.
+
+### Behoben
+
+- **„Bei Anmeldung starten“ war ausgegraut** mit dem Hinweis „Nur möglich, wenn Seam im Ordner
+  Programme liegt“, obwohl Seam dort lag. macOS meldet vor der allerersten Anmeldung „nicht
+  gefunden“, Seam hielt das für „geht nicht“. Jetzt lässt sich der Schalter einschalten.
+
 ## [0.4.3] — 2026-10-09
 
 ### Behoben

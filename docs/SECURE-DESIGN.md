@@ -256,6 +256,117 @@ Plugin im Dock, braucht abgeschalteten Systemschutz SIP).
 - **Eigene Fenster:** weder Kürzel noch Popover wirken auf Seams Fenster (E4, `focusedWindow()`
   schließt die eigene Prozess-ID aus, seit Code-Audit 09.10.).
 
+### E16 – Links verteilen wie Velja (0.5, Durchgang 2026-10-10, VOR dem Code)
+
+Michael, 10.10.: Velja ersetzen und „alles in einem Werkzeug“, bewusst **in Seam** (Rückfrage zur
+eigenen App gestellt, Antwort: in Seam). Umfang v1: Regeln nach Website, Regeln nach Quell-App,
+Browser-Auswahl bei gedrückter Fn-Taste, Tracking-Parameter entfernen. **Nicht** in v1: Kurzlinks
+auflösen, Browser-Profile, Privatfenster, Verlauf, eigenes URL-Schema, Kurzbefehle-Aktionen,
+Browser-Erweiterungen, JavaScript-Umschreibregeln.
+
+**Was sich gegenüber E7 ändert:** Seam wird Standardbrowser für `http`/`https`. Damit kann
+**jedes** Programm Seam eine Eingabe schicken (`open https://…`). Das ist genau die
+Steuerschnittstelle, die E7 ausschließt. Sie ist nur vertretbar, wenn diese Eingabe die
+Bedienungshilfen-Freigabe nie erreicht.
+
+```
+[beliebige App] ──(7) Apple Event „GetURL“ + Absender-PID ──▶ [Seam: LinkRouter]
+                                                              │ kein AX, keine Fenster fremder Apps
+[Nutzer: Fn gedrückt?] ──(8) Zustand der Sondertasten ──────▶ │
+                                                              ▼
+                          ──(9) NSWorkspace.open(url, Browser) ──▶ [Browser]
+[Einstellungen] ──(10) Regeln, Standard-Browser ──▶ [UserDefaults]
+```
+
+- **E16a – Abschottung (Kern):** Der Link-Weg ist ein eigener Baustein (`LinkRouter`, reine
+  Logik ohne AppKit in `LinkRules`). Er ruft **nie** AX auf, bewegt keine Fenster, aktiviert keine
+  App außer dem Ziel-Browser über `NSWorkspace.open`. Lint-Regel: `AXUIElement` und
+  `AXAccess` sind in den Link-Dateien verboten. Einzige Wirkung eines Links: „diese Adresse in
+  diesem Browser öffnen“ — das kann jede App ohnehin selbst.
+- **E16b – Nur http/https, Größe begrenzt:** Annahme nur, wenn `URLComponents` die Adresse
+  parst, Schema genau `http` oder `https`, Host nicht leer, Länge ≤ 32 768 Zeichen. Alles andere
+  wird verworfen und einmal ohne Inhalt protokolliert. Kein `file:`, kein `javascript:`, keine
+  fremden Schemata werden je weitergereicht. Kein Shell-Aufruf, kein `Process`.
+- **E16c – Keine Schleife:** Ziel ist nur eine App, die macOS selbst für https **und**
+  HTML-Dateien meldet (`NSWorkspace.urlsForApplications(toOpen:)`), **ohne Seam selbst** und
+  **ohne andere Link-Verteiler wie Velja** (würden zurückreichen). Ausschluss kleingeschrieben
+  verglichen — gemessen 10.10.: Velja heißt `com.sindresorhus.Velja`, die erste Liste ließ es
+  durch; nur https ließ auch ChatGPT/Codex und Downie als „Browser“ zu. Gespeicherte Regel mit fehlender oder ungültiger
+  Ziel-App → Standard-Browser. Fehlt auch der → Auswahlfenster.
+- **E16d – Kein Netz:** Seam ruft Links nie selbst ab (keine Kurzlink-Auflösung, keine
+  Vorschau, kein Favicon). Netzwerkzugriff bleibt allein die Update-Prüfung (E9). Damit
+  entfällt SSRF ganz.
+- **E16e – Regeln nach Website:** Vergleich nur über den Host, kleingeschrieben, ohne
+  abschließenden Punkt. Eine Regel `cineweb.de` trifft `cineweb.de` und `*.cineweb.de`, nur an
+  der Punktgrenze (nicht `evilcineweb.de`, nicht `cineweb.de.evil.com`). Keine regulären
+  Ausdrücke (kein ReDoS, keine Überraschung). Erste passende Regel in der Reihenfolge der Liste
+  gewinnt; Regel mit Website **und** Quell-App muss beides erfüllen.
+- **E16f – Regeln nach Quell-App:** Absender aus dem Apple Event (`keySenderPIDAttr` →
+  `NSRunningApplication.bundleIdentifier`). Das ist **Komfort, keine Sicherheitsgrenze**: ein
+  lokales Programm kann einen Link auch über eine andere App auslösen lassen. Schlimmster Fall:
+  ein Link öffnet im falschen Browser. Fehlt der Absender → nur Website-Regeln gelten.
+- **E16g – Fn-Auswahl ohne Tastatur mitzulesen (E1 bleibt):** Seam liest beim Eintreffen des
+  Links einmal `NSEvent.modifierFlags` (Zustand, keine Ereignisse, keine Freigabe
+  „Eingabeüberwachung“). Das Auswahlfenster ist ein eigenes Fenster; Buchstaben-Tasten wirken
+  nur, solange es den Fokus hat. ⌘-Klick auf einen Browser legt eine Website-Regel an. Escape oder
+  Fokusverlust → Link wird **nicht** geöffnet (lieber nichts als im falschen Browser).
+  Die Adresse wird im Fenster angezeigt, gekürzt, als reiner Text.
+- **E16h – Tracking-Parameter:** feste Liste im Code (`utm_*`, `fbclid`, `gclid`, `dclid`,
+  `msclkid`, `mc_cid`, `mc_eid`, `igshid`, `twclid`, `ttclid`, `yclid`, `_hsenc`, `_hsmi`,
+  `mkt_tok`, `si` nur bei `youtu.be`/`open.spotify.com` …), keine nachgeladene Liste. Nur
+  Abfrage-Parameter werden entfernt, Schema/Host/Pfad/Fragment bleiben unverändert. Schalter,
+  ab Werk an. Test: signierte Adressen (z. B. `X-Amz-Signature`) bleiben byte-gleich.
+- **E16i – Daten (E10, erweitert):** UserDefaults: Liste der Regeln (Codable, höchstens 200,
+  Website ≤ 253 Zeichen, nur Bundle-IDs als Ziel), Standard-Browser (Bundle-ID), Schalter. Beim
+  Laden unbekannte Felder ignoriert, ungültige Einträge verworfen (Test). Kein Verlauf der
+  geöffneten Links.
+- **E16j – Protokoll (E11):** nie die Adresse, nie der Host. Protokolliert: „Link angenommen /
+  verworfen (Grund)“, Regel-Nummer, Ziel-Bundle-ID.
+- **E16k – Standardbrowser setzen/zurückgeben:** Nur auf Klick des Nutzers
+  (`NSWorkspace.setDefaultApplication(at:toOpenURLsWithScheme:)`, macOS fragt selbst nach).
+  Schaltet Michael die Funktion aus, gibt Seam die Rolle an den gewählten Standard-Browser
+  zurück. Läuft Seam nicht, startet macOS es beim nächsten Link — dabei startet nur der
+  Link-Weg sofort, Fenster-Funktionen wie bisher.
+
+**STRIDE (Grenze 7–10):**
+
+| | Bedrohung | Antwort |
+|---|---|---|
+| **S** | App gibt sich als andere Quell-App aus | E16f: Folge ist nur ein anderer Browser |
+| **T** | Regeln in UserDefaults manipuliert (gleicher Nutzer) | E16c/E16i: Ziel nur http-fähige App ohne Seam/Velja; nichts Ausführbares gespeichert |
+| **R** | – | Einzelnutzer, E16j |
+| **I** | Adressen landen im Protokoll | E16j: nie |
+| **I** | Tracking-Entfernung verändert Adresse unerwartet | E16h: nur Abfrage-Parameter aus fester Liste, Schalter |
+| **D** | Link-Flut (Schleife, 1000 × `open`) | E16c verhindert die Schleife; Auswahlfenster nur eines zur Zeit, weitere Links während offener Auswahl → Standard-Browser |
+| **D** | Seam hängt → kein Link öffnet sich | Link-Weg auf dem Hauptthread ohne AX-Aufrufe, Entscheidung < 1 ms (Messung im Test); Ausfall = einmal Velja oder Safari wieder als Standard setzen |
+| **E** | fremde App nutzt Seams Bedienungshilfen über einen Link | E16a: Link-Weg hat keinen Zugang zu AX (Lint-Regel), einzige Wirkung ist `NSWorkspace.open` |
+
+**Umsetzung 10.10. geprüft** (`rafter-code-review` über unabhängigen Rafter-Agenten, Sichttest
+mit signierter Testkopie per `open -a`, Michaels Standardbrowser unverändert): keine kritischen
+oder hohen Befunde. 6 niedrige, alle behoben:
+1. E16j: Fehlermeldung von `NSWorkspace` (kann Dateiname/Adresse enthalten) im Protokoll → nur
+   Bereich + Nummer.
+2. E16a: Lint-Regel `link_weg_ohne_ax` war Namensmuster + Sperrliste mit Lücken → ganzer Ordner
+   `Seam/Links/` (auch `LinkAppDelegate`), dazu `kAX…`, `Engine`, alle AX-Bausteine,
+   `NSClassFromString`/`dlsym`. Positivfall ausgelöst (3/3).
+3. E16e: Host aus `url.host()` war kodiert (`cineweb%2Ede`, IDN) → `LinkRules.urlHost`:
+   dekodiert, streng, verwirft statt zu kürzen (`evil%2Ecom%2F.cineweb.de` → kein Host).
+   Tests mit userinfo-, `?@`-, `#@`-, Port-, IPv6- und Doppelpunkt-Tricks.
+4. E16g: Auswahlfenster nahm sofort Tasten → 0,4 s Sperrzeit für Öffnen, Return als
+   Sofortauswahl entfernt.
+5. E16c: Schleifenschutz nur per Liste → zusätzlich `RecentHandoffs`: dieselbe Adresse, die
+   binnen 2 s von der App zurückkommt, an die Seam sie gab, geht nicht wieder dorthin.
+6. E16b: HTML-Dateien → Symlinks aufgelöst, nur reguläre Dateien, Host leer/`localhost`,
+   höchstens 20 je Aufruf.
+Gemessen beim Sichttest und behoben: Auswahlfenster unsichtbar (NSPanel versteckt sich bei
+inaktiver App → nicht aktivierendes Panel), Velja per Groß-V nicht ausgeschlossen, Nicht-Browser
+(ChatGPT/Codex, Downie) in der Liste, HTML-Datei öffnete die Einstellungen
+(`.handlesExternalEvents(matching: [])`). `rafter run` folgt nach dem Push.
+
+**Restrisiko (bewusst akzeptiert):** Stürzt Seam ab, öffnen Links erst nach dem Neustart, den
+macOS beim nächsten Link selbst auslöst. Fenster- und Link-Funktion teilen einen Prozess und
+einen Release-Takt — Michaels Wahl („In Seam“), Rückfrage gestellt.
+
 ### Code-Audit 2026-10-09 (`/code-audit --deep`)
 
 5 Prüfer, 55 Kandidaten, je 2 Skeptiker, 37 bestätigt, alle behoben. Sicherheitsrelevant:

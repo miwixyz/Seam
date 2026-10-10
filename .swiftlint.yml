@@ -103,6 +103,20 @@ custom_rules:
     message: "Seam erzeugt keine Eingaben und liest keine Tastatur mit (SECURE-DESIGN E1/E2)."
     severity: error
 
+  # Seam, docs/SECURE-DESIGN.md E16a: Der Link-Weg nimmt Eingaben von JEDER App an. Er darf die
+  # Bedienungshilfen-Freigabe nie erreichen — kein AX, kein AXAccess, keine Fenster-Bausteine.
+  link_weg_ohne_ax:
+    name: "Link-Weg ohne Bedienungshilfen"
+    # Rafter-Review 10.10.: ganzer Ordner Seam/Links statt Namensmuster; auch kAX-Konstanten,
+    # Engine und alle Bausteine mit AX-Zugriff, dazu Umwege über Laufzeit-Lookup.
+    regex: '\b(k?AX[A-Z]\w*|AXAccess|Engine|WindowActions|WindowFinder|WindowList|NeighborWriter|PairKeeper|DragController|Dimmer|SpaceReader|SpaceWatcher|Hotkeys|Layout|NSClassFromString|NSSelectorFromString|dlsym|dlopen)\b'
+    included: 'Seam/Links/.*\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Link-Dateien dürfen keine Bedienungshilfen und keine Fenster-Bausteine benutzen (SECURE-DESIGN E16a)."
+    severity: error
+
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
   # SwiftUI-App mit @NSApplicationDelegateAdaptor ist NSApp.delegate NICHT die
   # eigene AppDelegate-Instanz — der Cast liefert immer nil, `?.` verschluckt es,

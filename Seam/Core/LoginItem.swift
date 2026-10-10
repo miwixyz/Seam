@@ -18,17 +18,21 @@ enum LoginItem {
         case off
         /// macOS hat den Eintrag angelegt, der Nutzer muss ihn noch freigeben.
         case needsApproval
-        /// Registrierung nicht möglich — typisch für Builds, die nicht an einem
-        /// festen Ort liegen oder keine stabile Signatur haben.
+        /// Unbekannter Status einer künftigen macOS-Version.
         case unavailable
     }
 
-    static var state: State {
-        switch SMAppService.mainApp.status {
+    static var state: State { state(for: SMAppService.mainApp.status) }
+
+    /// `.notFound` heißt NICHT „geht nicht“: Gemessen 10.10.2026 (macOS 27) meldet eine
+    /// signierte App in /Applications vor ihrer allerersten Registrierung `.notFound`,
+    /// `register()` gelingt trotzdem. Als `.unavailable` gesperrt, kam Seam nie zur ersten
+    /// Anmeldung. Scheitert `register()` wirklich, zeigt SettingsView den Fehler.
+    static func state(for status: SMAppService.Status) -> State {
+        switch status {
         case .enabled: .on
-        case .notRegistered: .off
+        case .notRegistered, .notFound: .off
         case .requiresApproval: .needsApproval
-        case .notFound: .unavailable
         @unknown default: .unavailable
         }
     }

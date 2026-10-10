@@ -39,6 +39,11 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 - **Glas-Fenster in der Menüleiste** (0.4): alle Anordnungen als Kacheln mit Piktogramm, Quer/Hochkant
   passend zum Bildschirm des Zielfensters, aktueller Space oben, Knöpfe für Abdunkeln, Spaces,
   Einstellungen und Hilfe. Einstellungen im eigenen Fenster im selben Look, erscheinen im aktuellen Space (0.4.2).
+- **Links verteilen** (0.5, ab Werk aus): Seam als Standardbrowser gibt jeden Link nach Regeln
+  (Website und/oder Quell-App) an einen Browser weiter, Fn beim Klick zeigt eine Auswahl, ⌘
+  merkt sich die Website. Tracking-Anhänge (`utm_*`, `fbclid` …) werden abgeschnitten. Idee aus
+  [Velja](https://sindresorhus.com/velja), eigener Code. Der Link-Teil hat keinen Zugriff auf die
+  Bedienungshilfen (eigener Ordner `Seam/Links`, per Lint-Regel erzwungen).
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
 ## Installieren
@@ -68,7 +73,9 @@ Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Tit
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage. An
 fremden Fenstern ändert es Lage und Größe, hebt bei einem Paar den Partner an und minimiert ihn mit.
 Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
-werden nur Einstellungen; Fensterpaare liegen nur im Arbeitsspeicher. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
+werden nur Einstellungen und Link-Regeln; Fensterpaare liegen nur im Arbeitsspeicher. Als
+Standardbrowser gibt Seam Links nur an einen Browser weiter, lädt keine Seite und protokolliert
+keine Adressen. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
 Sicherheitsentwurf: [`docs/SECURE-DESIGN.md`](docs/SECURE-DESIGN.md).
 
 ## Bauen

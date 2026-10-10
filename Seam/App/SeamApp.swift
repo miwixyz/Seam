@@ -5,6 +5,9 @@ import SwiftUI
 @main
 struct SeamApp: App {
 
+    /// Links (E16): Der Empfänger muss vor dem Ende des App-Starts stehen, sonst geht der Link
+    /// verloren, der Seam gestartet hat.
+    @NSApplicationDelegateAdaptor private var linkDelegate: LinkAppDelegate
     @State private var engine = Engine()
 
     var body: some Scene {
@@ -41,6 +44,9 @@ struct SeamApp: App {
                 .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
+        // Gemessen 10.10.: Eine HTML-Datei (E16) öffnete sonst die Einstellungen — SwiftUI
+        // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
+        .handlesExternalEvents(matching: [])
 
         // Hilfe, Änderungen, Fremdcode-Lizenzen (Sparkle verlangt, dass sein Lizenztext
         // mit ausgeliefert und erreichbar ist).
@@ -51,6 +57,21 @@ struct SeamApp: App {
                 .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
+        // Gemessen 10.10.: Eine HTML-Datei (E16) öffnete sonst die Einstellungen — SwiftUI
+        // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
+        .handlesExternalEvents(matching: [])
+
+        Window("Link-Regeln", id: "linkregeln") {
+            LinkRulesView(router: LinkRouter.shared)
+                .padding(16)
+                .frame(width: 560)
+                .familyBackground()
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        // Gemessen 10.10.: Eine HTML-Datei (E16) öffnete sonst die Einstellungen — SwiftUI
+        // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
+        .handlesExternalEvents(matching: [])
 
         Window("Spaces benennen", id: "spaces") {
             SpaceNamesView()
@@ -61,6 +82,9 @@ struct SeamApp: App {
                 .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)
+        // Gemessen 10.10.: Eine HTML-Datei (E16) öffnete sonst die Einstellungen — SwiftUI
+        // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
+        .handlesExternalEvents(matching: [])
     }
 }
 

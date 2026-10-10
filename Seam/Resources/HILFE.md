@@ -47,6 +47,28 @@ Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Die Stärke stells
 (leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Klicks gehen durch
 die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.
 
+## Links verteilen
+
+Seam kann wie Velja dein Standardbrowser sein und jeden Link an den passenden Browser
+weiterreichen. Einschalten: Einstellungen → „Links“ → „Seam verteilt Links“; macOS fragt einmal
+nach, ob der Standardbrowser wechseln soll. Darunter wählst du den Standard-Browser für alle Links
+ohne Regel. Ausschalten gibt die Rolle an diesen Browser zurück.
+
+- **Regeln** („Regeln bearbeiten …“): eine Website (z. B. `cineweb.de`, gilt auch für
+  `www.cineweb.de`) und/oder die App, aus der der Link kommt, öffnen in einem bestimmten Browser.
+  Die erste passende Regel gewinnt, die Reihenfolge änderst du mit den Pfeilen.
+- **Browser auswählen:** Halte **Fn** gedrückt, während du einen Link anklickst. Es erscheint
+  ein kleines Fenster mit deinen Browsern: Ziffer 1–9 oder Klick öffnet, Esc bricht ab (der Link
+  öffnet dann nicht). **⌘-Klick** oder ⌘-Ziffer merkt
+  sich die Website als Regel. Ist kein Standard-Browser gewählt, kommt dieses Fenster immer.
+- **Tracking-Parameter entfernen** (ab Werk an): Seam schneidet bekannte Werbe-Anhänge wie
+  `utm_source` oder `fbclid` ab, bevor der Browser den Link bekommt. Der Rest der Adresse bleibt
+  unverändert.
+- HTML-Dateien öffnet Seam ohne Regeln im Standard-Browser.
+
+Seam ruft die Links nicht selbst ab und speichert keinen Verlauf. Läuft Velja noch, schalte es ab
+oder lass es aus dem Autostart, damit nur einer von beiden Standardbrowser ist.
+
 ## Mitziehen mit der Maus
 
 Stehen zwei Fenster bündig nebeneinander, ziehst du die gemeinsame Kante. Beim Loslassen setzt
@@ -82,6 +104,7 @@ Was sich in jeder Version geändert hat, steht hier im Reiter „Änderungen“.
 Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters, nie Titel oder Inhalte.
 Es beobachtet keine Tastatureingaben: Die Kürzel sind beim System angemeldet, Seam erfährt nur,
 dass eines gedrückt wurde. Die Maus beobachtet es nur, um Ziehen und Loslassen zu erkennen.
-Gespeichert werden nur die Einstellungen. Die ursprüngliche Größe eines Fensters und welche
+Links, die Seam als Standardbrowser bekommt, reicht es nur an einen Browser weiter; Adressen
+landen weder im Protokoll noch in einem Verlauf. Gespeichert werden nur die Einstellungen und deine Link-Regeln. Die ursprüngliche Größe eines Fensters und welche
 Fenster ein Paar bilden, liegen nur im Arbeitsspeicher und sind nach dem Beenden weg. Der einzige Netzzugriff ist die Update-Prüfung
 bei GitHub.

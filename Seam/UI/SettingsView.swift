@@ -11,9 +11,13 @@ struct SettingsView: View {
     /// (C3): vorher wurde ein Fehler verworfen und „Freigabe nötig“ als „aus“ gezeigt.
     @State private var login = LoginItem.state
     @State private var loginError: String?
+    @State private var router = LinkRouter.shared
+    @State private var linkError: String?
 
     var body: some View {
         @Bindable var prefs = prefs
+        // 0.5: zwei Spalten, mit „Links“ war eine Spalte höher als der MacBook-Bildschirm.
+        HStack(alignment: .top, spacing: FamilyTheme.Space.m) {
         VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
             card("Fenster") {
                 toggleRow("Fenster an gemeinsamen Kanten mitziehen", isOn: $prefs.linkEdges)
@@ -58,6 +62,9 @@ struct SettingsView: View {
                 }
                 .disabled(!prefs.dimEnabled)
             }
+        }
+        .frame(width: 428)
+        VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
             if engine.spaces.available {
                 card("Spaces") {
                     toggleRow("Space-Namen in der Menüleiste", isOn: $prefs.showSpaceName)
@@ -73,6 +80,7 @@ struct SettingsView: View {
                     .padding(.vertical, FamilyTheme.Space.s)
                 }
             }
+            linksCard
             card("Allgemein") {
                 toggleRow("Bei Anmeldung starten", isOn: Binding(
                     get: { login == .on || login == .needsApproval },
@@ -92,7 +100,7 @@ struct SettingsView: View {
                     }
                 }
                 if login == .unavailable {
-                    note("Nur möglich, wenn Seam im Ordner Programme liegt",
+                    note("macOS meldet einen unbekannten Autostart-Status",
                          symbol: "info.circle", color: FamilyTheme.textSecondary)
                 }
                 if let loginError {
@@ -107,14 +115,64 @@ struct SettingsView: View {
                 }
             }
         }
+        .frame(width: 428)
+        }
         .padding(FamilyTheme.Space.l)
         .font(FamilyTheme.font(.body))
         .foregroundStyle(FamilyTheme.textPrimary)
         .tint(FamilyTheme.accent)
-        .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
         .familyBackground()
-        .onAppear { login = LoginItem.state }
+        .onAppear {
+            login = LoginItem.state
+            router.refresh()
+        }
+    }
+
+    // MARK: - Links (E16)
+
+    private var linksCard: some View {
+        @Bindable var router = router
+        return card("Links") {
+            toggleRow("Seam verteilt Links (Standardbrowser)", isOn: Binding(
+                get: { router.isDefault },
+                set: { on in
+                    linkError = nil
+                    Task {
+                        do {
+                            if on { try await router.becomeDefault() } else { try await router.resignDefault() }
+                        } catch {
+                            linkError = error.localizedDescription
+                            router.refresh()
+                        }
+                    }
+                }))
+            divider
+            row("Standard-Browser") {
+                Picker("Standard-Browser", selection: Binding(
+                    get: { router.fallback ?? "" },
+                    set: { router.fallback = $0.isEmpty ? nil : $0 })) {
+                    Text("Jedes Mal fragen").tag("")
+                    ForEach(router.browsers) { Text(verbatim: $0.name).tag($0.id) }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+            divider
+            toggleRow("Tracking-Parameter entfernen", isOn: $router.stripTracking)
+            divider
+            Button("Regeln bearbeiten … (\(router.rules.count))") {
+                router.refresh()
+                openWindow(id: "linkregeln")
+            }
+            .buttonStyle(CardButtonStyle())
+            .padding(.vertical, FamilyTheme.Space.s)
+            note("Fn beim Klick auf einen Link: Browser auswählen", symbol: "globe",
+                 color: FamilyTheme.textSecondary)
+            if let linkError {
+                note(linkError, symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+            }
+        }
     }
 
     // MARK: - Bausteine (wie Karten „Anordnen“ und „Spaces“ im Seam-Fenster)

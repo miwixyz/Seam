@@ -23,6 +23,40 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<!-- Menüleisten-App: kein Dock-Symbol, kein Hauptfenster. -->
+	<!-- Links verteilen (docs/SECURE-DESIGN.md E16): Seam kann Standardbrowser werden. Nur
+	     http/https, KEIN eigenes URL-Schema (E7 bleibt). public.html wie Velja und Finicky,
+	     sonst gilt Seam für macOS nicht als Browser; HTML-Dateien gehen ohne Regeln an den
+	     Standard-Browser. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>Webadresse</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>http</string>
+				<string>https</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>HTML-Dokument</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.html</string>
+				<string>public.xhtml</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSUIElement</key>
 	<true/>
 	<!-- Sparkle (docs/SECURE-DESIGN.md E9, Muster Kalli). Appcast IM REPO: jede Änderung
