@@ -20,7 +20,7 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ## Neu in 0.5
 
-**Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick Fn oder ⌥ gedrückt, wählst du den Browser selbst. Welche Taste das ist, stellst du ein, auch für externe Tastaturen ohne Fn. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten.
+**Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick Fn oder ⌥ gedrückt, wählst du den Browser selbst. Welche Taste das ist, stellst du ein, auch für externe Tastaturen ohne Fn. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten. Seit 0.5.4 zeigt ein Schild an der Naht, wenn ein Fenster nicht kleiner geht.
 
 ---
 
@@ -52,7 +52,7 @@ Mit ⌃⌥S teilen sich das aktive Fenster und das Fenster, das du davor benutzt
 
 Auch die normalen Kürzel nehmen den Nachbarn mit: Legst du ein Fenster auf eine Hälfte, ein Drittel oder ein Viertel, rückt das Fenster gegenüber an die Naht. Ziehst du die gemeinsame Kante mit der Maus, bewegt sich zunächst nur dein Fenster. Beim Loslassen setzt Seam das Nachbarfenster bündig an die neue Kante.
 
-Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröße, bleibt die Kante dort stehen.
+Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröße, bleibt die Kante dort stehen, und ein Schild an der Naht sagt kurz, welches Fenster nicht kleiner geht. Passen zwei Fenster gar nicht nebeneinander, etwa Edge und Outlook mit Ordnerbereich auf einem MacBook, sagt das Schild auch das.
 
 ---
 

@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.4] — 2026-10-10
+
+### Neu
+
+- **Hinweis an der Naht, wenn ein Fenster nicht kleiner wird.** Bisher blieb Seam still, wenn
+  ein Fenster an seiner Mindestgröße stand: Die Naht sprang zurück oder die Fenster überlappten,
+  und es sah aus, als funktioniere das Mitziehen nicht. Jetzt erscheint für einige Sekunden ein
+  Schild an der Naht, etwa „Outlook geht nicht schmaler als 980 pt“. Passen beide Fenster nicht
+  nebeneinander (gemessen: Edge mindestens 500 pt + Outlook 980 pt auf einem 1470 pt breiten
+  MacBook), nennt das Schild beide Mindestbreiten und den Tipp, eine Seitenleiste einzuklappen.
+
 ## [0.5.3] — 2026-10-10
 
 ### Behoben

@@ -9,6 +9,8 @@ final class WindowActions {
     private let prefs: Preferences
     /// Gemeinsame Schreib-Warteschlange der App (R4), auch von DragController genutzt.
     let writer = NeighborWriter()
+    /// Hinweis, wenn ein Fenster an seiner Mindestgröße stehen blieb (MinimumNotice).
+    private let hud = NoticeHUD()
 
     /// Rahmen vor dem ersten Andocken. Nur im Speicher, an die AX-Referenz
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
@@ -139,19 +141,37 @@ final class WindowActions {
             let a1 = NeighborWriter.setVerified(first.0, first.1)
             let a2 = NeighborWriter.setVerified(second.0, second.1)
             if let a2, let fix = Geometry.resolveMinimum(leading: first.1, wanted: second.1, actual: a2) {
-                NeighborWriter.setVerified(second.0, fix.neighbor)
-                NeighborWriter.setVerified(first.0, fix.leading)
+                let nIst = NeighborWriter.setVerified(second.0, fix.neighbor)
+                let lIst = NeighborWriter.setVerified(first.0, fix.leading)
                 log.notice("\(name, privacy: .public): Mindestgröße rechts/unten, Naht gehalten")
+                self?.announce(MinimumHit(wanted: second.1, actual: a2, fix: fix, neighborIst: nIst, leadingIst: lIst),
+                               neighbor: second.0, other: first.0)
             } else if let a1, let fix = Geometry.resolveMinimum(leading: second.1, wanted: first.1, actual: a1) {
-                NeighborWriter.setVerified(first.0, fix.neighbor)
-                NeighborWriter.setVerified(second.0, fix.leading)
+                let nIst = NeighborWriter.setVerified(first.0, fix.neighbor)
+                let lIst = NeighborWriter.setVerified(second.0, fix.leading)
                 log.notice("\(name, privacy: .public): Mindestgröße links/oben, Naht gehalten")
+                self?.announce(MinimumHit(wanted: first.1, actual: a1, fix: fix, neighborIst: nIst, leadingIst: lIst),
+                               neighbor: first.0, other: second.0)
             }
             log.notice("\(name, privacy: .public): \(first.0.logName, privacy: .public) + \(second.0.logName, privacy: .public) | Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
             Task { @MainActor in
                 self?.unplan(jobs)
                 done?()
             }
+        }
+    }
+
+    /// Mindestgröße getroffen: Hinweisschild an der Naht (MinimumNotice). Aufrufbar von der
+    /// Schreib-Warteschlange, gezeigt auf dem Hauptthread. Auch von `DragController` genutzt.
+    nonisolated func announce(_ hit: MinimumHit, neighbor: AXWindow, other: AXWindow) {
+        guard let notice = hit.notice else { return }
+        let anchor = MinimumNotice.anchor(leading: hit.leadingIst ?? hit.fix.leading, neighbor: hit.neighborIst ?? hit.fix.neighbor,
+                                          horizontal: notice.horizontal)
+        let nPid = neighbor.pid, oPid = other.pid, fallback = hit.fix.neighbor
+        Task { @MainActor [weak self] in
+            guard let self, let screen = Screens.containing(anchor) ?? Screens.best(for: fallback) else { return }
+            let name = { (pid: pid_t) in NSRunningApplication(processIdentifier: pid)?.localizedName ?? "Das Fenster" }
+            self.hud.show(notice.text(neighbor: name(nPid), other: name(oPid)), at: anchor, within: screen.visible)
         }
     }
 

@@ -205,7 +205,7 @@ final class DragController {
     /// 3. Hat ein Nachbar eine Mindestgröße: Kante dort halten, gezogenes Fenster anpassen.
     private func finish(leading w: AXWindow, raw: CGRect, now: CGRect,
                         frames: [Int: CGRect], windows: [Int: AXWindow]) {
-        let log = Self.log, writer = self.writer
+        let log = Self.log, writer = self.writer, actions = self.actions
         let m = writer.mark()
         writer.run {
             // Bricht ab, sobald der Nutzer eine neue Geste beginnt (R3).
@@ -225,6 +225,8 @@ final class DragController {
                     let nIst = NeighborWriter.setVerified(nw, fix.neighbor)
                     leading = fix.leading
                     let lIst = NeighborWriter.setVerified(w, leading)
+                    actions.announce(MinimumHit(wanted: wanted, actual: actual, fix: fix, neighborIst: nIst, leadingIst: lIst),
+                                     neighbor: nw, other: w)
                     log.notice("Mindestgröße: Nachbar Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public) → Nachbar \(nIst.map(NSStringFromRect) ?? "–", privacy: .public), gezogenes Fenster Soll \(NSStringFromRect(leading), privacy: .public) Ist \(lIst.map(NSStringFromRect) ?? "–", privacy: .public)")
                 } else {
                     log.notice("Mitziehen Ende: Soll \(NSStringFromRect(wanted), privacy: .public) Ist \(NSStringFromRect(actual), privacy: .public)")

@@ -84,6 +84,11 @@ Seam das Nachbarfenster an die neue Kante, sein äußerer Rand bleibt stehen. W�
 bewegt sich nur das Fenster, das du ziehst. Kann der Nachbar nicht so schmal werden, bleibt die
 Kante an seiner Mindestbreite stehen. Verdeckte Fenster bleiben, wo sie sind.
 
+Stößt Seam beim Mitziehen, Teilen oder Verschieben der Naht an eine Mindestgröße, zeigt ein
+Schild an der Naht kurz an, warum: „Outlook geht nicht schmaler als 980 pt“. Passen beide
+Fenster gar nicht nebeneinander, sagt das Schild auch das. Dann hilft es, in einer der Apps die
+Seitenleiste einzuklappen (in Outlook zum Beispiel den Ordnerbereich).
+
 ## Andocken per Ziehen
 
 Zieh ein Fenster an der Titelleiste an den Bildschirmrand. Eine Fläche zeigt, wo es landet.

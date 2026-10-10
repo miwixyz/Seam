@@ -30,8 +30,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   beide hell. Stärke 20/35/50 %. Seam schiebt dafür ein eigenes Fenster unter das aktive, liest
   nur Nummer, Prozess und Lage der Fenster und braucht keine Bildschirmaufnahme-Freigabe.
 - **Mitziehen beim Loslassen:** Ziehst du die gemeinsame Kante mit der Maus, setzt Seam das
-  Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante. Nur sichtbare
-  Nachbarn ziehen mit.
+  Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante, ein Schild an der
+  Naht sagt dann kurz, welches Fenster nicht kleiner geht (0.5.4). Nur sichtbare Nachbarn ziehen mit.
 - **Tastenkürzel** für Hälften, Viertel, Drittel, zwei Drittel, maximieren, zentrieren,
   ursprüngliche Größe und Bildschirmwechsel, mit eigenem Satz für Hochkant-Bildschirme.
 - **Andocken per Ziehen** an den Bildschirmrand mit Vorschaufläche, Raster 24 × 12 (quer) bzw.
