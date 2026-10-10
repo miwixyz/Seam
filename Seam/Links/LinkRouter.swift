@@ -17,6 +17,7 @@ final class LinkRouter {
         static let rules = "linkRules"
         static let fallback = "linkFallback"
         static let stripTracking = "linkStripTracking"
+        static let pickerKeys = "linkPickerKeys"
     }
 
     private let defaults: UserDefaults
@@ -27,6 +28,10 @@ final class LinkRouter {
     var fallback: String? { didSet { defaults.set(fallback, forKey: Key.fallback) } }
     /// Tracking-Parameter entfernen (E16h), ab Werk an.
     var stripTracking: Bool { didSet { defaults.set(stripTracking, forKey: Key.stripTracking) } }
+    /// Tasten, die beim Klick die Auswahl öffnen (E16g, ab 0.5.2 wählbar).
+    var pickerKeys: Set<PickerKey> {
+        didSet { defaults.set(pickerKeys.map(\.rawValue).sorted(), forKey: Key.pickerKeys) }
+    }
 
     /// Ist Seam gerade Standardbrowser? Von macOS gelesen (E16k), bei `refresh()` aktualisiert.
     private(set) var isDefault = false
@@ -42,11 +47,15 @@ final class LinkRouter {
         let f = defaults.string(forKey: Key.fallback)
         fallback = f.flatMap { LinkRules.isBundleID($0) ? $0 : nil }
         stripTracking = defaults.object(forKey: Key.stripTracking) as? Bool ?? true
+        pickerKeys = LinkRules.pickerKeys(from: defaults.stringArray(forKey: Key.pickerKeys))
     }
 
     /// Vor dem Ende des App-Starts, damit auch der Link ankommt, der Seam gestartet hat.
     func installHandler() {
-        let sink = AppleEventSink { [weak self] raw, source, fn in self?.route(raw, source: source, picker: fn) }
+        let sink = AppleEventSink { [weak self] raw, source, held in
+            guard let self else { return }
+            self.route(raw, source: source, picker: LinkRules.pickerRequested(held, keys: self.pickerKeys))
+        }
         NSAppleEventManager.shared().setEventHandler(
             sink, andSelector: #selector(AppleEventSink.handle(_:reply:)),
             forEventClass: AEEventClass(kInternetEventClass), andEventID: AEEventID(kAEGetURL))
@@ -199,17 +208,19 @@ final class LinkRouter {
 /// Apple Events kommen auf dem Hauptthread an (NSAppleEventManager), daher `@MainActor`.
 @MainActor
 private final class AppleEventSink: NSObject {
-    private let onURL: @MainActor (String, String?, Bool) -> Void
+    private let onURL: @MainActor (String, String?, HeldKeys) -> Void
 
-    init(onURL: @escaping @MainActor (String, String?, Bool) -> Void) {
+    init(onURL: @escaping @MainActor (String, String?, HeldKeys) -> Void) {
         self.onURL = onURL
     }
 
     @objc func handle(_ event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
         guard let raw = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue else { return }
         let pid = event.attributeDescriptor(forKeyword: keySenderPIDAttr)?.int32Value
-        let fn = NSEvent.modifierFlags.contains(.function)
+        let f = NSEvent.modifierFlags
+        let held = HeldKeys(fn: f.contains(.function), option: f.contains(.option),
+                            shift: f.contains(.shift), control: f.contains(.control))
         let source = pid.flatMap { NSRunningApplication(processIdentifier: $0)?.bundleIdentifier }
-        onURL(raw, source, fn)
+        onURL(raw, source, held)
     }
 }

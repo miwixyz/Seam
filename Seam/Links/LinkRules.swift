@@ -15,7 +15,47 @@ struct LinkRule: Codable, Equatable, Identifiable, Sendable {
     var browser: String
 }
 
+/// Taste, die beim Link-Klick das Auswahlfenster öffnet (E16g). 0.5.2 (Michael, 10.10.): Externe
+/// Tastaturen haben kein Fn → wählbar, ab Werk Fn und ⌥.
+enum PickerKey: String, CaseIterable, Codable, Sendable {
+    case fn, option, shift, controlOption
+
+    var label: String {
+        switch self {
+        case .fn: "Fn"
+        case .option: "⌥"
+        case .shift: "⇧"
+        case .controlOption: "⌃⌥"
+        }
+    }
+
+    static let defaults: Set<PickerKey> = [.fn, .option]
+}
+
+/// Zustand der Sondertasten beim Eintreffen eines Links (einmal gelesen, keine Ereignisse).
+struct HeldKeys: Equatable, Sendable {
+    var fn = false, option = false, shift = false, control = false
+}
+
 enum LinkRules {
+
+    /// Soll das Auswahlfenster kommen? Jede gewählte Taste wirkt für sich; ⌃⌥ verlangt beide.
+    static func pickerRequested(_ held: HeldKeys, keys: Set<PickerKey>) -> Bool {
+        keys.contains { key in
+            switch key {
+            case .fn: held.fn
+            case .option: held.option
+            case .shift: held.shift
+            case .controlOption: held.control && held.option
+            }
+        }
+    }
+
+    /// Gespeicherte Tasten lesen: Unbekanntes verworfen, nichts gespeichert → Werkseinstellung.
+    static func pickerKeys(from raw: [String]?) -> Set<PickerKey> {
+        guard let raw else { return PickerKey.defaults }
+        return Set(raw.prefix(PickerKey.allCases.count).compactMap(PickerKey.init(rawValue:)))
+    }
 
     static let maxRules = 200
     static let maxURLLength = 32_768

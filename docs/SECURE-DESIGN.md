@@ -370,6 +370,11 @@ Wahl des Nutzers nach 0,4 s Sperrzeit; Esc/Schließen bricht ab (Abbruchgrund im
 Adresse). Regel-Editor: „Andere App …“ (`NSOpenPanel`, nur `.app`) liefert nur die Bundle-ID,
 geprüft mit `LinkRules.isBundleID`; Regeln laufen weiter durch `sanitize`.
 
+**0.5.2 (10.10.):** Taste für die Auswahl wählbar (Fn, ⌥, ⇧, ⌃⌥; ab Werk Fn + ⌥), weil externe
+Tastaturen kein Fn haben. Unverändert E1/E16g: einmal `NSEvent.modifierFlags` (Zustand) beim
+Eintreffen des Links, keine Tastatur-Ereignisse, keine neue Berechtigung. Gespeichert als Liste
+bekannter Namen, Unbekanntes verworfen (Test).
+
 **Restrisiko (bewusst akzeptiert):** Stürzt Seam ab, öffnen Links erst nach dem Neustart, den
 macOS beim nächsten Link selbst auslöst. Fenster- und Link-Funktion teilen einen Prozess und
 einen Release-Takt — Michaels Wahl („In Seam“), Rückfrage gestellt.

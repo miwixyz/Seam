@@ -23,7 +23,7 @@ struct LinkRulesView: View {
             ScrollView {
                 VStack(spacing: FamilyTheme.Space.s) {
                     if router.rules.isEmpty {
-                        Text("Noch keine Regeln. Tipp: Im Auswahlfenster (Fn beim Klick) legt ⌘-Klick eine Regel an.")
+                        Text("Noch keine Regeln. Tipp: Im Auswahlfenster (Fn oder ⌥ beim Klick) legt ⌘-Klick eine Regel an.")
                             .font(FamilyTheme.font(.callout))
                             .foregroundStyle(FamilyTheme.textSecondary)
                             .padding(FamilyTheme.Space.m)

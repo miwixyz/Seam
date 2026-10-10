@@ -152,6 +152,34 @@ final class LinkRulesTests: XCTestCase {
         XCTAssertLessThan(Date().timeIntervalSince(start) / 100, 0.001, "Entscheidung muss < 1 ms bleiben")
     }
 
+    // MARK: E16g – Tasten für die Auswahl (0.5.2)
+
+    func testPickerKeysEachWorkAlone() {
+        let all = Set(PickerKey.allCases)
+        XCTAssertTrue(LinkRules.pickerRequested(HeldKeys(fn: true), keys: [.fn]))
+        XCTAssertTrue(LinkRules.pickerRequested(HeldKeys(option: true), keys: [.option]))
+        XCTAssertTrue(LinkRules.pickerRequested(HeldKeys(shift: true), keys: [.shift]))
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(), keys: all))
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(fn: true, option: true, shift: true, control: true), keys: []))
+    }
+
+    func testOnlyChosenKeysCount() {
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(fn: true), keys: [.option]))
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(shift: true), keys: [.fn, .option]))
+    }
+
+    func testControlOptionNeedsBoth() {
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(control: true), keys: [.controlOption]))
+        XCTAssertFalse(LinkRules.pickerRequested(HeldKeys(option: true), keys: [.controlOption]))
+        XCTAssertTrue(LinkRules.pickerRequested(HeldKeys(option: true, control: true), keys: [.controlOption]))
+    }
+
+    func testStoredPickerKeys() {
+        XCTAssertEqual(LinkRules.pickerKeys(from: nil), [.fn, .option])
+        XCTAssertEqual(LinkRules.pickerKeys(from: []), [])
+        XCTAssertEqual(LinkRules.pickerKeys(from: ["shift", "unsinn", "fn"]), [.shift, .fn])
+    }
+
     // MARK: E16c
 
     @MainActor

@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.2] — 2026-10-10
+
+### Neu
+
+- **Taste für die Browser-Auswahl wählbar.** Externe Tastaturen haben oft keine Fn-Taste. Unter
+  Einstellungen → „Links“ → „Auswahl beim Klick mit“ schaltest du Fn, ⌥, ⇧ und ⌃⌥ einzeln ein.
+  Ab Werk wirken Fn und ⌥. ⌃⌥ verlangt beide Tasten zusammen.
+
 ## [0.5.1] — 2026-10-10
 
 ### Geändert

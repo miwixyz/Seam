@@ -167,7 +167,24 @@ struct SettingsView: View {
             }
             .buttonStyle(CardButtonStyle())
             .padding(.vertical, FamilyTheme.Space.s)
-            note("Fn beim Klick auf einen Link: Browser auswählen", symbol: "globe",
+            divider
+            // 0.5.2: Externe Tastaturen haben kein Fn (Michael, 10.10.) → Tasten wählbar.
+            row("Auswahl beim Klick mit") {
+                HStack(spacing: FamilyTheme.Space.xs) {
+                    ForEach(PickerKey.allCases, id: \.self) { key in
+                        KeyChip(label: key.label, on: router.pickerKeys.contains(key)) {
+                            if router.pickerKeys.contains(key) {
+                                router.pickerKeys.remove(key)
+                            } else {
+                                router.pickerKeys.insert(key)
+                            }
+                        }
+                    }
+                }
+            }
+            note(router.pickerKeys.isEmpty
+                 ? "Keine Taste gewählt: Die Auswahl kommt nur ohne Standard-Browser"
+                 : "Taste halten und Link anklicken: Browser auswählen", symbol: "cursorarrow.click",
                  color: FamilyTheme.textSecondary)
             if let linkError {
                 note(linkError, symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
@@ -218,6 +235,30 @@ struct SettingsView: View {
 
     private var divider: some View {
         Rectangle().fill(FamilyTheme.cardStroke).frame(height: 0.8)
+    }
+}
+
+/// Umschaltbare Taste (Fn, ⌥, ⇧, ⌃⌥): an = Akzentfläche. Für VoiceOver ein Knopf mit Zustand.
+private struct KeyChip: View {
+    let label: String
+    let on: Bool
+    let toggle: () -> Void
+
+    var body: some View {
+        Button(action: toggle) {
+            Text(label)
+                .font(FamilyTheme.font(.callout, weight: .semibold))
+                .foregroundStyle(on ? FamilyTheme.onAccent : FamilyTheme.textPrimary)
+                .frame(minWidth: 34, minHeight: 26)
+                .padding(.horizontal, 4)
+                .background {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(on ? FamilyTheme.accentFill : FamilyTheme.cardStroke.opacity(0.45))
+                }
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(on ? "an" : "aus")
     }
 }
 

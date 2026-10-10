@@ -20,7 +20,7 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ## Neu in 0.5
 
-**Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick die Fn-Taste, wählst du den Browser selbst. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten.
+**Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick Fn oder ⌥ gedrückt, wählst du den Browser selbst. Welche Taste das ist, stellst du ein, auch für externe Tastaturen ohne Fn. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten.
 
 ---
 
@@ -72,7 +72,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Etwas Luft zwischen den Fenstern | Abstand wählbar: 0, 5, 10 oder 20 Punkt |
 | Zwei Fenster gemeinsam nach vorn holen | Ein Klick auf eines der geteilten Fenster holt beide nach vorn, Minimieren gilt für beide |
 | Wissen, auf welchem Space du bist | Namen für Spaces: der Name des aktuellen Space steht in der Menüleiste |
-| Links im passenden Browser öffnen | Seam als Standardbrowser: Regeln nach Website oder Quell-App, Fn beim Klick zeigt eine Auswahl |
+| Links im passenden Browser öffnen | Seam als Standardbrowser: Regeln nach Website oder Quell-App, Fn oder ⌥ beim Klick zeigt eine Auswahl (Taste wählbar) |
 | Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück (ab Werk aus) |
 | Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 

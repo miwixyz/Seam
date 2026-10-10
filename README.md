@@ -40,7 +40,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   passend zum Bildschirm des Zielfensters, aktueller Space oben, Knöpfe für Abdunkeln, Spaces,
   Einstellungen und Hilfe. Einstellungen im eigenen Fenster im selben Look, erscheinen im aktuellen Space (0.4.2).
 - **Links verteilen** (0.5, ab Werk aus): Seam als Standardbrowser gibt jeden Link nach Regeln
-  (Website und/oder Quell-App) an einen Browser weiter, Fn beim Klick zeigt eine Auswahl, ⌘
+  (Website und/oder Quell-App) an einen Browser weiter, eine gehaltene Taste beim Klick (Fn, ⌥, ⇧ oder ⌃⌥, wählbar; ab Werk Fn und ⌥) zeigt eine Auswahl, ⌘
   merkt sich die Website. Tracking-Anhänge (`utm_*`, `fbclid` …) werden abgeschnitten. Idee aus
   [Velja](https://sindresorhus.com/velja), eigener Code. Der Link-Teil hat keinen Zugriff auf die
   Bedienungshilfen (eigener Ordner `Seam/Links`, per Lint-Regel erzwungen).

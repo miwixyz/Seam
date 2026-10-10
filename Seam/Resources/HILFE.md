@@ -60,7 +60,10 @@ ohne Regel. Ausschalten gibt die Rolle an diesen Browser zurück.
   „Hinzufügen“. In der Liste darunter lassen sich Website und App auch kombinieren; eine
   geänderte Website gilt, sobald sie gültig ist. Die erste passende Regel gewinnt, die
   Reihenfolge änderst du mit den Pfeilen.
-- **Browser auswählen:** Halte **Fn** gedrückt, während du einen Link anklickst. Es erscheint
+- **Browser auswählen:** Halte **Fn** oder **⌥** gedrückt, während du einen Link anklickst.
+  Welche Tasten das sind, legst du unter „Auswahl beim Klick mit“ fest (Fn, ⌥, ⇧, ⌃⌥; ab Werk
+  Fn und ⌥). Externe Tastaturen haben oft kein Fn, dann nimm ⌥. ⇧ erweitert in manchen Apps die
+  Textauswahl, statt den Link zu öffnen. Es erscheint
   ein kleines Fenster mit deinen Browsern: Ziffer 1–9 oder Klick öffnet, Esc bricht ab (der Link
   öffnet dann nicht). **⌘-Klick** oder ⌘-Ziffer merkt
   sich die Website als Regel. Das Fenster bleibt offen, auch wenn du in eine andere App

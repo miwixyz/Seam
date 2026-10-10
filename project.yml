@@ -13,7 +13,7 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: YES
     SWIFT_STRICT_CONCURRENCY: complete
-    MARKETING_VERSION: "0.5.1"
+    MARKETING_VERSION: "0.5.2"
     CURRENT_PROJECT_VERSION: "1"
 
 # Genau EINE Abhängigkeit: Sparkle für Updates (docs/SECURE-DESIGN.md E9, gleiche
