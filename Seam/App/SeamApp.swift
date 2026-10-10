@@ -34,6 +34,9 @@ struct SeamApp: App {
             // die Breite des ersten Namens, ein längerer lief über den Rand (Michael 09.10.:
             // „Produktivität“ 77 pt Text in 59 pt Symbol, Nachbar zeichnete darüber).
             .id("\(name ?? "")|\(icon)|\(symbol)")
+            #if DEBUG
+            .background(DebugWindowOpener())
+            #endif
         }
         .menuBarExtraStyle(.window)
 
@@ -62,10 +65,10 @@ struct SeamApp: App {
         .handlesExternalEvents(matching: [])
 
         Window("Link-Regeln", id: "linkregeln") {
-            LinkRulesView(router: LinkRouter.shared)
-                .padding(16)
-                .frame(width: 560)
-                .familyBackground()
+            // 0.5.3: hier stand noch `.frame(width: 560)` aus 0.5.0 und schnitt die 620 pt breite
+            // Ansicht links und rechts ab (gemessen bei Michael: Fenster 560 × 584). Größe und
+            // Rand legt jetzt allein `LinkRulesWindow` fest — dieselbe Hülle rendert die Vorschau.
+            LinkRulesWindow(router: LinkRouter.shared)
                 .background(MoveToActiveSpace())
         }
         .windowResizability(.contentSize)

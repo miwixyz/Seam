@@ -67,6 +67,20 @@ struct LinkRulesView: View {
     }
 }
 
+/// Inhalt des Fensters „Link-Regeln“ samt Rand und Hintergrund. Von der Szene in `SeamApp` UND
+/// von der Vorschau benutzt, damit die Vorschau zeigt, was im echten Fenster steht.
+struct LinkRulesWindow: View {
+    @Bindable var router: LinkRouter
+    static let size = CGSize(width: 620 + 32, height: 520 + 32)
+
+    var body: some View {
+        LinkRulesView(router: router)
+            .padding(16)
+            .frame(width: Self.size.width, height: Self.size.height)
+            .familyBackground()
+    }
+}
+
 /// App als Auswahl für „Aus App“: Bundle-ID + Name. Nur diese beiden Werte, nichts anderes.
 struct AppChoice: Hashable {
     let id: String

@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.3] — 2026-10-10
+
+### Behoben
+
+- **Fenster „Link-Regeln“ schnitt links und rechts ab** („ue Regel“, „Hinzufüge“, Nummer und
+  Papierkorb fehlten). Das Fenster war noch auf die alte Breite festgelegt. Jetzt ist es so breit
+  wie sein Inhalt (gemessen: 652 statt 560 Punkt).
+
 ## [0.5.2] — 2026-10-10
 
 ### Neu

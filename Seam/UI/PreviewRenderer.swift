@@ -23,7 +23,7 @@ enum PreviewRenderer {
                        to: dir.appendingPathComponent("einstellungen-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
                 LinkRouter.shared.refresh()
-                render(LinkRulesView(router: LinkRouter.shared).padding(16).familyBackground(),
+                render(LinkRulesWindow(router: LinkRouter.shared),
                        to: dir.appendingPathComponent("linkregeln-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
             }
@@ -50,6 +50,24 @@ enum PreviewRenderer {
             // Code-Audit 09.10. (C12): nicht still verwerfen, sonst prüft man alte Bilder.
             FileHandle.standardError.write(Data("Vorschau nicht geschrieben: \(url.path) – \(error)\n".utf8))
             exit(1)
+        }
+    }
+}
+
+/// Nur im Debug-Build: `-openWindow <id>` öffnet beim Start ein Seam-Fenster (z. B. `linkregeln`),
+/// damit der Sichttest das echte Fenster messen kann. Künstliche Klicks aufs Leistensymbol öffnen
+/// das Popover nicht zuverlässig (Sichttest-Profil). Hängt am Menüleisten-Label, das ab Start steht.
+struct DebugWindowOpener: View {
+    @Environment(\.openWindow) private var openWindow
+    @State private var done = false
+
+    var body: some View {
+        Color.clear.onAppear {
+            let args = CommandLine.arguments
+            guard !done, let i = args.firstIndex(of: "-openWindow"), i + 1 < args.count else { return }
+            done = true
+            let id = args[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { openWindow(id: id) }
         }
     }
 }
