@@ -8,9 +8,10 @@ import SwiftUI
 final class BrowserPickerPanel: NSPanel, NSWindowDelegate {
 
     enum Choice {
-        case cancel
+        case cancel(String)
         case open(Browsers.Browser, remember: Bool)
     }
+    private var rekeyed = false
 
     private var onChoice: ((Choice) -> Void)?
     private let browsers: [Browsers.Browser]
@@ -85,9 +86,24 @@ final class BrowserPickerPanel: NSPanel, NSWindowDelegate {
         done(c)
     }
 
-    override func cancelOperation(_ sender: Any?) { finish(.cancel) }
-    func windowDidResignKey(_ notification: Notification) { finish(.cancel) }
-    func windowWillClose(_ notification: Notification) { finish(.cancel) }
+    override func cancelOperation(_ sender: Any?) { finish(.cancel("Esc")) }
+    func windowWillClose(_ notification: Notification) { finish(.cancel("Fenster geschlossen")) }
+
+    /// Fokusverlust bricht NICHT mehr ab (0.5.1): Michael klickte einen Link in Obsidian, das Fenster
+    /// erschien und war im selben Moment „abgebrochen“ (Protokoll 14:30) — vermutlich holt die App,
+    /// aus der der Link kam, den Fokus zurück. Kurz nach dem Erscheinen holt sich das Fenster den
+    /// Fokus einmal zurück; danach bleibt es schwebend offen, bis gewählt, Esc oder geschlossen.
+    func windowDidResignKey(_ notification: Notification) {
+        guard onChoice != nil, !rekeyed, Date().timeIntervalSince(shownAt) < 1.5 else { return }
+        rekeyed = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self, self.onChoice != nil else { return }
+            self.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    /// Ein neuer Link ersetzt das offene Fenster (Router).
+    func replace() { finish(.cancel("durch neuen Link ersetzt")) }
 }
 
 private struct BrowserPickerView: View {
@@ -136,7 +152,7 @@ private struct BrowserPickerView: View {
         .focusEffectDisabled()
         .focused($focused)
         .onAppear { focused = true }
-        .onKeyPress(.escape) { onChoice(.cancel); return .handled }
+        .onKeyPress(.escape) { onChoice(.cancel("Esc")); return .handled }
         .onKeyPress(characters: .decimalDigits) { press in
             guard let n = Int(press.characters), n >= 1, n <= min(9, browsers.count) else { return .ignored }
             pick(browsers[n - 1], remember: press.modifiers.contains(.command))

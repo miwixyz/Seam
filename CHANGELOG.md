@@ -2,6 +2,25 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.1] — 2026-10-10
+
+### Geändert
+
+- **Link-Regeln: neuer Bereich „Neue Regel“.** Du wählst Website oder App (z. B. Links aus
+  Outlook in Edge), dazu den Browser, und fügst die Regel hinzu. Apps, die gerade nicht laufen,
+  findest du über „Andere App …“.
+
+### Behoben
+
+- **Fenster „Link-Regeln“ war zu klein.** Die Liste schrumpfte auf eine halbe Zeile. Jetzt hat das
+  Fenster eine feste Größe und die Liste scrollt.
+- **Eine getippte Website ging verloren**, wenn du nicht Return gedrückt hast. Jetzt gilt sie,
+  sobald sie gültig ist.
+- **Das Auswahlfenster schloss sich sofort**, wenn die App, aus der der Link kam (z. B. Obsidian),
+  sich den Fokus zurückholte. Der Link öffnete dann gar nicht. Jetzt bleibt das Fenster offen, bis
+  du wählst, Esc drückst oder es schließt. Ein neuer Link ersetzt ein offenes Auswahlfenster,
+  statt verloren zu gehen.
+
 ## [0.5.0] — 2026-10-10
 
 ### Neu

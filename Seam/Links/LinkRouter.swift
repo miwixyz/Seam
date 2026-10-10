@@ -122,16 +122,10 @@ final class LinkRouter {
     }
 
     private func showPicker(_ url: URL, source: String?) {
-        // Nur eine Auswahl zur Zeit (STRIDE D): weitere Links gehen an den Standard-Browser.
-        if picker != nil {
-            if let b = browsers.first(where: { $0.id == fallback }) {
-                hand(url, to: b)
-                Self.log.notice("Auswahl schon offen, Link an Standard-Browser")
-            } else {
-                Self.log.notice("Auswahl schon offen, kein Standard-Browser: Link nicht geöffnet")
-            }
-            return
-        }
+        // Nur eine Auswahl zur Zeit (STRIDE D): Ein neuer Link ersetzt die offene Auswahl. Vorher
+        // ging er an den Standard-Browser oder verloren, und ein liegengebliebenes Fenster
+        // blockierte alle weiteren Links (0.5.1).
+        picker?.replace()
         guard !browsers.isEmpty else {
             Self.log.error("Kein Browser gefunden, Link nicht geöffnet")
             return
@@ -141,13 +135,14 @@ final class LinkRouter {
         }
         picker = panel
         panel.present()
+        Self.log.notice("Auswahl gezeigt (\(self.browsers.count, privacy: .public) Browser)")
     }
 
     private func picked(_ choice: BrowserPickerPanel.Choice, url: URL) {
         picker = nil
         switch choice {
-        case .cancel:
-            Self.log.notice("Auswahl abgebrochen, Link nicht geöffnet")
+        case .cancel(let why):
+            Self.log.notice("Auswahl abgebrochen (\(why, privacy: .public)), Link nicht geöffnet")
         case .open(let b, let remember):
             var added = false
             if remember, !url.isFileURL, let host = LinkRules.urlHost(url) {

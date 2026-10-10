@@ -337,7 +337,7 @@ Bedienungshilfen-Freigabe nie erreicht.
 | **R** | – | Einzelnutzer, E16j |
 | **I** | Adressen landen im Protokoll | E16j: nie |
 | **I** | Tracking-Entfernung verändert Adresse unerwartet | E16h: nur Abfrage-Parameter aus fester Liste, Schalter |
-| **D** | Link-Flut (Schleife, 1000 × `open`) | E16c verhindert die Schleife; Auswahlfenster nur eines zur Zeit, weitere Links während offener Auswahl → Standard-Browser |
+| **D** | Link-Flut (Schleife, 1000 × `open`) | E16c verhindert die Schleife; Auswahlfenster nur eines zur Zeit — seit 0.5.1 ersetzt ein neuer Link die offene Auswahl (vorher Standard-Browser bzw. verloren). Öffnen nur auf Wahl des Nutzers, 0,4 s Sperrzeit |
 | **D** | Seam hängt → kein Link öffnet sich | Link-Weg auf dem Hauptthread ohne AX-Aufrufe, Entscheidung < 1 ms (Messung im Test); Ausfall = einmal Velja oder Safari wieder als Standard setzen |
 | **E** | fremde App nutzt Seams Bedienungshilfen über einen Link | E16a: Link-Weg hat keinen Zugang zu AX (Lint-Regel), einzige Wirkung ist `NSWorkspace.open` |
 
@@ -362,6 +362,13 @@ Gemessen beim Sichttest und behoben: Auswahlfenster unsichtbar (NSPanel versteck
 inaktiver App → nicht aktivierendes Panel), Velja per Groß-V nicht ausgeschlossen, Nicht-Browser
 (ChatGPT/Codex, Downie) in der Liste, HTML-Datei öffnete die Einstellungen
 (`.handlesExternalEvents(matching: [])`). `rafter run` folgt nach dem Push.
+
+**0.5.1 (10.10., Michaels Test):** Auswahlfenster bricht bei Fokusverlust nicht mehr ab (Obsidian
+holte den Fokus zurück → Link verloren); holt sich den Fokus binnen 1,5 s einmal zurück, bleibt
+sonst schwebend offen. Neuer Link ersetzt die offene Auswahl. Weiter gilt: geöffnet wird nur auf
+Wahl des Nutzers nach 0,4 s Sperrzeit; Esc/Schließen bricht ab (Abbruchgrund im Protokoll, ohne
+Adresse). Regel-Editor: „Andere App …“ (`NSOpenPanel`, nur `.app`) liefert nur die Bundle-ID,
+geprüft mit `LinkRules.isBundleID`; Regeln laufen weiter durch `sanitize`.
 
 **Restrisiko (bewusst akzeptiert):** Stürzt Seam ab, öffnen Links erst nach dem Neustart, den
 macOS beim nächsten Link selbst auslöst. Fenster- und Link-Funktion teilen einen Prozess und

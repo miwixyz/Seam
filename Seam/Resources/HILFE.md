@@ -54,13 +54,18 @@ weiterreichen. Einschalten: Einstellungen → „Links“ → „Seam verteilt L
 nach, ob der Standardbrowser wechseln soll. Darunter wählst du den Standard-Browser für alle Links
 ohne Regel. Ausschalten gibt die Rolle an diesen Browser zurück.
 
-- **Regeln** („Regeln bearbeiten …“): eine Website (z. B. `cineweb.de`, gilt auch für
-  `www.cineweb.de`) und/oder die App, aus der der Link kommt, öffnen in einem bestimmten Browser.
-  Die erste passende Regel gewinnt, die Reihenfolge änderst du mit den Pfeilen.
+- **Regeln** („Regeln bearbeiten …“): Oben unter „Neue Regel“ wählst du **Website** (z. B.
+  `cineweb.de`, gilt auch für `www.cineweb.de`) oder **App** (z. B. Links aus Outlook in Edge;
+  Apps, die gerade nicht laufen, findest du über „Andere App …“), dazu den Browser, dann
+  „Hinzufügen“. In der Liste darunter lassen sich Website und App auch kombinieren; eine
+  geänderte Website gilt, sobald sie gültig ist. Die erste passende Regel gewinnt, die
+  Reihenfolge änderst du mit den Pfeilen.
 - **Browser auswählen:** Halte **Fn** gedrückt, während du einen Link anklickst. Es erscheint
   ein kleines Fenster mit deinen Browsern: Ziffer 1–9 oder Klick öffnet, Esc bricht ab (der Link
   öffnet dann nicht). **⌘-Klick** oder ⌘-Ziffer merkt
-  sich die Website als Regel. Ist kein Standard-Browser gewählt, kommt dieses Fenster immer.
+  sich die Website als Regel. Das Fenster bleibt offen, auch wenn du in eine andere App
+  wechselst; ein neuer Link ersetzt es. Ist kein Standard-Browser gewählt, kommt dieses Fenster
+  bei jedem Link ohne Regel.
 - **Tracking-Parameter entfernen** (ab Werk an): Seam schneidet bekannte Werbe-Anhänge wie
   `utm_source` oder `fbclid` ab, bevor der Browser den Link bekommt. Der Rest der Adresse bleibt
   unverändert.

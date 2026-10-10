@@ -22,6 +22,10 @@ enum PreviewRenderer {
                 render(SettingsView().environment(engine).environment(engine.prefs),
                        to: dir.appendingPathComponent("einstellungen-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
+                LinkRouter.shared.refresh()
+                render(LinkRulesView(router: LinkRouter.shared).padding(16).familyBackground(),
+                       to: dir.appendingPathComponent("linkregeln-\(name).png"), appearance: appearance,
+                       background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
             }
             NSApp.terminate(nil)
         }
