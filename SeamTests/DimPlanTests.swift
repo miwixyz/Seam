@@ -43,6 +43,25 @@ final class DimPlanTests: XCTestCase {
         XCTAssertNil(DimPlan.target(stack: [b, c], frontPID: 1, partner: nil, exclude: []))
     }
 
+    // Flackern (Michael, 12.10., Variante a): Kommt eine App ohne Fenster nach vorn (Menüleisten-App,
+    // Starter, Passwort-Manager), bleibt die Abdunklung stehen statt aus- und wieder anzugehen.
+    func testWindowlessFrontAppKeepsDimming() {
+        let o = StackWindow(number: 90, pid: 9, bounds: .zero)
+        XCTAssertTrue(DimPlan.keepWithoutTarget(isDesktop: false, stack: [a, o, c], lastTarget: 10, overlays: [90]))
+    }
+
+    func testDesktopStillLiftsDimming() {
+        let o = StackWindow(number: 90, pid: 9, bounds: .zero)
+        XCTAssertFalse(DimPlan.keepWithoutTarget(isDesktop: true, stack: [a, o, c], lastTarget: 10, overlays: [90]))
+    }
+
+    func testVanishedTargetLiftsDimming() {
+        // Altes Ziel geschlossen: Abdunklung läge sonst über allem.
+        let o = StackWindow(number: 90, pid: 9, bounds: .zero)
+        XCTAssertFalse(DimPlan.keepWithoutTarget(isDesktop: false, stack: [o, c], lastTarget: 10, overlays: [90]))
+        XCTAssertFalse(DimPlan.keepWithoutTarget(isDesktop: false, stack: [a, o, c], lastTarget: nil, overlays: [90]))
+    }
+
     func testInPlaceOnlyWhenOverlayDirectlyBelowTarget() {
         let o1 = StackWindow(number: 90, pid: 9, bounds: .zero)
         let o2 = StackWindow(number: 91, pid: 9, bounds: .zero)

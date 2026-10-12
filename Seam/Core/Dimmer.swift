@@ -24,6 +24,19 @@ enum DimPlan {
         guard let next = rest.first else { return false }
         return overlays.contains(next.number)
     }
+
+    /// Vorn ist kein Ziel (App ohne eigenes Fenster wie Menüleisten-Apps, Starter, Passwort-Manager,
+    /// oder ihr Fenster hat noch keinen Fokus): Abdunklung stehen lassen?
+    ///
+    /// Bis 0.5.4 ging sie dann aus und kam mit der nächsten App wieder — bei 50 % Stärke ein
+    /// Flackern des ganzen Hintergrunds, gemessen 10–25× je Stunde (Michael, 12.10., Variante a).
+    /// Weg nur noch beim Schreibtisch (Finder ohne Fokusfenster, eigener Klick) und wenn das alte
+    /// Ziel nicht mehr direkt über der Abdunklung liegt — sonst läge sie über allem.
+    static func keepWithoutTarget(isDesktop: Bool, stack: [StackWindow], lastTarget: Int?,
+                                  overlays: Set<Int>) -> Bool {
+        guard !isDesktop, let lastTarget else { return false }
+        return isInPlace(stack: stack, target: lastTarget, overlays: overlays)
+    }
 }
 
 /// Hintergrund abdunkeln wie HazeOver (docs/SECURE-DESIGN.md E13).
@@ -180,11 +193,13 @@ final class Dimmer {
         lastFrontPID = pid
         // Schreibtisch vorn (Finder ohne Fokusfenster): nicht abdunkeln.
         let focused = pid == ProcessInfo.processInfo.processIdentifier ? nil : AXAccess.focusedWindow(of: pid)
-        if focused == nil && pid != ProcessInfo.processInfo.processIdentifier { return hide("kein Fokusfenster") }
+        if focused == nil && pid != ProcessInfo.processInfo.processIdentifier {
+            return keepOrHide(app, focused: false, stack: stack, own: own, reason: "kein Fokusfenster")
+        }
         var partner: (pid_t, CGRect)?
         if let f = focused, let p = partnerOf?(f), let pf = p.frame { partner = (p.pid, pf) }
         guard let target = DimPlan.target(stack: stack, frontPID: pid, partner: partner, exclude: own) else {
-            return hide("kein Fenster der vorderen App")
+            return keepOrHide(app, focused: focused != nil, stack: stack, own: own, reason: "kein Fenster der vorderen App")
         }
         if target == lastTarget, DimPlan.isInPlace(stack: stack, target: target, overlays: own) { return }
         place(below: target)
@@ -209,6 +224,20 @@ final class Dimmer {
     private func isSettled(front pid: pid_t, stack: [StackWindow], own: Set<Int>) -> Bool {
         guard pid == lastFrontPID, let t = lastTarget else { return false }
         return DimPlan.isInPlace(stack: stack, target: t, overlays: own)
+    }
+
+    /// Kein Ziel vorn: stehen lassen oder aufheben (`DimPlan.keepWithoutTarget`). Protokolliert wird
+    /// nur die Prozessnummer, kein App-Name (E13: fürs Abdunkeln nur Nummer, Prozess, Lage).
+    /// Die Kennung der vorderen App dient allein dem Vergleich „ist es der Finder?“ (Schreibtisch).
+    private func keepOrHide(_ app: NSRunningApplication, focused: Bool, stack: [StackWindow], own: Set<Int>,
+                            reason: String) {
+        let pid = app.processIdentifier
+        let desktop = app.bundleIdentifier == "com.apple.finder" && !focused
+        if DimPlan.keepWithoutTarget(isDesktop: desktop, stack: stack, lastTarget: lastTarget, overlays: own) {
+            Self.log.notice("Abdunklung bleibt: \(reason, privacy: .public) (pid \(pid))")
+            return
+        }
+        hide("\(reason) (pid \(pid))")
     }
 
     private func hide(_ reason: String) {

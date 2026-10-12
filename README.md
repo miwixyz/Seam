@@ -70,7 +70,8 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
 Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
-Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage. An
+Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
+ob die vordere App der Finder ist (Schreibtisch). An
 fremden Fenstern ändert es Lage und Größe, hebt bei einem Paar den Partner an und minimiert ihn mit.
 Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
 werden nur Einstellungen und Link-Regeln; Fensterpaare liegen nur im Arbeitsspeicher. Als

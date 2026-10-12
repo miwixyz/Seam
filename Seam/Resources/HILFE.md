@@ -44,7 +44,9 @@ Liste der Spaces. Liefert macOS sie nach einem Update nicht mehr, blendet Seam d
 
 Mit dem Halbkreis-Knopf unten im Seam-Fenster oder in den Einstellungen → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.
 Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Die Stärke stellst du darunter ein
-(leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Klicks gehen durch
+(leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Kommt ein Programm
+ohne eigenes Fenster nach vorn, etwa eines aus der Menüleiste, bleibt die Abdunklung so stehen,
+wie sie war (seit 0.5.5, vorher ging sie kurz aus und wieder an). Klicks gehen durch
 die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.
 
 ## Links verteilen

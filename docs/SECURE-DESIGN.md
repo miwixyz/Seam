@@ -192,7 +192,12 @@ Michael, 09.10.: „so etwas wie HazeOver“, bei Paaren bleiben beide hell. Ab 
   Fokus/Hauptfenster gewechselt und Fenster erzeugt (AX, passiv); Selbstheilung 1×/s
   (Fensterliste lesen, nur bei Abweichung neu einsortieren).
 - **Verworfen:** Inhalte erkennen (Bildschirmaufnahme) — braucht eine weitere Freigabe, ohne Nutzen.
-- **Grenzfälle:** Schreibtisch vorn (kein Fokusfenster) → keine Abdunklung. Eigene Fenster
+- **Grenzfälle:** Schreibtisch vorn (kein Fokusfenster) → keine Abdunklung. **Ab 0.5.5
+  (12.10., Flacker-Fix):** Schreibtisch = vordere App ist der Finder (Vergleich der Kennung aus
+  `NSWorkspace.frontmostApplication`, kein AX, nichts gespeichert, im Protokoll nur die
+  Prozessnummer). Jede andere App ohne Fenster bzw. ohne Fokusfenster lässt die Abdunklung stehen,
+  solange das alte Ziel noch direkt darüber liegt (`DimPlan.keepWithoutTarget`); ist es weg, geht
+  sie aus, sonst läge sie über allem. Eigene Fenster
   (Hilfe) bleiben hell. Abdunkel-Fenster gehören Seams Prozess und fallen damit aus jeder
   Fenstersuche (`ownPID`-Filter in WindowFinder/DragController).
 - **STRIDE:** *I* – keine Titel/Inhalte, s. o. *D* – Fenster nimmt keine Ereignisse an; Fehler

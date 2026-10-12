@@ -2,6 +2,22 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.5] — 2026-10-12
+
+### Behoben
+
+- **Bildschirm flackerte bei eingeschalteter Abdunklung.** Kam ein Programm ohne eigenes Fenster
+  nach vorn (etwa aus der Menüleiste) oder hatte die vordere App kurz kein aktives Fenster, nahm
+  Seam die Abdunklung weg und setzte sie mit der nächsten App wieder, der ganze Hintergrund wurde
+  also kurz hell und wieder dunkel. Gemessen bis zu 25-mal in der Stunde. Jetzt bleibt die
+  Abdunklung in diesem Fall stehen. Sie geht nur noch aus, wenn der Schreibtisch vorn liegt oder
+  das abgedunkelte Fenster geschlossen wurde.
+
+### Intern
+
+- Datenschutzerklärung, README und Sicherheitsdesign (E13) nennen jetzt auch die Prüfung, ob die
+  vordere App der Finder ist. Das Protokoll nennt dabei nur die Prozessnummer.
+
 ## [0.5.4] — 2026-10-10
 
 ### Neu
