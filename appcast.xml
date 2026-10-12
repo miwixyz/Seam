@@ -6,6 +6,15 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.5.6</title>
+            <pubDate>Mon, 12 Oct 2026 16:20:18 +0200</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>54</sparkle:version>
+            <sparkle:shortVersionString>0.5.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.5.6/Seam-0.5.6.zip" length="3470970" type="application/octet-stream" sparkle:edSignature="H+cFpKGBYhOneF5WDpb/3QhXjlQMJpjMKiYefKp5z3PGVw5G86MxZr9mzuW+ef4wfRIsj47RmWL3f6K+bU5uDw=="/>
+        </item>
+        <item>
             <title>0.5.5</title>
             <pubDate>Mon, 12 Oct 2026 15:01:29 +0200</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -23,18 +32,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.5.4/Seam-0.5.4.zip" length="3514940" type="application/octet-stream" sparkle:edSignature="mL3pVRsUAyAPM72ITBdETvmKZEhuVNFsQ++oYaJqfopZD24KiUPbZMR2o48Jn1S1c8/CjDEr8yC83aqEvOFABg=="/>
         </item>
-        <item>
-            <title>0.5.3</title>
-            <pubDate>Sat, 10 Oct 2026 15:51:59 +0200</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>47</sparkle:version>
-            <sparkle:shortVersionString>0.5.3</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.5.3/Seam-0.5.3.zip" length="3506909" type="application/octet-stream" sparkle:edSignature="SlRQx9aUCMw7okicVDPBU9uA+8lCA/+kkgU6BeYayd9alxHJ/Dr7nQdJst3uLksWm9G88qOo4wclaupTYPk+Cw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: oYGleaueMqcCJ7hOvpOiNuyMnSxKl6CMUez+KAaEFWLCVMwh2Q5GIlVup0X6JRzKBgHFSa9cK5OJlviy5lLiBQ==
+edSignature: wvARTwQS5YmKbTzbI/FtWZu8B/iOxxm1BRk7KeJGJtrY/m2G2J4CJRuRmwd7tHhqx83HHhlSXYTjvi/cby25Dg==
 length: 2378
 -->
