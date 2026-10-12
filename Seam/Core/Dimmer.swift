@@ -37,6 +37,16 @@ enum DimPlan {
         guard !isDesktop, let lastTarget else { return false }
         return isInPlace(stack: stack, target: lastTarget, overlays: overlays)
     }
+
+    /// Sanft einblenden? Nur, wenn ein neues Ziel kommt UND die Abdunklung vorher nicht zu sehen war.
+    ///
+    /// Bis 0.5.5 wurde sie bei jedem neuen Ziel auf 0 gesetzt und neu eingeblendet, auch wenn sie
+    /// schon stand: Bei jedem App-Wechsel per Klick war der ganze Hintergrund ~0,3 s hell (Video
+    /// Michael 12.10., 15:57; gemessen Alpha 1 → 0,3 → 1 bei Outlook ↔ Edge). Steht sie schon, wird
+    /// sie nur unter das neue Ziel geschoben.
+    static func fadesIn(targetChanged: Bool, alreadyShown: Bool) -> Bool {
+        targetChanged && !alreadyShown
+    }
 }
 
 /// Hintergrund abdunkeln wie HazeOver (docs/SECURE-DESIGN.md E13).
@@ -205,15 +215,18 @@ final class Dimmer {
         place(below: target)
     }
 
-    /// Abdunkel-Fenster unter `target` einsortieren; bei neuem Ziel sanft einblenden.
+    /// Abdunkel-Fenster unter `target` einsortieren; nur aus dem Unsichtbaren sanft einblenden
+    /// (`DimPlan.fadesIn`). Steht die Abdunklung schon, wird sie nur verschoben — kein Blitzen.
     private func place(below target: Int) {
         let changed = target != lastTarget
+        let shown = overlays.contains { $0.isVisible && $0.alphaValue > 0.5 }
+        let fade = DimPlan.fadesIn(targetChanged: changed, alreadyShown: shown)
         lastTarget = target
         for o in overlays {
-            if changed { o.alphaValue = 0 }
+            if fade { o.alphaValue = 0 }
             o.order(.below, relativeTo: target)
         }
-        guard changed else { return }
+        guard fade else { return }
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.15
             for o in overlays { o.animator().alphaValue = 1 }

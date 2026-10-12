@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.5.6] — 2026-10-12
+
+### Behoben
+
+- **Bildschirm blitzte bei jedem App-Wechsel (Abdunklung an).** Klickte man auf eine andere App,
+  machte Seam die schon stehende Abdunklung kurz unsichtbar und blendete sie neu ein, der ganze
+  Hintergrund war dabei etwa 0,3 Sekunden hell (Video und Messung 12.10.: Deckkraft fiel bei
+  Outlook ↔ Edge jedes Mal auf 30 %). Jetzt wird sie nur unter das neue Fenster geschoben. Sanft
+  eingeblendet wird nur noch, wenn sie vorher ganz aus war. 0.5.5 hatte nur den Fall „App ohne
+  Fenster“ behoben.
+
 ## [0.5.5] — 2026-10-12
 
 ### Behoben

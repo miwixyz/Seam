@@ -62,6 +62,17 @@ final class DimPlanTests: XCTestCase {
         XCTAssertFalse(DimPlan.keepWithoutTarget(isDesktop: false, stack: [a, o, c], lastTarget: nil, overlays: [90]))
     }
 
+    // Blitzen beim App-Wechsel (Michael, 12.10., Video 15:57): Bei neuem Ziel wurde die schon
+    // sichtbare Abdunklung auf 0 gesetzt und neu eingeblendet — ganzer Hintergrund ~0,3 s hell.
+    func testAlreadyShownDimmingIsNotFadedAgainOnTargetChange() {
+        XCTAssertFalse(DimPlan.fadesIn(targetChanged: true, alreadyShown: true))
+    }
+
+    func testDimmingFadesInWhenComingFromHidden() {
+        XCTAssertTrue(DimPlan.fadesIn(targetChanged: true, alreadyShown: false))
+        XCTAssertFalse(DimPlan.fadesIn(targetChanged: false, alreadyShown: false))
+    }
+
     func testInPlaceOnlyWhenOverlayDirectlyBelowTarget() {
         let o1 = StackWindow(number: 90, pid: 9, bounds: .zero)
         let o2 = StackWindow(number: 91, pid: 9, bounds: .zero)
