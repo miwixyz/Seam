@@ -1,6 +1,35 @@
 import AppKit
 import OSLog
 
+/// Wie ein Bildschirm abgedunkelt wird (je Bildschirm einstellbar, Michael 16.10.).
+enum DimScreenMode: String, CaseIterable {
+    /// Ganz dunkel, nur das aktive Fenster hell (wie bis 0.5).
+    case dim
+    /// Zusätzlich bleibt das oberste Fenster dieses Bildschirms hell.
+    case topBright
+    /// Dieser Bildschirm wird nie abgedunkelt.
+    case off
+}
+
+/// Ein Bildschirm für die Rechnung: Lage (Bedienungshilfen-Koordinaten) und gewählte Art.
+struct DimScreen: Equatable {
+    let frame: CGRect
+    let mode: DimScreenMode
+}
+
+/// Ein Malschritt im Abdunkel-Fenster (Bedienungshilfen-Koordinaten): hell = Loch, sonst dunkel.
+struct DimPaint: Equatable {
+    let rect: CGRect
+    let bright: Bool
+}
+
+/// Was ein Abdunkel-Fenster zeigt: unter welchem Fenster (nil = ausgeblendet), welche Löcher, wie stark.
+struct DimScreenPlan: Equatable {
+    let target: Int?
+    let paints: [DimPaint]
+    let strength: Int
+}
+
 /// Unter welches Fenster gehört die Abdunklung? Reine Rechnung, getestet.
 enum DimPlan {
 
@@ -32,10 +61,11 @@ enum DimPlan {
     /// Flackern des ganzen Hintergrunds, gemessen 10–25× je Stunde (Michael, 12.10., Variante a).
     /// Weg nur noch beim Schreibtisch (Finder ohne Fokusfenster, eigener Klick) und wenn das alte
     /// Ziel nicht mehr direkt über der Abdunklung liegt — sonst läge sie über allem.
-    static func keepWithoutTarget(isDesktop: Bool, stack: [StackWindow], lastTarget: Int?,
+    /// Ab 0.6 je Bildschirm: stehen lassen nur, wenn JEDES Ziel noch direkt darüber liegt.
+    static func keepWithoutTarget(isDesktop: Bool, stack: [StackWindow], lastTargets: [Int],
                                   overlays: Set<Int>) -> Bool {
-        guard !isDesktop, let lastTarget else { return false }
-        return isInPlace(stack: stack, target: lastTarget, overlays: overlays)
+        guard !isDesktop, !lastTargets.isEmpty else { return false }
+        return lastTargets.allSatisfy { isInPlace(stack: stack, target: $0, overlays: overlays) }
     }
 
     /// Sanft einblenden? Nur, wenn ein neues Ziel kommt UND die Abdunklung vorher nicht zu sehen war.
@@ -46,6 +76,61 @@ enum DimPlan {
     /// sie nur unter das neue Ziel geschoben.
     static func fadesIn(targetChanged: Bool, alreadyShown: Bool) -> Bool {
         targetChanged && !alreadyShown
+    }
+
+    /// Je Bildschirm (Michael, 16.10.): Unter welches Fenster gehört die Abdunklung jedes
+    /// Bildschirms? `screens`/`modes` in derselben Reihenfolge wie die Abdunkel-Fenster.
+    /// `.off` → nil (keine Abdunklung). Bildschirm des vorderen Fensters und `.dim` → `front`.
+    /// `.topBright` → oberstes Fenster des Bildschirms (es zählt für den Bildschirm, auf dem der
+    /// größte Teil liegt); ohne Fenster → `front` (ganz dunkel).
+    static func screenTargets(stack: [StackWindow], screens: [DimScreen], front: Int,
+                              exclude: Set<Int>, eligible: (StackWindow) -> Bool) -> [Int?] {
+        let frames = screens.map(\.frame)
+        let frontScreen = stack.first { $0.number == front }.flatMap { screenIndex(of: $0.bounds, in: frames) }
+        return screens.indices.map { i in
+            if screens[i].mode == .off { return nil }
+            guard i != frontScreen, screens[i].mode == .topBright else { return front }
+            return stack.first {
+                !exclude.contains($0.number) && eligible($0) && screenIndex(of: $0.bounds, in: frames) == i
+            }?.number ?? front
+        }
+    }
+
+    /// Löcher im Abdunkel-Fenster (Apps nie abdunkeln, alle Fenster der aktiven App hell).
+    /// Maler-Verfahren über die Fenster UNTER dem Ziel auf diesem Bildschirm, von hinten nach vorn:
+    /// helles Fenster = Loch, ein anderes Fenster darüber = dort wieder dunkel. Vor dem hintersten
+    /// hellen Fenster ist ohnehin alles dunkel; ein dunkles Fenster zählt nur, wenn es ein Loch
+    /// darunter überdeckt. Leer = keine Löcher.
+    static func paints(stack: [StackWindow], below target: Int, screen: CGRect, exclude: Set<Int>,
+                       bright: (StackWindow) -> Bool) -> [DimPaint] {
+        guard let ti = stack.firstIndex(where: { $0.number == target }) else { return [] }
+        var out: [DimPaint] = []
+        for w in stack[(ti + 1)...].reversed() where !exclude.contains(w.number) {
+            let r = w.bounds.intersection(screen)
+            guard !r.isNull, !r.isEmpty else { continue }
+            if bright(w) {
+                out.append(DimPaint(rect: r, bright: true))
+            } else if out.contains(where: { $0.bright && $0.rect.intersects(r) }) {
+                out.append(DimPaint(rect: r, bright: false))
+            }
+        }
+        return out
+    }
+
+    /// Liegt auf diesem Bildschirm gerade ein Space ohne Abdunkeln vorn?
+    static func spaceOff(_ spaces: [SpaceInfo], display: String?, offKeys: Set<String>) -> Bool {
+        guard !offKeys.isEmpty, let c = SpaceNames.current(spaces, display: display) else { return false }
+        return offKeys.contains(c.key)
+    }
+
+    /// Bildschirm mit der größten Überschneidung, nil = liegt auf keinem.
+    static func screenIndex(of r: CGRect, in screens: [CGRect]) -> Int? {
+        let areas = screens.map { s -> CGFloat in
+            let x = s.intersection(r)
+            return x.isNull ? 0 : x.width * x.height
+        }
+        guard let best = areas.indices.max(by: { areas[$0] < areas[$1] }), areas[best] > 0 else { return nil }
+        return best
     }
 }
 
@@ -65,8 +150,28 @@ final class Dimmer {
     /// Partner eines Paars (E12), gesetzt von der Engine.
     var partnerOf: ((AXWindow) -> AXWindow?)?
 
+    /// Ein Abdunkel-Fenster je Bildschirm, dazu dessen Kennung und Lage (gleiche Reihenfolge).
     private var overlays: [NSWindow] = []
+    private var screens: [OverlayScreen] = []
+
+    /// Bildschirm eines Abdunkel-Fensters: Kennung (UUID, Schlüssel der Einstellungen) und Lage.
+    private struct OverlayScreen {
+        let uuid: String?
+        let ax: CGRect
+        let appKit: CGRect
+    }
+    /// Oberstes helles Fenster der vorderen App (bzw. Paar-Partner).
     private var lastTarget: Int?
+    /// Plan je Abdunkel-Fenster (Ziel, Löcher, Stärke), gleiche Reihenfolge wie `overlays`.
+    private var lastPlans: [DimScreenPlan] = []
+    /// Je Bildschirm: Space ohne Abdunkeln vorn? Beim letzten vollständigen Lauf gelesen,
+    /// die Selbstheilung nutzt ihn weiter (Space-Wechsel melden sich selbst).
+    private var lastSpaceOff: [Bool] = []
+    /// Bundle-ID je Prozess, nur für „Apps nie abdunkeln“, je Lauf im Speicher (E13, 0.6).
+    private var bundleIDs: [pid_t: String] = [:]
+    /// Normale App (Dock-Symbol)? Über die Läufe gemerkt, damit die Selbstheilung 1×/s nicht jedes Mal
+    /// `NSRunningApplication` fragt (Rafter-Review 16.10.). Beim App-Ende vergessen.
+    private var regularApps: [pid_t: Bool] = [:]
     private var tokens: [NSObjectProtocol] = []
     /// Je App ein Beobachter, einmal angelegt und behalten (Code-Audit 09.10., P1: vorher bei
     /// JEDEM App-Wechsel abgebaut und neu angemeldet, gemessen 39 ms Hauptthread je Wechsel).
@@ -92,7 +197,8 @@ final class Dimmer {
             })
             tokens.append(ws.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
                 guard let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier else { return }
-                MainActor.assumeIsolated { self?.removeObserver(pid) }
+                // Prozessnummer kann später eine andere App bekommen: Bundle-ID vergessen.
+                MainActor.assumeIsolated { self?.removeObserver(pid); self?.bundleIDs[pid] = nil; self?.regularApps[pid] = nil }
             })
             tokens.append(ws.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.update() }
@@ -122,15 +228,16 @@ final class Dimmer {
         lastFrontPID = nil
         overlays.forEach { $0.orderOut(nil) }
         overlays = []
+        screens = []
         lastTarget = nil
+        lastPlans = []
+        lastSpaceOff = []
+        bundleIDs = [:]
+        regularApps = [:]
     }
 
-    /// Stärke geändert.
-    func strengthChanged() {
-        for o in overlays { o.backgroundColor = Self.color(prefs.dimStrength) }
-    }
-
-    /// Von außen anstoßen (z. B. nachdem ein Paar-Partner angehoben wurde).
+    /// Von außen anstoßen (Paar-Partner angehoben, Einstellung je Bildschirm/App/Space geändert).
+    /// Nur neu einsortieren und zeichnen, nicht neu aufbauen: kein Blitzen.
     func refresh() {
         guard prefs.dimEnabled else { return }
         update()
@@ -211,20 +318,93 @@ final class Dimmer {
         guard let target = DimPlan.target(stack: stack, frontPID: pid, partner: partner, exclude: own) else {
             return keepOrHide(app, focused: focused != nil, stack: stack, own: own, reason: "kein Fenster der vorderen App")
         }
-        if target == lastTarget, DimPlan.isInPlace(stack: stack, target: target, overlays: own) { return }
-        place(below: target)
+        let spaceOff = currentSpaceOff()
+        lastSpaceOff = spaceOff
+        let plans = makePlans(front: target, frontPID: pid, stack: stack, own: own, spaceOff: spaceOff)
+        if target == lastTarget, plans == lastPlans, allInPlace(plans, stack: stack, own: own) { return }
+        place(plans, front: target)
     }
 
-    /// Abdunkel-Fenster unter `target` einsortieren; nur aus dem Unsichtbaren sanft einblenden
-    /// (`DimPlan.fadesIn`). Steht die Abdunklung schon, wird sie nur verschoben — kein Blitzen.
-    private func place(below target: Int) {
-        let changed = target != lastTarget
+    /// Plan je Abdunkel-Fenster aus den Einstellungen je Bildschirm, App und Space (0.6, E13).
+    /// Auf anderen Bildschirmen zählt als „oberstes Fenster“ nur eines einer normalen App
+    /// (Dock-Symbol), mindestens 50 × 50 pt, nicht Seams eigenes. Löcher bekommen Fenster der
+    /// vorderen App („alle Fenster der aktiven App hell“) und der Apps in „nie abdunkeln“.
+    private func makePlans(front: Int, frontPID: pid_t, stack: [StackWindow], own: Set<Int>,
+                           spaceOff: [Bool]) -> [DimScreenPlan] {
+        let modes = screens.indices.map { i -> DimScreenMode in
+            i < spaceOff.count && spaceOff[i] ? .off : prefs.dimMode(for: screens[i].uuid)
+        }
+        let me = ProcessInfo.processInfo.processIdentifier
+        let setup = screens.indices.map { DimScreen(frame: screens[$0].ax, mode: modes[$0]) }
+        let targets = DimPlan.screenTargets(stack: stack, screens: setup, front: front, exclude: own) { w in
+            guard w.pid != me, w.bounds.width >= 50, w.bounds.height >= 50 else { return false }
+            if let r = regularApps[w.pid] { return r }
+            let r = WindowList.isRegularApp(w.pid)
+            regularApps[w.pid] = r
+            return r
+        }
+        let allFront = prefs.dimActiveAppAll
+        let never = Set(prefs.dimNeverApps)
+        return screens.indices.map { i in
+            let strength = prefs.dimStrength(for: screens[i].uuid)
+            guard let t = targets[i] else { return DimScreenPlan(target: nil, paints: [], strength: strength) }
+            let paints = (allFront || !never.isEmpty)
+                ? DimPlan.paints(stack: stack, below: t, screen: screens[i].ax, exclude: own) { w in
+                    (allFront && w.pid == frontPID) || (!never.isEmpty && never.contains(bundleID(w.pid)))
+                }
+                : []
+            return DimScreenPlan(target: t, paints: paints, strength: strength)
+        }
+    }
+
+    /// Bundle-ID nur zum Vergleich mit „nie abdunkeln“, je Lauf zwischengespeichert, nie protokolliert.
+    private func bundleID(_ pid: pid_t) -> String {
+        if let id = bundleIDs[pid] { return id }
+        // Kein Ergebnis (Prozess startet noch): nicht merken, sonst bliebe die App bis zu ihrem Ende dunkel.
+        guard let id = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier else { return "" }
+        bundleIDs[pid] = id
+        return id
+    }
+
+    /// Je Bildschirm: liegt ein Space ohne Abdunkeln vorn? Liest Spaces nur, wenn welche gewählt sind.
+    private func currentSpaceOff() -> [Bool] {
+        let off = Set(prefs.dimOffSpaces)
+        guard !off.isEmpty, let spaces = SpaceReader.read() else { return screens.map { _ in false } }
+        return screens.map { DimPlan.spaceOff(spaces, display: $0.uuid, offKeys: off) }
+    }
+
+    /// Ziele der sichtbaren Abdunkel-Fenster.
+    private func activeTargets(_ plans: [DimScreenPlan]) -> [Int] { plans.compactMap(\.target) }
+
+    private func allInPlace(_ plans: [DimScreenPlan], stack: [StackWindow], own: Set<Int>) -> Bool {
+        Set(activeTargets(plans)).allSatisfy { DimPlan.isInPlace(stack: stack, target: $0, overlays: own) }
+    }
+
+    /// Abdunkel-Fenster unter ihr Ziel einsortieren (oder ausblenden), Löcher und Stärke zeichnen;
+    /// nur aus dem Unsichtbaren sanft einblenden (`DimPlan.fadesIn`). Steht die Abdunklung schon,
+    /// wird sie nur verschoben — kein Blitzen.
+    private func place(_ plans: [DimScreenPlan], front: Int) {
+        let changed = front != lastTarget || plans.map(\.target) != lastPlans.map(\.target)
         let shown = overlays.contains { $0.isVisible && $0.alphaValue > 0.5 }
         let fade = DimPlan.fadesIn(targetChanged: changed, alreadyShown: shown)
-        lastTarget = target
-        for o in overlays {
+        lastTarget = front
+        lastPlans = plans
+        let h = Screens.primaryHeight
+        for (i, o) in overlays.enumerated() where i < plans.count && i < screens.count {
+            let p = plans[i]
+            guard let t = p.target else {
+                o.orderOut(nil)
+                continue
+            }
+            let origin = screens[i].appKit.origin
+            (o.contentView as? DimView)?.show(
+                color: Self.color(p.strength),
+                paints: p.paints.map {
+                    let r = Geometry.toAppKit($0.rect, primaryHeight: h)
+                    return DimPaint(rect: r.offsetBy(dx: -origin.x, dy: -origin.y), bright: $0.bright)
+                })
             if fade { o.alphaValue = 0 }
-            o.order(.below, relativeTo: target)
+            o.order(.below, relativeTo: t)
         }
         guard fade else { return }
         NSAnimationContext.runAnimationGroup { ctx in
@@ -233,10 +413,13 @@ final class Dimmer {
         }
     }
 
-    /// Gleiche App vorn und die Abdunklung liegt noch direkt unter demselben Ziel?
+    /// Gleiche App vorn und jede Abdunklung liegt noch direkt unter demselben Ziel, mit denselben
+    /// Löchern? Rechnet den Plan nur aus der Fensterliste nach (kein AX) — sonst bliebe ein auf
+    /// einem anderen Bildschirm geschlossenes oder verschobenes Fenster unbemerkt.
     private func isSettled(front pid: pid_t, stack: [StackWindow], own: Set<Int>) -> Bool {
         guard pid == lastFrontPID, let t = lastTarget else { return false }
-        return DimPlan.isInPlace(stack: stack, target: t, overlays: own)
+        return makePlans(front: t, frontPID: pid, stack: stack, own: own, spaceOff: lastSpaceOff) == lastPlans
+            && allInPlace(lastPlans, stack: stack, own: own)
     }
 
     /// Kein Ziel vorn: stehen lassen oder aufheben (`DimPlan.keepWithoutTarget`). Protokolliert wird
@@ -246,7 +429,8 @@ final class Dimmer {
                             reason: String) {
         let pid = app.processIdentifier
         let desktop = app.bundleIdentifier == "com.apple.finder" && !focused
-        if DimPlan.keepWithoutTarget(isDesktop: desktop, stack: stack, lastTarget: lastTarget, overlays: own) {
+        if lastTarget != nil,
+           DimPlan.keepWithoutTarget(isDesktop: desktop, stack: stack, lastTargets: activeTargets(lastPlans), overlays: own) {
             Self.log.notice("Abdunklung bleibt: \(reason, privacy: .public) (pid \(pid))")
             return
         }
@@ -256,6 +440,7 @@ final class Dimmer {
     private func hide(_ reason: String) {
         guard lastTarget != nil || overlays.contains(where: \.isVisible) else { return }
         lastTarget = nil
+        lastPlans = []
         overlays.forEach { $0.orderOut(nil) }
         Self.log.notice("Abdunklung aus: \(reason, privacy: .public)")
     }
@@ -264,10 +449,17 @@ final class Dimmer {
 
     private func rebuildOverlays() {
         overlays.forEach { $0.orderOut(nil) }
+        let h = Screens.primaryHeight
+        screens = NSScreen.screens.map {
+            OverlayScreen(uuid: SpaceReader.displayIdentifier(of: $0), ax: Geometry.toAX($0.frame, primaryHeight: h),
+                          appKit: $0.frame)
+        }
         overlays = NSScreen.screens.map { screen in
             let w = NSWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
             w.isReleasedWhenClosed = false
-            w.backgroundColor = Self.color(prefs.dimStrength)
+            // Farbe zeichnet die DimView (mit Löchern), das Fenster selbst ist durchsichtig.
+            w.backgroundColor = .clear
+            w.contentView = DimView(frame: NSRect(origin: .zero, size: screen.frame.size))
             w.isOpaque = false
             w.hasShadow = false
             w.ignoresMouseEvents = true
@@ -277,9 +469,68 @@ final class Dimmer {
             return w
         }
         lastTarget = nil
+        lastPlans = []
     }
 
     private static func color(_ percent: Int) -> NSColor {
         NSColor.black.withAlphaComponent(CGFloat(percent) / 100)
+    }
+}
+
+/// Inhalt eines Abdunkel-Fensters: ganze Fläche in der Abdunkel-Farbe, darauf die Malschritte
+/// (`DimPlan.paints`, schon in Fenster-Koordinaten) — hell = Loch, sonst wieder dunkel.
+/// Neu gezeichnet wird nur, wenn sich Farbe oder Löcher ändern.
+final class DimView: NSView {
+    private var color = NSColor.clear
+    private var paints: [DimPaint] = []
+
+    func show(color: NSColor, paints: [DimPaint]) {
+        guard color != self.color || paints != self.paints else { return }
+        self.color = color
+        self.paints = paints
+        needsDisplay = true
+        #if DEBUG
+        dumpIfRequested()
+        #endif
+    }
+
+    #if DEBUG
+    /// Nur Debug: `-dumpDim <ordner>` legt nach jeder Änderung das gezeichnete Bild als
+    /// `dim-<Bildschirmbreite>.png` ab (ein Viertel groß). Messpunkt für den Sichttest — Claude darf
+    /// keine Bildschirmfotos machen; so lässt sich prüfen, ob die Löcher an der richtigen Stelle sitzen.
+    private func dumpIfRequested() {
+        let args = CommandLine.arguments
+        guard let i = args.firstIndex(of: "-dumpDim"), i + 1 < args.count else { return }
+        let url = URL(fileURLWithPath: args[i + 1]).appendingPathComponent("dim-\(Int(bounds.width)).png")
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let rep = self.bitmapImageRepForCachingDisplay(in: self.bounds) else { return }
+            self.cacheDisplay(in: self.bounds, to: rep)
+            let small = NSImage(size: NSSize(width: self.bounds.width / 4, height: self.bounds.height / 4))
+            small.lockFocus()
+            rep.draw(in: NSRect(origin: .zero, size: small.size))
+            small.unlockFocus()
+            guard let tiff = small.tiffRepresentation, let png = NSBitmapImageRep(data: tiff)?
+                .representation(using: .png, properties: [:]) else { return }
+            try? png.write(to: url)
+        }
+    }
+    #endif
+
+    override var isOpaque: Bool { false }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        // `.copy` setzt die Deckkraft, statt sie zu stapeln: „wieder dunkel“ über schon dunkler Fläche
+        // ergab sonst 0,75 statt 0,5 (gemessen 16.10. am Dump: Tippi und Finder über einem Loch).
+        ctx.setBlendMode(.copy)
+        ctx.setFillColor(color.cgColor)
+        ctx.fill(bounds)
+        for p in paints {
+            if p.bright {
+                ctx.clear(p.rect)
+            } else {
+                ctx.fill(p.rect)
+            }
+        }
     }
 }

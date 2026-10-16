@@ -210,6 +210,43 @@ Michael, 09.10.: „so etwas wie HazeOver“, bei Paaren bleiben beide hell. Ab 
   Leerlauf 0,2 % (aus) bzw. 0,6 % CPU (an, Selbstheilung 1×/s). **Nicht gemessen:** Schreibtisch
   vorn, mehrere Bildschirme, Space-/Vollbild-Wechsel. Kein fremdes Fenster wird verändert, keine
   Titel gelesen (Fensterliste nur Nummer/Prozess/Ebene/Lage).
+- **Ab 0.6 (16.10.) Abdunkeln je Bildschirm, App und Space** (Michael: „für unterschiedliche
+  Monitore wählen“, dazu „Apps nie abdunkeln“, „je Space an/aus“, „alle Fenster der aktiven App
+  hell“, „Stärke je Monitor“). Durchgang `rafter-secure-design` vor dem Code:
+  - **Je Bildschirm** Art (ganz dunkel / oberstes Fenster hell / aus) und Stärke. Schlüssel ist
+    die Bildschirm-UUID von macOS (`CGDisplayCreateUUIDFromDisplayID`, dieselbe wie in E14),
+    nicht der Name; der Name (`NSScreen.localizedName`) wird nur angezeigt, nie gespeichert.
+    „Oberstes Fenster hell“ (`DimPlan.screenTargets`): Ziel ist das oberste Fenster, das
+    überwiegend auf dem Bildschirm liegt, nur normale Apps (`activationPolicy == .regular`),
+    mindestens 50 × 50 pt, nicht Seams eigene.
+  - **Helle Fenster hinter anderen** (Apps nie abdunkeln, alle Fenster der aktiven App): Das
+    Abdunkel-Fenster zeichnet Löcher. Maler-Verfahren von hinten nach vorn (`DimPlan.paints`):
+    helles Fenster = Loch, darüberliegendes anderes Fenster = wieder dunkel. Nur Rechtecke aus
+    der Fensterliste, kein Bildinhalt.
+  - **Gelesen (neu):** die Bundle-ID der App hinter einer Prozessnummer
+    (`NSRunningApplication.bundleIdentifier`), nur wenn die Liste „nie abdunkeln“ nicht leer ist,
+    nur zum Vergleich mit dieser Liste, im Speicher je Lauf zwischengespeichert, nie protokolliert.
+    Je Space nur die Kennung des aktuellen Space je Bildschirm über `SpaceReader` (E14, nur lesend).
+    Das Fenster „Abdunkeln“ zeigt zum Hinzufügen die laufenden normalen Apps (`AppChoice.running()`,
+    Name + Bundle-ID, nur im Speicher und in der Anzeige, wie E16).
+  - **Gespeichert (neu, UserDefaults):** Bildschirm-UUID → Art/Stärke, Bundle-IDs der hell
+    bleibenden Apps (von Hand gewählt), Space-Schlüssel ohne Abdunkeln. Keine Namen, keine Titel.
+  - **STRIDE:** *T* – von außen veränderte Werte werden beim Laden verworfen: Art nur aus der
+    festen Liste, Stärke nur 20/35/50, Bundle-IDs über `LinkRules.isBundleID`, höchstens 50 Apps,
+    100 Spaces, 20 Bildschirme, Schlüssel höchstens 80 Zeichen. *I* – keine Titel/Inhalte, keine
+    App-Namen im Protokoll. *D* – Löcher werden nur bei geänderter Lage neu gezeichnet
+    (Selbstheilung 1×/s vergleicht den Plan). *E* – keine neue Berechtigung, kein AX-Aufruf in
+    Hintergrund-Apps; weiter wird kein fremdes Fenster verändert.
+  - **Grenzfälle:** Bildschirm ohne Fenster bei „oberstes hell“ → ganz dunkel. Alle Bildschirme
+    aus → keine Abdunklung. Kommt eine App ohne Fenster nach vorn, bleibt die Abdunklung stehen,
+    solange jedes Ziel noch direkt darüber liegt (0.5.5-Regel, jetzt je Bildschirm).
+  - **`rafter-code-review` 16.10.** (unabhängiger Prüfer, nur lesend): 0 kritisch/hoch/mittel,
+    6 niedrig, alle vor dem Release behoben — Laden ohne `uniqueKeysWithValues` (Absturz bei
+    doppelten Schlüsseln), Obergrenze während des Durchlaufs und über ein Set (vorher quadratisch),
+    Schlüssellänge in Bytes und ohne Steuerzeichen, Obergrenze 20 Bildschirme auch beim Schreiben,
+    leere Bundle-ID nicht zwischenspeichern, „normale App?“ über die Läufe zwischenspeichern
+    (Selbstheilung). `-dumpDim` (Messpunkt) nur unter `#if DEBUG`, nach dem Release am Binary
+    geprüft. Die CPU-Angabe oben (0,6 %) stammt aus 0.2 und ist für 0.6 nicht neu gemessen.
 
 ### E14 – Namen für Spaces (0.3, Durchgang 2026-10-09)
 

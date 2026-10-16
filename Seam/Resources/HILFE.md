@@ -43,8 +43,19 @@ Liste der Spaces. Liefert macOS sie nach einem Update nicht mehr, blendet Seam d
 ## Hintergrund abdunkeln
 
 Mit dem Halbkreis-Knopf unten im Seam-Fenster oder in den Einstellungen → „Hintergrund abdunkeln“ dunkelt Seam alle Fenster außer dem aktiven ab.
-Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Die Stärke stellst du darunter ein
-(leicht, mittel, stark). Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Kommt ein Programm
+Hast du zwei Fenster mit ⌃⌥S geteilt, bleiben beide hell. Mit „Alle Fenster der aktiven App hell
+lassen“ bleiben alle Fenster der App vorn hell, nicht nur das oberste.
+
+Unter „Bildschirme, Stärke, Apps, Spaces …“ stellst du mehr ein (seit 0.6):
+
+- **Je Bildschirm:** ganz dunkel (nur das aktive Fenster hell), oberstes Fenster hell (dort
+  bleibt jeweils das oberste Fenster hell) oder nicht abdunkeln. Dazu die Stärke (leicht,
+  mittel, stark).
+- **Apps nie abdunkeln:** Fenster dieser Apps bleiben hell, auch wenn sie hinten liegen. Liegt
+  ein anderes Fenster darüber, bleibt das abgedunkelt.
+- **Spaces:** In ausgeschalteten Spaces dunkelt Seam nichts ab.
+
+Das Fenster, in dem du gerade arbeitest, bleibt immer hell. Liegt der Schreibtisch vorn, dunkelt Seam nichts ab. Kommt ein Programm
 ohne eigenes Fenster nach vorn, etwa eines aus der Menüleiste, bleibt die Abdunklung so stehen,
 wie sie war (seit 0.5.5, vorher ging sie kurz aus und wieder an). Klicks gehen durch
 die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.

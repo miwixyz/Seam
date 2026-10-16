@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.6
+
+**Abdunkeln je Bildschirm.** Jeder Bildschirm bekommt seine eigene Einstellung: ganz abdunkeln, das oberste Fenster hell lassen oder gar nicht abdunkeln, dazu eine eigene Stärke. Einzelne Apps und Spaces kannst du ganz ausnehmen. Die Fenster dieser Apps bleiben hell, auch wenn sie hinten liegen. Und wer mag, lässt alle Fenster der aktiven App hell statt nur das oberste. Du findest das alles im neuen Fenster „Abdunkeln“.
+
+---
+
 ## Neu in 0.5
 
 **Links an den richtigen Browser.** Seam kann jetzt dein Standardbrowser sein. Klickst du in Mail, Slack oder einer anderen App auf einen Link, landet er in dem Browser, den du dafür festgelegt hast, nach Website oder nach der App, aus der er kommt. Die Idee kennst du vielleicht von Velja. Hältst du beim Klick Fn oder ⌥ gedrückt, wählst du den Browser selbst. Welche Taste das ist, stellst du ein, auch für externe Tastaturen ohne Fn. Tracking-Anhänge wie utm_source schneidet Seam vorher ab. Es ruft die Links nicht selbst ab und führt keinen Verlauf. Dazu: Die Einstellungen stehen in zwei Spalten, und „Bei Anmeldung starten“ lässt sich wieder einschalten. Seit 0.5.4 zeigt ein Schild an der Naht, wenn ein Fenster nicht kleiner geht.
@@ -73,7 +79,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Zwei Fenster gemeinsam nach vorn holen | Ein Klick auf eines der geteilten Fenster holt beide nach vorn, Minimieren gilt für beide |
 | Wissen, auf welchem Space du bist | Namen für Spaces: der Name des aktuellen Space steht in der Menüleiste |
 | Links im passenden Browser öffnen | Seam als Standardbrowser: Regeln nach Website oder Quell-App, Fn oder ⌥ beim Klick zeigt eine Auswahl (Taste wählbar) |
-| Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück (ab Werk aus) |
+| Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück, je Bildschirm einstellbar, Apps und Spaces lassen sich ausnehmen (ab Werk aus) |
 | Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 
 ---
@@ -88,7 +94,7 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 
 ## Deine Daten bleiben auf deinem Mac
 
-- Seam braucht die Bedienungshilfen-Freigabe von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
+- Seam braucht die Bedienungshilfen-Freigabe von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
 - Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv.
 - Gespeichert werden nur deine Einstellungen. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
 - Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.

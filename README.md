@@ -27,7 +27,9 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   lesend über eine nicht dokumentierte macOS-Schnittstelle, ohne neue Berechtigung; kein Wechseln
   per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
-  beide hell. Stärke 20/35/50 %. Seam schiebt dafür ein eigenes Fenster unter das aktive, liest
+  beide hell. Je Bildschirm wählbar: ganz dunkel, oberstes Fenster hell oder nicht abdunkeln,
+  Stärke 20/35/50 %. Dazu Apps, die nie abgedunkelt werden, Spaces ohne Abdunkeln und wahlweise
+  alle Fenster der aktiven App hell. Seam schiebt dafür ein eigenes Fenster unter das aktive, liest
   nur Nummer, Prozess und Lage der Fenster und braucht keine Bildschirmaufnahme-Freigabe.
 - **Mitziehen beim Loslassen:** Ziehst du die gemeinsame Kante mit der Maus, setzt Seam das
   Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante, ein Schild an der
@@ -71,7 +73,9 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
 Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
-ob die vordere App der Finder ist (Schreibtisch). An
+ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie abgedunkelt werden,
+vergleicht es die App-Kennung (Bundle-ID) der Fenster mit dieser Liste. Gespeichert werden nur deine
+Wahl je Bildschirm (Kennung des Bildschirms), die Kennungen der gewählten Apps und Spaces. An
 fremden Fenstern ändert es Lage und Größe, hebt bei einem Paar den Partner an und minimiert ihn mit.
 Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
 werden nur Einstellungen und Link-Regeln; Fensterpaare liegen nur im Arbeitsspeicher. Als

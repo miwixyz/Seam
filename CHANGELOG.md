@@ -2,6 +2,25 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.6.0] — 2026-10-16
+
+### Neu
+
+- **Abdunkeln je Bildschirm.** Neues Fenster „Abdunkeln“ (Einstellungen → Hintergrund abdunkeln →
+  „Bildschirme, Stärke, Apps, Spaces …“). Für jeden Bildschirm wählst du: ganz dunkel (wie
+  bisher), oberstes Fenster hell (auf jedem Bildschirm bleibt dessen oberstes Fenster hell, zum
+  Beispiel Teams unten und Outlook oben) oder nicht abdunkeln. Dazu die Stärke je Bildschirm.
+- **Apps nie abdunkeln.** Fenster der gewählten Apps bleiben hell, auch wenn sie hinten liegen.
+  Liegt ein anderes Fenster darüber, ist dieses weiter abgedunkelt.
+- **Spaces ohne Abdunkeln.** Je Space ein Schalter, zum Beispiel aus für einen Grafik-Space.
+- **Alle Fenster der aktiven App hell** (Schalter in den Einstellungen, ab Werk aus). Bisher blieb
+  nur ihr oberstes Fenster hell.
+
+### Geändert
+
+- Die Stärke steht jetzt je Bildschirm im Fenster „Abdunkeln“. Bildschirme ohne eigene Wahl
+  behalten die bisher eingestellte Stärke.
+
 ## [0.5.6] — 2026-10-12
 
 ### Behoben

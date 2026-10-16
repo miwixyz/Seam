@@ -49,18 +49,14 @@ struct SettingsView: View {
                 toggleRow("Alle Fenster außer dem aktiven abdunkeln", isOn: $prefs.dimEnabled)
                     .onChange(of: prefs.dimEnabled) { engine.applyDimSetting() }
                 divider
-                row("Stärke") {
-                    Picker("Stärke", selection: $prefs.dimStrength) {
-                        Text("Leicht").tag(20)
-                        Text("Mittel").tag(35)
-                        Text("Stark").tag(50)
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.segmented)
-                    .fixedSize()
-                    .onChange(of: prefs.dimStrength) { engine.applyDimStrength() }
-                }
-                .disabled(!prefs.dimEnabled)
+                toggleRow("Alle Fenster der aktiven App hell lassen", isOn: $prefs.dimActiveAppAll)
+                    .onChange(of: prefs.dimActiveAppAll) { engine.applyDimDetails() }
+                    .disabled(!prefs.dimEnabled)
+                divider
+                // 0.6: Stärke und Art je Bildschirm, Apps und Spaces im eigenen Fenster.
+                Button("Bildschirme, Stärke, Apps, Spaces …") { openWindow(id: "abdunkeln") }
+                    .buttonStyle(CardButtonStyle())
+                    .padding(.vertical, FamilyTheme.Space.s)
             }
         }
         .frame(width: 428)
@@ -264,7 +260,7 @@ private struct KeyChip: View {
 
 /// Knopf in einer Karte: gleiche Fläche wie die Kacheln im Seam-Fenster
 /// (Kartenrand-Ton, Radius 9, beim Überfahren Akzent).
-private struct CardButtonStyle: ButtonStyle {
+struct CardButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         CardButtonLabel(configuration: configuration)
     }
@@ -299,7 +295,7 @@ private struct CardButtonLabel: View {
 /// Eigener Schalter: Apples `.switch` wird grau, sobald das Fenster nicht aktiv ist
 /// (gemessen 09.10. im Vorschau-Render und in Michaels Screenshot) — das Seam-Fenster
 /// hat nur eigene Bedienelemente und sieht immer gleich aus. Für VoiceOver bleibt es ein Toggle.
-private struct FamilySwitchStyle: ToggleStyle {
+struct FamilySwitchStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         FamilySwitch(configuration: configuration)
     }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Erst erhöhen, wenn diese Seite gegen das Release gelesen wurde. -->
-<meta name="seam:documented-version" content="0.5.4">
+<meta name="seam:documented-version" content="0.6.0">
 <title>Seam: Fenster anordnen auf dem Mac, mit einer Naht zwischen zwei Fenstern</title>
 <meta name="description" content="Seam ordnet Fenster auf deinem Mac per Tastenkürzel oder durch Ziehen an. Zwei Fenster teilen sich eine Kante, und wenn du sie verschiebst, gehen beide mit. Kostenlos und Open Source.">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -243,7 +243,12 @@
       <div class="feature card wide">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-focus"/></svg></div>
         <h3>Hintergrund abdunkeln <span class="tag">Neu in 0.2</span></h3>
-        <p>Alle Fenster außer dem aktiven treten zurück, so siehst du sofort, wo du gerade tippst. Hast du zwei Fenster geteilt, bleiben beide hell. Ab Werk ist es aus. Einschalten geht mit dem Halbkreis-Knopf im Seam-Fenster, die Stärke (drei Stufen) stellst du unter „Einstellungen“ ein.</p>
+        <p>Alle Fenster außer dem aktiven treten zurück, so siehst du sofort, wo du gerade tippst. Hast du zwei Fenster geteilt, bleiben beide hell. Ab Werk ist es aus. Einschalten geht mit dem Halbkreis-Knopf im Seam-Fenster. Die Stärke stellst du seit 0.6 je Bildschirm im Fenster „Abdunkeln“ ein, und wer will, lässt alle Fenster der aktiven App hell.</p>
+      </div>
+      <div class="feature card wide">
+        <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-monitors"/></svg></div>
+        <h3>Abdunkeln je Bildschirm <span class="tag">Neu in 0.6</span></h3>
+        <p>Mit zwei Bildschirmen stellst du für jeden einzeln ein, wie stark und wie weit er abgedunkelt wird: ganz, bis auf sein oberstes Fenster oder gar nicht. Dann bleibt zum Beispiel oben Outlook hell, während du unten in Teams schreibst. Apps wie ein Videoanruf im Hintergrund kannst du ganz vom Abdunkeln ausnehmen, Spaces auch, etwa den, in dem du Farben beurteilst. Das alles steht im Fenster „Abdunkeln“ in den Einstellungen.</p>
       </div>
       <div class="feature card wide">
         <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></div>
@@ -337,7 +342,7 @@
     <h2>Seam sieht deine Fenster, nicht ihren Inhalt</h2>
     <p class="lead">Um Fenster anderer Apps zu bewegen, braucht Seam die Bedienungshilfen-Freigabe von macOS. Diese Freigabe erlaubt sehr viel, doch Seam nutzt davon nur einen kleinen Teil.</p>
     <div class="privacy-grid">
-      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space gerade aktiv ist. Fenstertitel und Inhalte liest es nicht, eine Bildschirmaufnahme-Freigabe braucht es nicht.</p></div>
+      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space gerade aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Fenstertitel und Inhalte liest es nicht, eine Bildschirmaufnahme-Freigabe braucht es nicht.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span><p><strong>Keine Tastatur mitlesen</strong>Seam meldet seine Kürzel bei macOS an und bekommt nur diese Kombinationen mitgeteilt. Die Maus beobachtet es nur, um das Ziehen zu erkennen, und verändert keine Klicks.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-cloudoff"/></svg></span><p><strong>Kein Konto, keine Analyse</strong>Gespeichert werden nur deine Einstellungen auf deinem Mac. Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht: Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters und welche Fenster ein Paar bilden, hält Seam nur im Arbeitsspeicher. Nach einem Neustart ist beides weg.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></span><p><strong>Updates nur mit deinem Ja</strong>Der einzige Netzwerkzugriff ist die Suche nach Updates bei GitHub. Beim ersten Mal fragt Seam, ob es selbst suchen darf. Jedes Update ist signiert, und Seam prüft die Signatur vor dem Installieren.</p></div>

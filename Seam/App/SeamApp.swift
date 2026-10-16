@@ -76,6 +76,17 @@ struct SeamApp: App {
         // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
         .handlesExternalEvents(matching: [])
 
+        Window("Abdunkeln", id: "abdunkeln") {
+            DimSettingsWindow()
+                .environment(engine)
+                .environment(engine.prefs)
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        // Gemessen 10.10.: Eine HTML-Datei (E16) öffnete sonst die Einstellungen — SwiftUI
+        // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
+        .handlesExternalEvents(matching: [])
+
         Window("Spaces benennen", id: "spaces") {
             SpaceNamesView()
                 .environment(engine)
@@ -289,9 +300,11 @@ final class Engine {
         dimmer.apply()
     }
 
-    func applyDimStrength() {
+    /// Abdunkeln je Bildschirm, App, Space, Stärke (0.6): nur neu einsortieren und zeichnen,
+    /// nicht neu aufbauen (kein Blitzen).
+    func applyDimDetails() {
         guard running else { return }
-        dimmer.strengthChanged()
+        dimmer.refresh()
     }
 
     func openAccessibilitySettings() {
