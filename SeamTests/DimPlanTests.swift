@@ -39,6 +39,37 @@ final class DimPlanTests: XCTestCase {
         XCTAssertEqual(DimPlan.target(stack: [overlay, a, c], frontPID: 1, partner: nil, exclude: [99]), 10)
     }
 
+    // Blitzen 16.10. (Video Michael, Helium): Die Linkanzeige unten im Browser (212 × 43 pt) wurde
+    // Ziel, verschwand im selben Moment, die Abdunklung ging aus bzw. landete ganz unten.
+    func testTinyWindowOfFrontAppIsNeverTarget() {
+        let statusBubble = StackWindow(number: 77, pid: 1, bounds: CGRect(x: 803, y: 1339, width: 212, height: 43))
+        XCTAssertEqual(DimPlan.target(stack: [statusBubble, a, c], frontPID: 1, partner: nil, exclude: []), 10)
+    }
+
+    // Messung 16.10., 17:12:51: Zusatzfenster der vorderen App über dem Hauptfenster (Download-Hinweis,
+    // Dialog im Ausblenden) darf nicht Ziel werden, wenn das Hauptfenster den Fokus hat.
+    func testFocusedWindowIsTargetNotTopmostExtraWindow() {
+        let toast = StackWindow(number: 79, pid: 1, bounds: CGRect(x: 2504, y: 61, width: 320, height: 68))
+        XCTAssertEqual(DimPlan.target(stack: [toast, a, c], frontPID: 1, partner: nil, exclude: [], focused: a.bounds), 10)
+        // Ohne Fokusangabe wie bisher das oberste Fenster der App.
+        XCTAssertEqual(DimPlan.target(stack: [toast, a, c], frontPID: 1, partner: nil, exclude: []), 79)
+    }
+
+    func testFocusNotFoundFallsBackToTopmost() {
+        let elsewhere = CGRect(x: 5000, y: 5000, width: 300, height: 300)
+        XCTAssertEqual(DimPlan.target(stack: [a, a2, c], frontPID: 1, partner: nil, exclude: [], focused: elsewhere), 10)
+    }
+
+    func testPairStillWorksWithFocus() {
+        XCTAssertEqual(DimPlan.target(stack: [a, b, c], frontPID: 1, partner: (2, b.bounds), exclude: [],
+                                      focused: a.bounds), 20)
+    }
+
+    func testOnlyTinyWindowCountsAsNoWindow() {
+        let tooltip = StackWindow(number: 78, pid: 1, bounds: CGRect(x: 0, y: 0, width: 40, height: 40))
+        XCTAssertNil(DimPlan.target(stack: [tooltip, c], frontPID: 1, partner: nil, exclude: []))
+    }
+
     func testNoWindowOfFrontAppMeansNoDimming() {
         XCTAssertNil(DimPlan.target(stack: [b, c], frontPID: 1, partner: nil, exclude: []))
     }

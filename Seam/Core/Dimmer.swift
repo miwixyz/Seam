@@ -36,10 +36,27 @@ enum DimPlan {
     /// `stack`: Fenster der Ebene 0 von vorn nach hinten. Hell bleibt das oberste Fenster der
     /// vorderen App (auch Dialoge und Bedienfelder) und — bei einem Paar — der Partner.
     /// Rückgabe: die Nummer des untersten hellen Fensters, oder nil = nicht abdunkeln.
+    /// Kleiner als 50 × 50 pt ist kein Fenster, unter das die Abdunklung gehört: Linkanzeige unten im
+    /// Browser, Tooltips, Hover-Schilder. Gemessen 16.10. (Michaels Video, Helium): die Linkanzeige
+    /// (212 × 43 pt, Deckkraft 0) wurde Ziel, verschwand im selben Moment, die Abdunklung landete ganz
+    /// unten bzw. ging aus — der ganze Bildschirm blitzte ~0,2 s hell.
+    static let minWindow: CGFloat = 50
+
+    static func isRealWindow(_ w: StackWindow) -> Bool {
+        w.bounds.width >= minWindow && w.bounds.height >= minWindow
+    }
+
     static func target(stack: [StackWindow], frontPID: pid_t, partner: (pid: pid_t, frame: CGRect)?,
-                       exclude: Set<Int>) -> Int? {
-        let visible = stack.filter { !exclude.contains($0.number) }
-        guard let fi = visible.firstIndex(where: { $0.pid == frontPID }) else { return nil }
+                       exclude: Set<Int>, focused: CGRect? = nil) -> Int? {
+        let visible = stack.filter { !exclude.contains($0.number) && isRealWindow($0) }
+        // Ab 0.6.1: das Fenster mit dem Fokus (über die Lage gefunden), nicht einfach das oberste der App.
+        // Das oberste war bei Helium oft ein flüchtiges Zusatzfenster (Dialog im Ausblenden, Download-
+        // Hinweis); verschwand es, fiel die Abdunklung nach unten (Messung 16.10., 17:12:51).
+        // Zusatzfenster ÜBER dem Fokusfenster bleiben trotzdem hell, sie liegen über der Abdunklung.
+        let byFocus = focused.flatMap { f in
+            visible.firstIndex { $0.pid == frontPID && Geometry.close($0.bounds, f) }
+        }
+        guard let fi = byFocus ?? visible.firstIndex(where: { $0.pid == frontPID }) else { return nil }
         guard let partner,
               let pi = visible.firstIndex(where: { $0.pid == partner.pid && Geometry.close($0.bounds, partner.frame) }),
               pi > fi else { return visible[fi].number }
@@ -172,6 +189,8 @@ final class Dimmer {
     /// Normale App (Dock-Symbol)? Über die Läufe gemerkt, damit die Selbstheilung 1×/s nicht jedes Mal
     /// `NSRunningApplication` fragt (Rafter-Review 16.10.). Beim App-Ende vergessen.
     private var regularApps: [pid_t: Bool] = [:]
+    /// Nachkorrekturen in Folge (`scheduleVerify`), begrenzt gegen eine Schleife.
+    private var verifyRetries = 0
     private var tokens: [NSObjectProtocol] = []
     /// Je App ein Beobachter, einmal angelegt und behalten (Code-Audit 09.10., P1: vorher bei
     /// JEDEM App-Wechsel abgebaut und neu angemeldet, gemessen 39 ms Hauptthread je Wechsel).
@@ -308,14 +327,24 @@ final class Dimmer {
         let stack = WindowList.onScreen(excludingOwn: false)
         if heal, isSettled(front: pid, stack: stack, own: own) { return }
         lastFrontPID = pid
-        // Schreibtisch vorn (Finder ohne Fokusfenster): nicht abdunkeln.
-        let focused = pid == ProcessInfo.processInfo.processIdentifier ? nil : AXAccess.focusedWindow(of: pid)
-        if focused == nil && pid != ProcessInfo.processInfo.processIdentifier {
+        let me = ProcessInfo.processInfo.processIdentifier
+        let focused = pid == me ? nil : AXAccess.focusedWindow(of: pid)
+        // Schreibtisch vorn (Finder ohne Fokusfenster): nicht abdunkeln. Jede andere App ohne
+        // Fokusfenster geht ab 0.6.1 weiter über die Fensterliste: macOS meldet beim Öffnen und
+        // Schließen von Zusatzfenstern (Sichern-Dialog, Linkanzeige, Download-Liste) kurz kein
+        // Fokusfenster; bis 0.6.0 ging die Abdunklung dann aus und wieder an (Video 16.10.).
+        if focused == nil, pid != me, app.bundleIdentifier == "com.apple.finder" {
             return keepOrHide(app, focused: false, stack: stack, own: own, reason: "kein Fokusfenster")
         }
         var partner: (pid_t, CGRect)?
         if let f = focused, let p = partnerOf?(f), let pf = p.frame { partner = (p.pid, pf) }
-        guard let target = DimPlan.target(stack: stack, frontPID: pid, partner: partner, exclude: own) else {
+        // Kurz kein Fokusfenster (Zusatzfenster geht auf oder zu): altes Ziel behalten, solange es
+        // noch da ist und zur vorderen App gehört — nicht auf ein flüchtiges Fenster springen.
+        let keptTarget = focused == nil ? lastTarget.flatMap { lt in
+            stack.contains { $0.number == lt && $0.pid == pid } ? lt : nil
+        } : nil
+        guard let target = keptTarget ?? DimPlan.target(stack: stack, frontPID: pid, partner: partner, exclude: own,
+                                                        focused: focused?.frame) else {
             return keepOrHide(app, focused: focused != nil, stack: stack, own: own, reason: "kein Fenster der vorderen App")
         }
         let spaceOff = currentSpaceOff()
@@ -337,7 +366,7 @@ final class Dimmer {
         let me = ProcessInfo.processInfo.processIdentifier
         let setup = screens.indices.map { DimScreen(frame: screens[$0].ax, mode: modes[$0]) }
         let targets = DimPlan.screenTargets(stack: stack, screens: setup, front: front, exclude: own) { w in
-            guard w.pid != me, w.bounds.width >= 50, w.bounds.height >= 50 else { return false }
+            guard w.pid != me, DimPlan.isRealWindow(w) else { return false }
             if let r = regularApps[w.pid] { return r }
             let r = WindowList.isRegularApp(w.pid)
             regularApps[w.pid] = r
@@ -406,10 +435,29 @@ final class Dimmer {
             if fade { o.alphaValue = 0 }
             o.order(.below, relativeTo: t)
         }
+        scheduleVerify()
         guard fade else { return }
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.15
             for o in overlays { o.animator().alphaValue = 1 }
+        }
+    }
+
+    /// Nach dem Einsortieren nachsehen, ob die Abdunklung wirklich unter ihrem Ziel liegt. Schließt sich
+    /// das Ziel zwischen Lesen der Fensterliste und Einsortieren, legt macOS sie ganz nach unten
+    /// (gemessen 16.10.: 130 ms hell, bis die Selbstheilung kam). Höchstens drei Versuche am Stück.
+    private func scheduleVerify() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.lastTarget != nil else { return }
+                let own = Set(self.overlays.map(\.windowNumber))
+                if self.allInPlace(self.lastPlans, stack: WindowList.onScreen(excludingOwn: false), own: own) {
+                    self.verifyRetries = 0
+                } else if self.verifyRetries < 3 {
+                    self.verifyRetries += 1
+                    self.update()
+                }
+            }
         }
     }
 

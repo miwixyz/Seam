@@ -247,6 +247,13 @@ Michael, 09.10.: „so etwas wie HazeOver“, bei Paaren bleiben beide hell. Ab 
     leere Bundle-ID nicht zwischenspeichern, „normale App?“ über die Läufe zwischenspeichern
     (Selbstheilung). `-dumpDim` (Messpunkt) nur unter `#if DEBUG`, nach dem Release am Binary
     geprüft. Die CPU-Angabe oben (0,6 %) stammt aus 0.2 und ist für 0.6 nicht neu gemessen.
+- **Ab 0.6.1 (16.10., Blitzen in Browsern):** Ziel ist das Fokusfenster der vorderen App, über
+  seine Lage in der Fensterliste gefunden (`AXFocusedWindow` + Rahmen, beides schon E3), nicht mehr
+  das oberste Fenster der App. Fenster unter 50 × 50 pt sind nie Ziel. Ohne Fokusfenster bleibt
+  das alte Ziel, solange es zur vorderen App gehört (nur der Finder/Schreibtisch hebt auf). Nach
+  dem Einsortieren prüft Seam die Lage nach 50 ms, höchstens drei Nachkorrekturen in Folge. Nichts
+  Neues gelesen. Gemessen mit Testkopie + Fensterlisten-Messung alle 20 ms (Helium: Linkanzeige,
+  Download-Liste, „Sichern unter“ öffnen/abbrechen): Abdunklung nie weg, vorher 130 ms bzw. 0,2–0,3 s.
 
 ### E14 – Namen für Spaces (0.3, Durchgang 2026-10-09)
 

@@ -2,6 +2,19 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.6.1] — 2026-10-16
+
+### Behoben
+
+- **Bildschirm blitzte in Browsern kurz hell (Abdunklung an).** Fuhr man über einen Link, öffnete
+  die Download-Liste oder schloss „Sichern unter“, war der ganze Hintergrund 0,1 bis 0,3 Sekunden
+  hell (Video und Messung 16.10., Helium). Seam legte die Abdunklung unter das oberste Fenster der
+  App, und das war oft ein flüchtiges Zusatzfenster wie die Linkanzeige unten im Browser.
+  Verschwand es, ging die Abdunklung aus oder rutschte nach unten. Jetzt liegt sie unter dem
+  Fenster, in dem du arbeitest, und bleibt dort, solange macOS kurz kein aktives Fenster meldet.
+  Kleine Fenster wie Linkanzeigen und Tooltips zählen nie. Seam prüft außerdem nach dem
+  Einsortieren, ob die Abdunklung richtig liegt. Der Fehler bestand schon vor 0.6.
+
 ## [0.6.0] — 2026-10-16
 
 ### Neu
