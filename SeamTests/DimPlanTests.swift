@@ -193,7 +193,7 @@ final class DimPlanTests: XCTestCase {
 
     @MainActor
     func testScreenSettingsDefaultsAndFallback() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         let p = Preferences(defaults: d)
         XCTAssertEqual(p.dimMode(for: "X"), .dim)
         XCTAssertEqual(p.dimMode(for: nil), .dim)
@@ -212,7 +212,7 @@ final class DimPlanTests: XCTestCase {
     @MainActor
     func testTamperedDimSettingsAreDropped() {
         // STRIDE T (E13, 0.6): von außen veränderte Werte fallen beim Laden weg.
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         d.set(["ok": "off", "bad": "boom", String(repeating: "x", count: 81): "off"], forKey: "dimScreenModes")
         d.set(["ok": 50, "bad": 77], forKey: "dimScreenStrengths")
         d.set(["com.microsoft.teams2", "com.microsoft.teams2", "kein bundle/id", ""], forKey: "dimNeverApps")
@@ -227,7 +227,7 @@ final class DimPlanTests: XCTestCase {
     @MainActor
     func testDimSettingsCappedOnLoadAndWrite() {
         // Rafter-Review 16.10.: Obergrenzen beim Laden UND Schreiben, Bytes statt Zeichen, keine Steuerzeichen.
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         d.set((0..<500).map { "com.test.app\($0)" }, forKey: "dimNeverApps")
         d.set(["a\u{7}b", "e" + String(repeating: "\u{301}", count: 60)], forKey: "dimOffSpaces")
         let p = Preferences(defaults: d)
@@ -242,7 +242,7 @@ final class DimPlanTests: XCTestCase {
 
     @MainActor
     func testNeverAppsAndSpacesSetters() {
-        let p = Preferences(defaults: UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!)
+        let p = Preferences(defaults: freshDefaults())
         p.addDimNeverApp("com.spotify.client")
         p.addDimNeverApp("com.spotify.client")
         p.addDimNeverApp("nicht gültig")
@@ -285,7 +285,7 @@ final class DimPlanTests: XCTestCase {
 
     @MainActor
     func testDimDefaultsOffAndMedium() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         let p = Preferences(defaults: d)
         XCTAssertFalse(p.dimEnabled)
         XCTAssertEqual(p.dimStrength, 35)
@@ -293,7 +293,7 @@ final class DimPlanTests: XCTestCase {
 
     @MainActor
     func testInvalidStrengthFallsBack() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         d.set(99, forKey: "dimStrength")
         XCTAssertEqual(Preferences(defaults: d).dimStrength, 35)
     }

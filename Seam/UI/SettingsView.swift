@@ -76,6 +76,15 @@ struct SettingsView: View {
                     .padding(.vertical, FamilyTheme.Space.s)
                 }
             }
+            if engine.spaces.available {
+                card("Layouts") {
+                    toggleRow("Nach Anmeldung und Bildschirmwechsel aufräumen", isOn: $prefs.deskAutoTidy)
+                    divider
+                    Button("Layout bearbeiten …") { openWindow(id: "layout") }
+                        .buttonStyle(CardButtonStyle())
+                        .padding(.vertical, FamilyTheme.Space.s)
+                }
+            }
             linksCard
             card("Allgemein") {
                 toggleRow("Bei Anmeldung starten", isOn: Binding(

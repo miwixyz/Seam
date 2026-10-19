@@ -97,10 +97,22 @@ custom_rules:
   keine_synthetischen_ereignisse:
     name: "Keine künstlichen Eingaben / Tastatur-Beobachtung"
     regex: 'AXUIElementPostKeyboardEvent|CGEventPost|CGEventTapCreate|CGEvent\.tapCreate|\.post\(tap:|\.keyDown|\.keyUp|\.flagsChanged'
+    # E17a (19.10., Michaels Zustimmung): einzige Ausnahme, Positivliste + Test dort.
+    excluded: 'Seam/Core/InputSynth\.swift'
     excluded_match_kinds:
       - comment
       - doccomment
     message: "Seam erzeugt keine Eingaben und liest keine Tastatur mit (SECURE-DESIGN E1/E2)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E17a: In der einzigen Datei mit künstlichen Eingaben gibt es keine
+  # fest eingetippten Tastennummern — nur die benannten Konstanten (← → und die Sondertasten zum
+  # Lösen), die InputSynthTests festhält. So schleicht sich keine weitere Taste ein.
+  inputsynth_nur_benannte_tasten:
+    name: "InputSynth: nur benannte Tasten"
+    regex: 'virtualKey:\s*[0-9]'
+    included: 'Seam/Core/InputSynth\.swift'
+    message: "Nur InputSynth.arrowLeft/arrowRight/releasedKeys (SECURE-DESIGN E17a)."
     severity: error
 
   # Seam, docs/SECURE-DESIGN.md E16a: Der Link-Weg nimmt Eingaben von JEDER App an. Er darf die

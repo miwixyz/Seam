@@ -43,7 +43,7 @@ struct SpaceNamesView: View {
                 Text("\(space.number).").monospacedDigit().frame(width: 22, alignment: .trailing)
                 TextField("Schreibtisch \(space.number)", text: Binding(
                     get: { prefs.spaceNames[space.key] ?? "" },
-                    set: { prefs.setSpaceName($0, for: space.key) }
+                    set: { prefs.setSpaceName($0, for: space) }
                 ))
                 .textFieldStyle(.roundedBorder)
             }

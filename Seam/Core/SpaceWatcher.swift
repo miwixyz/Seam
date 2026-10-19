@@ -15,6 +15,9 @@ final class SpaceWatcher {
     private(set) var current: SpaceInfo?
     var available: Bool { !spaces.isEmpty }
 
+    /// Wird bei jeder geänderten Space-Liste gerufen (E17d: Namen neuer Spaces übernehmen).
+    @ObservationIgnored var onChange: (([SpaceInfo]) -> Void)?
+
     @ObservationIgnored private var tokens: [NSObjectProtocol] = []
     @ObservationIgnored private var reportedMissing = false
 
@@ -46,7 +49,10 @@ final class SpaceWatcher {
             return
         }
         reportedMissing = false
-        if list != spaces { spaces = list }
+        if list != spaces {
+            spaces = list
+            onChange?(list)
+        }
         let now = SpaceNames.current(list, display: SpaceReader.displayIdentifier(of: NSScreen.main))
         if now != current {
             current = now

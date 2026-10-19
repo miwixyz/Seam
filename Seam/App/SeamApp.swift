@@ -87,6 +87,16 @@ struct SeamApp: App {
         // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
         .handlesExternalEvents(matching: [])
 
+        Window("Layout bearbeiten", id: "layout") {
+            DeskLayoutWindow()
+                .environment(engine)
+                .environment(engine.prefs)
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        // Wie die anderen Fenster: öffnet nur der Nutzer, nie ein Ereignis von außen (E16).
+        .handlesExternalEvents(matching: [])
+
         Window("Spaces benennen", id: "spaces") {
             SpaceNamesView()
                 .environment(engine)
@@ -129,8 +139,33 @@ final class Engine {
     @ObservationIgnored private var trustWatch: Timer?
     @ObservationIgnored private var running = false
 
+    // MARK: Layouts pro Space (E17)
+
+    /// ⌃⌥⌘L: Schreibtische aufräumen. In Seam frei (⌃⌘L ist „Linkes Drittel“).
+    static let tidyKey = KeyCombo(keyCode: 37, modifiers: KeyCombo.ctrlOptCmd)
+    @ObservationIgnored private lazy var desks = DeskRunner(prefs: prefs)
+    @ObservationIgnored private let deskHUD = NoticeHUD()
+    @ObservationIgnored private var autoTidyTask: Task<Void, Never>?
+    @ObservationIgnored private var afterFixTask: Task<Void, Never>?
+    @ObservationIgnored private var screenToken: NSObjectProtocol?
+    /// rafter-code-review 19.10., Fund 3: Nachräumen nach dem Zurückziehen höchstens alle 30 s —
+    /// ein flatternder Bildschirm darf Maus und Tastatur nicht in Dauerschleife übernehmen.
+    @ObservationIgnored private var lastAfterFix: Date?
+    /// Fürs Popover: Lauf aktiv, letzte Meldung, Schreibtische am falschen Platz.
+    private(set) var deskRunning = false
+    private(set) var deskMessage: String?
+    private(set) var deskIssues: [DeskIssue] = []
+
     /// Im Testlauf startet die App als Test-Host. Dann weder Freigabe-Dialog noch
     /// Kürzel noch Maus-Beobachter: Die Tests prüfen reine Rechenlogik.
+    static var isPreview: Bool {
+        #if DEBUG
+        PreviewRenderer.isRequested
+        #else
+        false
+        #endif
+    }
+
     static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }
@@ -144,10 +179,20 @@ final class Engine {
         guard !Self.isRunningTests else { return }
         AXAccess.setGlobalTimeout()
         updater = Updater()
+        // Im Vorschau-Modus (DEBUG, gleiche Bundle-ID wie die installierte App) keine Namen
+        // übernehmen — sonst schriebe die Vorschau in Michaels echte Einstellungen (code-audit 19.10.).
+        if !Self.isPreview {
+            spaces.onChange = { [weak self, prefs] list in
+                let n = prefs.adoptSpaceNames(list)
+                if n > 0 { Self.log.notice("Space-Namen vom Platz übernommen: \(n)") }
+                self?.spacesChanged()
+            }
+        }
         spaces.start()
         trackTargetApp()
         #if DEBUG
         PreviewRenderer.runIfRequested(engine: self)
+        if PreviewRenderer.isRequested { return }
         #endif
         Task { @MainActor in self.boot() }
     }
@@ -198,6 +243,7 @@ final class Engine {
         isTrusted = true
         hotkeys.onPress = { [weak self] key in
             guard let self, self.prefs.shortcuts else { return }
+            if key == Self.tidyKey { self.tidyUp(automatic: false); return }
             self.actions.perform(key)
         }
         applyShortcutSetting()
@@ -208,6 +254,12 @@ final class Engine {
         pairs.onRaised = { [weak self] in self?.dimmer.refresh() }
         dimmer.apply()
         watchTrust()
+        // E17b: nach Anmeldung und nach jeder Bildschirmänderung, sobald die Bildschirme ruhig sind.
+        screenToken = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.scheduleAutoTidy() }
+        }
+        scheduleAutoTidy()
     }
 
     /// Letzte vordere App, die nicht Seam ist. Öffnet man das Popover, wird Seam selbst aktiv;
@@ -280,11 +332,99 @@ final class Engine {
     func applyShortcutSetting() {
         guard running else { return }
         if prefs.shortcuts {
-            hotkeys.register(Layout.allKeys)
+            hotkeys.register(Layout.allKeys.union([Self.tidyKey]))
             failedShortcuts = hotkeys.failed
         } else {
             hotkeys.unregister()
             failedShortcuts = []
+        }
+    }
+
+    /// Popover/Menü: jetzige Anordnung als Layout dieser Bildschirm-Kombination speichern.
+    func saveDeskLayout() {
+        let screens = DeskLayouts.liveScreens()
+        let spaces = SpaceReader.read() ?? []
+        let layout = DeskLayouts.capture(windows: DeskLayouts.liveWindows(), spaces: spaces, names: prefs.spaceNames,
+                                         screens: screens, ownBundleID: Bundle.main.bundleIdentifier)
+        // Nichts erfasst (z. B. Spaces kurz nicht lesbar) → altes Layout behalten. Ein leeres Layout
+        // hieße sonst „löschen“ (code-audit 19.10.).
+        guard !layout.entries.isEmpty else { showDesk(DeskMessages.saved(apps: 0)); return }
+        prefs.rememberSpaceSlots(spaces)
+        let ok = prefs.saveDeskLayout(layout, for: screens.combinationKey)
+        deskIssues = []
+        Self.log.notice("Layout gespeichert: \(layout.entries.count) Apps")
+        showDesk(ok ? DeskMessages.saved(apps: layout.entries.count)
+                    : "Layout nicht gespeichert: Seam merkt sich höchstens 20 "
+                        + "Bildschirm-Kombinationen.\n→ ZU TUN: in den Einstellungen unter „Layouts“ das Layout löschen und neu speichern.")
+    }
+
+    /// Popover, Kürzel ⌃⌥⌘L, Automatik.
+    func tidyUp(automatic: Bool) {
+        guard running else { return }
+        if let block = desks.run(automatic: automatic, done: { [weak self] in self?.deskFinished($0) }) {
+            if let text = DeskMessages.blocked(block, automatic: automatic) { showDesk(text) }
+            return
+        }
+        deskRunning = true
+        // Steht, bis das Ergebnis kommt (`deskFinished` blendet es aus) — auch wenn ein Lauf länger dauert.
+        showDesk(DeskMessages.running, for: .seconds(600))
+    }
+
+    /// Popover beim Öffnen: Weicht die Anordnung vom Layout ab? nil = kein Layout.
+    func deskDeviates() -> Bool? {
+        desks.currentPlan()?.deviates
+    }
+
+    private func deskFinished(_ r: DeskRunResult) {
+        deskRunning = false
+        deskIssues = r.issues
+        let names = deskNames
+        let text = DeskMessages.issues(r.issues, names: names, autoTidy: prefs.deskAutoTidy) ?? DeskMessages.result(r, names: names)
+        deskHUD.hide()
+        showDesk(text, for: r.issues.isEmpty ? .seconds(8) : .seconds(20))
+    }
+
+    private func showDesk(_ text: String, for duration: Duration = .seconds(8)) {
+        deskMessage = text
+        guard let screen = Screens.all().first else { return }
+        deskHUD.show(text, at: CGPoint(x: screen.visible.midX, y: screen.visible.midY), within: screen.visible, for: duration)
+    }
+
+    private var deskNames: DeskMessages.Names {
+        DeskMessages.Names(
+            app: { DeskLayouts.appName($0) },
+            display: { id in
+                NSScreen.screens.first { SpaceReader.displayIdentifier(of: $0) == id }?.localizedName ?? "dem anderen Bildschirm"
+            })
+    }
+
+    /// Bildschirme 10 s ruhig, dann automatisch aufräumen. Jede weitere Änderung startet die Wartezeit neu.
+    private func scheduleAutoTidy() {
+        guard prefs.deskAutoTidy else { return }
+        autoTidyTask?.cancel()
+        autoTidyTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(10))
+            guard !Task.isCancelled else { return }
+            self?.tidyUp(automatic: true)
+        }
+    }
+
+    /// Spaces geändert: Hat der Nutzer die gemeldeten Schreibtische in Mission Control
+    /// zurückgezogen, räumt Seam 4 s nach der letzten Änderung den Rest auf — nur mit
+    /// eingeschalteter Automatik (code-audit 19.10.: sonst wirkte der Notschalter hier nicht) und
+    /// in eigener Aufgabe, damit ein gleichzeitiger Bildschirmwechsel nicht verloren geht.
+    private func spacesChanged() {
+        guard running, prefs.deskAutoTidy, !deskIssues.isEmpty, !deskRunning else { return }
+        afterFixTask?.cancel()
+        afterFixTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled, let self else { return }
+            let issues = self.desks.currentPlan()?.issues ?? []
+            self.deskIssues = issues
+            guard issues.isEmpty else { return }
+            if let last = self.lastAfterFix, Date().timeIntervalSince(last) < 30 { return }
+            self.lastAfterFix = Date()
+            self.tidyUp(automatic: false)
         }
     }
 

@@ -23,6 +23,9 @@ final class Preferences {
         static let dimOffSpaces = "dimOffSpaces"
         static let showSpaceName = "showSpaceName"
         static let spaceNames = "spaceNames"
+        static let spaceSlotNames = "spaceSlotNames"
+        static let deskLayouts = "deskLayouts"
+        static let deskAutoTidy = "deskAutoTidy"
         static let hideIconWithSpaceName = "hideIconWithSpaceName"
     }
 
@@ -57,6 +60,15 @@ final class Preferences {
     var showSpaceName: Bool { didSet { defaults.set(showSpaceName, forKey: Key.showSpaceName) } }
     /// Namen der Spaces: Space-Schlüssel (UUID) → Name. Nur Eingaben des Nutzers (E14).
     var spaceNames: [String: String] { didSet { defaults.set(spaceNames, forKey: Key.spaceNames) } }
+    /// Platz → Name (E17d): wo der Nutzer welchen Namen vergeben hat. Daraus erbt ein Space,
+    /// den macOS nach einem Neustart neu angelegt hat, seinen Namen.
+    var spaceSlotNames: [String: String] { didSet { defaults.set(spaceSlotNames, forKey: Key.spaceSlotNames) } }
+    /// Nach Anmeldung und Bildschirmwechsel selbst aufräumen (E17b, Michael 19.10.: Standard an).
+    var deskAutoTidy: Bool { didSet { defaults.set(deskAutoTidy, forKey: Key.deskAutoTidy) } }
+    /// Layouts pro Space (E17c): Bildschirm-Kombination → Layout. Beim Laden geprüft.
+    private(set) var deskLayouts: [String: DeskLayout] {
+        didSet { defaults.set(DeskLayouts.encode(deskLayouts), forKey: Key.deskLayouts) }
+    }
     /// Seam-Symbol weglassen, solange ein Space-Name in der Menüleiste steht (Michael, 09.10.).
     var hideIconWithSpaceName: Bool { didSet { defaults.set(hideIconWithSpaceName, forKey: Key.hideIconWithSpaceName) } }
 
@@ -122,6 +134,73 @@ final class Preferences {
         if n.isEmpty { spaceNames[key] = nil } else { spaceNames[key] = n }
     }
 
+    /// Namen setzen und den Platz dazu merken (E17d).
+    func setSpaceName(_ name: String, for space: SpaceInfo) {
+        setSpaceName(name, for: space.key)
+        guard let slot = space.slot, Self.validKey(slot) else { return }
+        let n = spaceNames[space.key]
+        guard n == nil || spaceSlotNames[slot] != nil || spaceSlotNames.count < Self.maxSlotNames else { return }
+        spaceSlotNames[slot] = n
+    }
+
+    static let maxSlotNames = 100
+    /// Kennungen der Spaces, die Seam seit dem Start gesehen hat (nur im Speicher).
+    @ObservationIgnored private var seenSpaceKeys: Set<String>?
+
+    /// Beim Speichern eines Layouts: Plätze aller benannten Spaces merken — diese Anordnung ist
+    /// gewollt (E17d). Andere gemerkte Plätze bleiben.
+    func rememberSpaceSlots(_ spaces: [SpaceInfo]) {
+        var merged = spaceSlotNames
+        for (slot, name) in SpaceNames.slots(spaces, names: spaceNames)
+        where merged[slot] != nil || merged.count < Self.maxSlotNames { merged[slot] = name }
+        if merged != spaceSlotNames { spaceSlotNames = merged }
+    }
+
+    /// Liste „Layout bearbeiten“: einer App einen anderen Schreibtisch geben. Größen bleiben.
+    func setDesk(_ desk: DeskRef, for bundleID: String, in combination: String) {
+        guard let layout = deskLayouts[combination] else { return }
+        let entries = layout.entries.map { $0.bundleID == bundleID ? DeskLayoutEntry(bundleID: bundleID, desk: desk, frames: $0.frames) : $0 }
+        saveDeskLayout(DeskLayout(entries: entries), for: combination)
+    }
+
+    /// App aus dem Layout nehmen — Seam lässt sie dann in Ruhe.
+    func removeFromLayout(_ bundleID: String, in combination: String) {
+        guard let layout = deskLayouts[combination] else { return }
+        saveDeskLayout(DeskLayout(entries: layout.entries.filter { $0.bundleID != bundleID }), for: combination)
+    }
+
+    /// Layout für eine Bildschirm-Kombination speichern (ersetzt das alte, Michael 19.10.).
+    /// Leeres Layout = für diese Kombination löschen. Neu ab dem 21. Kombinationsschlüssel abgelehnt.
+    @discardableResult
+    func saveDeskLayout(_ layout: DeskLayout, for combination: String) -> Bool {
+        if layout.entries.isEmpty { deskLayouts[combination] = nil; return true }
+        // Durch dieselbe Prüfung wie beim Laden (E17c): was gespeichert wird, muss auch ladbar sein.
+        guard let checked = DeskLayouts.decode(DeskLayouts.encode([combination: layout]))[combination],
+              deskLayouts[combination] != nil || deskLayouts.count < DeskLayouts.maxCombinations else { return false }
+        deskLayouts[combination] = checked
+        return true
+    }
+
+    /// Nach jeder Änderung der Spaces: neue Spaces erben den Namen ihres Platzes (E17d).
+    /// Gibt die Zahl übernommener Namen zurück (fürs Protokoll, ohne die Namen selbst).
+    @discardableResult
+    func adoptSpaceNames(_ spaces: [SpaceInfo]) -> Int {
+        // Erster Abgleich nach dem Start: alle gelten als neu. Danach nur, was neu auftaucht.
+        let keys = Set(spaces.map(\.key))
+        let fresh = seenSpaceKeys.map { keys.subtracting($0) }
+        seenSpaceKeys = (seenSpaceKeys ?? []).union(keys)
+        // Umstieg von 0.6: noch keine Plätze gemerkt → die jetzige Anordnung gilt als gewollt.
+        if spaceSlotNames.isEmpty {
+            let start = SpaceNames.slots(spaces, names: spaceNames)
+            if !start.isEmpty { spaceSlotNames = start }
+        }
+        let adopted = SpaceNames.adopt(spaces, names: spaceNames, slots: spaceSlotNames, fresh: fresh)
+        guard adopted != spaceNames else { return 0 }
+        let count = adopted.count - spaceNames.count
+        spaceNames = adopted
+        return count
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         linkEdges = defaults.object(forKey: Key.linkEdges) as? Bool ?? true
@@ -158,6 +237,13 @@ final class Preferences {
         spaceNames = raw.reduce(into: [:]) { r, e in
             let n = SpaceNames.sanitize(e.value)
             if !n.isEmpty, e.key.count <= 80 { r[e.key] = n }
+        }
+        deskLayouts = DeskLayouts.decode(defaults.data(forKey: Key.deskLayouts))
+        deskAutoTidy = defaults.object(forKey: Key.deskAutoTidy) as? Bool ?? true
+        let rawSlots = defaults.dictionary(forKey: Key.spaceSlotNames) as? [String: String] ?? [:]
+        spaceSlotNames = rawSlots.sorted { $0.key < $1.key }.prefix(Self.maxSlotNames).reduce(into: [:]) { r, e in
+            let n = SpaceNames.sanitize(e.value)
+            if !n.isEmpty, Self.validKey(e.key) { r[e.key] = n }
         }
     }
 }

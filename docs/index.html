@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Erst erhöhen, wenn diese Seite gegen das Release gelesen wurde. -->
-<meta name="seam:documented-version" content="0.6.0">
+<meta name="seam:documented-version" content="0.7.0">
 <title>Seam: Fenster anordnen auf dem Mac, mit einer Naht zwischen zwei Fenstern</title>
 <meta name="description" content="Seam ordnet Fenster auf deinem Mac per Tastenkürzel oder durch Ziehen an. Zwei Fenster teilen sich eine Kante, und wenn du sie verschiebst, gehen beide mit. Kostenlos und Open Source.">
 <link rel="icon" href="favicon.png" type="image/png">
@@ -260,6 +260,11 @@
         <h3>Namen für Spaces <span class="tag">Neu in 0.3</span></h3>
         <p>Gib deinen Schreibtischen Namen wie „Arbeit“ oder „Grafik“. Der Name des aktuellen Space steht neben dem Seam-Symbol in der Menüleiste, im Seam-Fenster siehst du alle Spaces, der aktuelle ist hervorgehoben. Ordnet macOS die Spaces neu an, bleiben die Namen trotzdem richtig. Seit 0.4 kannst du das Seam-Symbol ausblenden, solange ein Name dasteht. Dann bleibt in der Menüleiste nur der Name.</p>
       </div>
+      <div class="feature card wide">
+        <div class="icon"><svg class="ico" aria-hidden="true"><use href="#i-spaces"/></svg></div>
+        <h3>Layouts pro Schreibtisch <span class="tag">Neu in 0.7</span></h3>
+        <p>Seam merkt sich, welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, und stellt das wieder her: per Knopf, mit ⌃⌥⌘L oder von selbst nach der Anmeldung und wenn ein Bildschirm dazukommt. Hat macOS nach einem Neustart Schreibtische auf den falschen Bildschirm geschoben, sagt Seam dir genau, welche, und räumt auf, sobald du sie in Mission Control zurückgezogen hast. Dafür bewegt Seam sichtbar die Maus und drückt ⌃← / ⌃→. Einen anderen Weg lässt macOS ohne abgeschalteten Systemschutz nicht zu. Greifst du ein, hört Seam sofort auf.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -331,8 +336,8 @@
     <div class="without card">
       <div class="tile-icon"><svg class="ico" aria-hidden="true"><use href="#i-minus"/></svg></div>
       <h3>Was bewusst fehlt</h3>
-      <p>Seam merkt sich keine Fensteranordnungen über einen Neustart hinaus, denn so eine Liste würde zeigen, welche Apps du wann nutzt. Andere Programme können Seam nicht fernsteuern. Und das Nachbarfenster folgt erst beim Loslassen, weil manche Apps zu langsam antworten, um ruckelfrei live mitzugehen. Zu einem Space springt Seam nicht: Das ginge nur, indem es Tastendrücke vortäuscht, und das tut Seam grundsätzlich nicht.</p>
-      <div class="chips" aria-label="Nicht enthalten"><span>Gespeicherte Layouts</span><span>Steuerung per Skript oder URL</span><span>Zu einem Space springen</span><span>Mitziehen während des Ziehens</span></div>
+      <p>Andere Programme können Seam nicht fernsteuern. Das Nachbarfenster folgt erst beim Loslassen, weil manche Apps zu langsam antworten, um ruckelfrei live mitzugehen. Zu einem Space springt Seam nicht per Klick. Tastendrücke erzeugt Seam nur an einer Stelle, beim Aufräumen der Layouts (seit 0.7, auf ausdrücklichen Wunsch): nur ⌃← / ⌃→, nur dort, mit Abbruch, sobald du eingreifst. Das Layout speichert nur, welche App auf welchem Schreibtisch liegt, ohne Fenstertitel und ohne Zeiten.</p>
+      <div class="chips" aria-label="Nicht enthalten"><span>Steuerung per Skript oder URL</span><span>Zu einem Space springen per Klick</span><span>Mitziehen während des Ziehens</span><span>Apps selbst starten</span></div>
     </div>
   </div>
 </section>
@@ -343,8 +348,8 @@
     <p class="lead">Um Fenster anderer Apps zu bewegen, braucht Seam die Bedienungshilfen-Freigabe von macOS. Diese Freigabe erlaubt sehr viel, doch Seam nutzt davon nur einen kleinen Teil.</p>
     <div class="privacy-grid">
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space gerade aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Fenstertitel und Inhalte liest es nicht, eine Bildschirmaufnahme-Freigabe braucht es nicht.</p></div>
-      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span><p><strong>Keine Tastatur mitlesen</strong>Seam meldet seine Kürzel bei macOS an und bekommt nur diese Kombinationen mitgeteilt. Die Maus beobachtet es nur, um das Ziehen zu erkennen, und verändert keine Klicks.</p></div>
-      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-cloudoff"/></svg></span><p><strong>Kein Konto, keine Analyse</strong>Gespeichert werden nur deine Einstellungen auf deinem Mac. Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht: Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters und welche Fenster ein Paar bilden, hält Seam nur im Arbeitsspeicher. Nach einem Neustart ist beides weg.</p></div>
+      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span><p><strong>Keine Tastatur mitlesen</strong>Seam meldet seine Kürzel bei macOS an und bekommt nur diese Kombinationen mitgeteilt. Die Maus beobachtet es nur, um das Ziehen zu erkennen, und verändert keine Klicks. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→.</p></div>
+      <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-cloudoff"/></svg></span><p><strong>Kein Konto, keine Analyse</strong>Gespeichert werden nur deine Einstellungen auf deinem Mac und, wenn du eins speicherst, dein Layout (App, Schreibtisch, Fenstergröße — keine Titel, keine Zeiten). Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht: Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Die ursprüngliche Größe eines Fensters und welche Fenster ein Paar bilden, hält Seam nur im Arbeitsspeicher. Nach einem Neustart ist beides weg.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg></span><p><strong>Updates nur mit deinem Ja</strong>Der einzige Netzwerkzugriff ist die Suche nach Updates bei GitHub. Beim ersten Mal fragt Seam, ob es selbst suchen darf. Jedes Update ist signiert, und Seam prüft die Signatur vor dem Installieren.</p></div>
     </div>
     <p class="mock-note">Den Quellcode und die Begründung jeder dieser Entscheidungen findest du auf <a href="https://github.com/miwixyz/Seam">GitHub</a>.</p>

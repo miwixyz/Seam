@@ -36,9 +36,44 @@ Im Seam-Fenster stehen unter den Kacheln alle Spaces, der aktuelle ist hervorgeh
 des aktuellen Space steht dann neben dem Seam-Symbol in der Menüleiste; Spaces ohne eigenen Namen
 zeigen nur das Symbol. In den Einstellungen → „Symbol ausblenden, wenn ein Space-Name steht“
 siehst du statt Symbol und Name nur noch den Namen. Die Namen hängen am Space selbst, nicht an seiner Position: Ordnet macOS
-die Spaces neu an, stimmen sie weiter. Wechseln geht wie gewohnt mit ⌃← / ⌃→ oder Mission
+die Spaces neu an, stimmen sie weiter. Legt macOS einen Schreibtisch neu an — das passiert nach
+einem Neustart, besonders bei einem zweiten Bildschirm am USB-C-Kabel —, bekommt der neue Schreibtisch
+den Namen, der vorher an dieser Stelle stand, sofern kein anderer Schreibtisch ihn gerade trägt.
+Du musst also nach einem Neustart nicht neu benennen. Wechseln geht wie gewohnt mit ⌃← / ⌃→ oder Mission
 Control. Seam liest dafür über eine nicht offiziell dokumentierte Schnittstelle von macOS nur die
 Liste der Spaces. Liefert macOS sie nach einem Update nicht mehr, blendet Seam die Funktion aus.
+
+## Layouts pro Schreibtisch
+
+Seam merkt sich, welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, und
+stellt das wieder her. Gedacht für den Fall, dass macOS nach einem Neustart alles durcheinanderwirft.
+
+**Speichern:** Ordne deine Fenster an, wie du sie haben willst, dann im Seam-Fenster unter
+„Layout“ auf **Speichern**. Je Bildschirm-Kombination gibt es ein Layout (MacBook allein und
+MacBook mit zweitem Bildschirm also getrennt). Apps auf allen Schreibtischen (z. B. Finder),
+minimierte Fenster, Vollbild-Apps und reine Menüleisten-Apps zählen nicht dazu.
+
+**Aufräumen:** im Seam-Fenster auf **Aufräumen** oder mit **⌃⌥⌘L**. Ab Werk räumt Seam auch selbst
+auf: nach der Anmeldung bzw. dem Start von Seam (auch nach einem Update) und wenn ein Bildschirm dazukommt, sobald die Bildschirme 10 Sekunden ruhig
+sind, höchstens alle zwei Minuten. Abschalten: Einstellungen → Layouts.
+Dabei bewegt Seam **sichtbar** Maus und Tastatur: Es greift ein Fenster an der Titelleiste und
+trägt es mit ⌃← / ⌃→ auf seinen Schreibtisch. Einen anderen Weg lässt macOS ohne abgeschalteten
+Systemschutz nicht zu. Ein Hinweis zeigt an, dass Seam gerade aufräumt. **Bewegst du die Maus
+oder drückst eine Taste, bricht Seam sofort ab.** Am Ende stehen deine Bildschirme wieder auf dem
+Schreibtisch, auf dem sie vorher standen. Seam startet keine Apps; was nicht läuft, bleibt aus.
+Voraussetzung: In den Systemeinstellungen → Tastatur → Tastaturkurzbefehle → Mission Control ist
+„Einen Schreibtisch nach links/rechts“ eingeschaltet (macOS-Standard).
+
+**Wenn Schreibtische auf dem falschen Bildschirm liegen:** Nach einem Neustart legt macOS manchmal
+die Schreibtische eines zweiten Bildschirms auf den Hauptbildschirm, besonders bei einem Bildschirm
+am USB-C-Kabel. Schreibtische verschieben kann Seam nicht. Es sagt dir dann genau, welche, zum
+Beispiel: „„Mail“ und „Notizen“ liegen nicht auf DELL U2723QE.“ Öffne Mission Control (F3),
+ziehe sie oben auf die Leiste des richtigen Bildschirms, und Seam räumt danach selbst auf.
+
+**Ändern:** Neu anordnen und erneut speichern, oder Einstellungen → Layouts → „Layout bearbeiten …“:
+dort je App den Schreibtisch wählen oder die App herausnehmen. Seam lässt Apps, die nicht im Layout
+stehen, in Ruhe. Weicht deine Anordnung vom Layout ab, steht im Seam-Fenster „weicht ab“. Speichere
+dann, wenn die neue Anordnung bleiben soll.
 
 ## Hintergrund abdunkeln
 
@@ -130,7 +165,10 @@ Was sich in jeder Version geändert hat, steht hier im Reiter „Änderungen“.
 Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters, nie Titel oder Inhalte.
 Es beobachtet keine Tastatureingaben: Die Kürzel sind beim System angemeldet, Seam erfährt nur,
 dass eines gedrückt wurde. Die Maus beobachtet es nur, um Ziehen und Loslassen zu erkennen.
+Einzige Ausnahme beim Steuern: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt
+⌃← / ⌃→ — nur dafür, nur diese Tasten, mit Abbruch, sobald du eingreifst.
 Links, die Seam als Standardbrowser bekommt, reicht es nur an einen Browser weiter; Adressen
-landen weder im Protokoll noch in einem Verlauf. Gespeichert werden nur die Einstellungen und deine Link-Regeln. Die ursprüngliche Größe eines Fensters und welche
+landen weder im Protokoll noch in einem Verlauf. Gespeichert werden nur die Einstellungen, deine Link-Regeln und dein Layout (je App: Kennung,
+Schreibtisch, Fenstergröße — keine Titel, keine Zeiten). Die ursprüngliche Größe eines Fensters und welche
 Fenster ein Paar bilden, liegen nur im Arbeitsspeicher und sind nach dem Beenden weg. Der einzige Netzzugriff ist die Update-Prüfung
 bei GitHub.

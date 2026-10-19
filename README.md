@@ -26,6 +26,11 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   aller Spaces im Seam-Fenster (aktueller hervorgehoben), Fenster zum Benennen. Namen hängen an der UUID des Space (überstehen „automatisch neu anordnen“). Nur
   lesend über eine nicht dokumentierte macOS-Schnittstelle, ohne neue Berechtigung; kein Wechseln
   per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
+- **Layouts pro Schreibtisch** (0.7): welche App auf welchem Schreibtisch, in welcher Größe —
+  speichern und wiederherstellen per Knopf, ⌃⌥⌘L oder automatisch nach Anmeldung und
+  Bildschirmwechsel. Liegen Schreibtische nach einem Neustart auf dem falschen Bildschirm, nennt
+  Seam sie und räumt nach dem Zurückziehen in Mission Control selbst auf. Seam bewegt dafür
+  sichtbar Maus und Tastatur und bricht ab, sobald du eingreifst.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
   beide hell. Je Bildschirm wählbar: ganz dunkel, oberstes Fenster hell oder nicht abdunkeln,
   Stärke 20/35/50 %. Dazu Apps, die nie abgedunkelt werden, Spaces ohne Abdunkeln und wahlweise
@@ -77,8 +82,11 @@ ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie
 vergleicht es die App-Kennung (Bundle-ID) der Fenster mit dieser Liste. Gespeichert werden nur deine
 Wahl je Bildschirm (Kennung des Bildschirms), die Kennungen der gewählten Apps und Spaces. An
 fremden Fenstern ändert es Lage und Größe, hebt bei einem Paar den Partner an und minimiert ihn mit.
-Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. Gespeichert
-werden nur Einstellungen und Link-Regeln; Fensterpaare liegen nur im Arbeitsspeicher. Als
+Tastenkürzel sind beim System angemeldet; Seam beobachtet keine Tastatureingaben. **Ausnahme
+beim Steuern (0.7):** Zum Aufräumen der Layouts erzeugt Seam selbst Mausbewegungen und ⌃←/⌃→ —
+nur dort, nur diese Tasten, mit Abbruch bei jedem Eingriff (E17). Gespeichert werden Einstellungen,
+Link-Regeln und das Layout (Bundle-ID, Schreibtisch, Fensterrahmen; keine Titel, keine Zeiten);
+Fensterpaare liegen nur im Arbeitsspeicher. Als
 Standardbrowser gibt Seam Links nur an einen Browser weiter, lädt keine Seite und protokolliert
 keine Adressen. Einziger Netzzugriff ist die Update-Prüfung bei GitHub.
 Sicherheitsentwurf: [`docs/SECURE-DESIGN.md`](docs/SECURE-DESIGN.md).

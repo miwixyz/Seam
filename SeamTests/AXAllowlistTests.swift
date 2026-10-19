@@ -11,6 +11,7 @@ final class AXAllowlistTests: XCTestCase {
         XCTAssertEqual(Set(AXAttribute.allCases.map(\.rawValue)), [
             "AXRole", "AXSubrole", "AXPosition", "AXSize", "AXMinimized", "AXFullScreen",
             "AXWindows", "AXFocusedApplication", "AXFocusedWindow",
+            "AXWindow",   // E17a: Elternfenster am Griffpunkt (19.10.)
         ])
     }
 

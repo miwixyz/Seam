@@ -2,6 +2,39 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.7.0] — 2026-10-19
+
+### Neu
+
+- **Layouts pro Schreibtisch.** Seam merkt sich, welche App auf welchem Schreibtisch liegt und wie
+  groß ihre Fenster sind, und stellt es wieder her — per Knopf, mit ⌃⌥⌘L und ab Werk automatisch
+  nach der Anmeldung und wenn ein Bildschirm dazukommt. Anlass (Michael, 19.10.): „Es wirft nach
+  jedem Neustart alles durcheinander.“ Gemessen: macOS legt die Schreibtische eines zweiten
+  Bildschirms am USB-C-Kabel nach jedem Neustart neu an oder schiebt sie auf den Hauptbildschirm;
+  die Dock-Zuweisung „Diesem Schreibtisch zuweisen“ zeigt danach ins Leere. Liegen Schreibtische
+  auf dem falschen Bildschirm, sagt Seam genau, welche, und räumt auf, sobald du sie in Mission
+  Control zurückgezogen hast. Seam bewegt dafür sichtbar Maus und Tastatur (nur ⌃←/⌃→) und bricht
+  sofort ab, wenn du eingreifst. Layout ändern: neu speichern oder Einstellungen → Layouts →
+  „Layout bearbeiten …“. Sicherheitsentwurf: E17.
+  Geprüft mit zwei Bildschirmen (Neustart: 16 von 16 Apps wieder am Platz). Mit zwei Bildschirmen
+  bewegt Seam Fenster ganz ohne Klick; mit nur einem greift es das Fenster an der Titelleiste —
+  bei Apps, deren Kopfzeile eine Web-Oberfläche ist, kann das scheitern, Seam nennt die App dann.
+  Seam räumt auch 10 Sekunden nach seinem eigenen Start auf, also auch nach einem Update.
+
+### Behoben
+
+- **Space-Namen gingen nach einem Neustart verloren.** macOS legt beim Neustart manche
+  Schreibtische neu an, vor allem auf einem zweiten Bildschirm am USB-C-Kabel (gemessen 19.10.:
+  bei jedem Neustart). Der neue Schreibtisch hatte keinen Namen mehr, man musste neu benennen.
+  Jetzt merkt sich Seam auch, an welcher Stelle (Bildschirm + Position) ein Name stand, und gibt
+  ihn einem neu angelegten Schreibtisch an dieser Stelle zurück — nie doppelt. Schreibtische, die
+  macOS nur verschiebt, behalten ihren Namen wie bisher.
+
+### Intern
+
+- Tests hinterlassen keine Einstellungsdateien mehr in `~/Library/Preferences` (vorher eine je
+  Testlauf).
+
 ## [0.6.1] — 2026-10-16
 
 ### Behoben

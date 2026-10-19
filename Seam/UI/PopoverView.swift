@@ -15,6 +15,8 @@ struct PopoverView: View {
     @State private var hovered: Command?
     /// Beim Öffnen gelesen, nicht beobachtet (siehe `Engine.targetInfo`).
     @State private var targetName: String?
+    /// Beim Öffnen berechnet (E17): weicht die Anordnung vom Layout ab? nil = kein Layout.
+    @State private var deskDeviates: Bool?
 
     /// Gruppen in der Reihenfolge der Kürzeltabelle auf der Website.
     private static let groups: [(String, [Command])] = [
@@ -32,6 +34,7 @@ struct PopoverView: View {
             notices
             arrangeCard
             if engine.spaces.available { spacesCard }
+            if engine.spaces.available { layoutCard }
             footer
         }
         .padding(FamilyTheme.Space.l)
@@ -42,6 +45,7 @@ struct PopoverView: View {
             let info = engine.targetInfo()
             targetName = info.name
             if let o = info.orientation { orientation = o }
+            deskDeviates = engine.deskDeviates()
         }
     }
 
@@ -241,6 +245,55 @@ struct PopoverView: View {
         .help(space.isCurrent ? "Aktueller Space – klicken zum Benennen"
                               : "Wechseln mit ⌃← / ⌃→ oder Mission Control – klicken zum Benennen")
         .accessibilityLabel(space.isCurrent ? "\(title), aktueller Space" : title)
+    }
+
+    // MARK: - Layout (E17)
+
+    /// Layouts pro Schreibtisch: Stand, Speichern, Aufräumen. Schreibtische am falschen Platz
+    /// stehen als Hinweis mit Anleitung darüber (`→ ZU TUN`).
+    private var layoutCard: some View {
+        VStack(alignment: .leading, spacing: FamilyTheme.Space.s) {
+            HStack {
+                Text("Layout").font(FamilyTheme.font(.headline)).foregroundStyle(FamilyTheme.textPrimary)
+                Spacer()
+                Text(layoutStatus).font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
+            }
+            if !engine.deskIssues.isEmpty, let text = engine.deskMessage {
+                Label(text, systemImage: "exclamationmark.triangle")
+                    .font(FamilyTheme.font(.caption))
+                    .foregroundStyle(FamilyTheme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: FamilyTheme.Space.s) {
+                Button {
+                    engine.saveDeskLayout()
+                    deskDeviates = false
+                } label: { Label("Speichern", systemImage: "square.and.arrow.down") }
+                    .buttonStyle(.familyGlass(.capsule, size: 26))
+                    .help("Jetzige Anordnung als Layout speichern: welche App auf welchem Schreibtisch, in welcher Größe")
+                Button {
+                    dismiss()
+                    engine.tidyUp(automatic: false)
+                } label: { Label("Aufräumen", systemImage: "rectangle.3.group") }
+                    .buttonStyle(.familyGlass(.capsule, size: 26))
+                    .disabled(deskDeviates == nil || engine.deskRunning)
+                    .help("Alle Fenster auf ihren Schreibtisch und in ihre Größe (\(DeskMessages.shortcut))")
+                Spacer()
+                Text(DeskMessages.shortcut).font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(FamilyTheme.Space.m)
+        .familyCard(radius: FamilyTheme.Radius.tile)
+    }
+
+    private var layoutStatus: String {
+        if engine.deskRunning { return "räumt auf …" }
+        switch deskDeviates {
+        case nil: return "noch nicht gespeichert"
+        case true?: return "weicht ab"
+        case false?: return "alles am Platz"
+        }
     }
 
     // MARK: - Fuß

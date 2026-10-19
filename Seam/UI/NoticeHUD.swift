@@ -9,12 +9,12 @@ final class NoticeHUD {
     private var panel: NSPanel?
     private var label: NSTextField?
     private var hideTask: Task<Void, Never>?
-    private static let duration: Duration = .seconds(5)
+    static let duration: Duration = .seconds(5)
     private static let maxTextWidth: CGFloat = 340
     private static let padding = NSSize(width: 16, height: 12)
 
     /// `anchor` in Bedienungshilfen-Koordinaten, Schild mittig darauf, im sichtbaren Bereich gehalten.
-    func show(_ text: String, at anchor: CGPoint, within visible: CGRect) {
+    func show(_ text: String, at anchor: CGPoint, within visible: CGRect, for duration: Duration = NoticeHUD.duration) {
         let p = panel ?? makePanel()
         panel = p
         guard let label else { return }
@@ -29,10 +29,16 @@ final class NoticeHUD {
         p.orderFrontRegardless()
         hideTask?.cancel()
         hideTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.duration)
+            try? await Task.sleep(for: duration)
             guard !Task.isCancelled else { return }
             self?.fadeOut()
         }
+    }
+
+    /// Sofort ausblenden (z. B. „räumt auf …“, sobald das Ergebnis da ist).
+    func hide() {
+        hideTask?.cancel()
+        fadeOut()
     }
 
     private func fadeOut() {

@@ -9,6 +9,10 @@ import SwiftUI
 @MainActor
 enum PreviewRenderer {
 
+    /// Vorschau angefordert? Dann startet Seam keine Beobachter und fragt keine Freigabe an
+    /// (sonst ginge beim Rendern der Systemdialog „Bedienungshilfen“ für die Debug-Version auf).
+    static var isRequested: Bool { CommandLine.arguments.contains("-renderPreview") }
+
     static func runIfRequested(engine: Engine) {
         let args = CommandLine.arguments
         guard let i = args.firstIndex(of: "-renderPreview"), i + 1 < args.count else { return }
@@ -30,6 +34,21 @@ enum PreviewRenderer {
                         .environment(engine).environment(engine.prefs),
                        to: dir.appendingPathComponent("abdunkeln-voll-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
+                // Layout-Fenster gefüllt zeigen, ohne in Michaels Einstellungen zu speichern:
+                // Beispiel aus der jetzigen Anordnung in der Test-Suite (wird von den Tests geleert).
+                // Nie auf .standard zurückfallen: das wären Michaels echte Einstellungen (code-audit 19.10.).
+                guard let suite = UserDefaults(suiteName: "dev.mwlr.seam.tests") else { continue }
+                let sample = Preferences(defaults: suite)
+                sample.spaceNames = engine.prefs.spaceNames
+                let screens = DeskLayouts.liveScreens()
+                sample.saveDeskLayout(DeskLayouts.capture(windows: DeskLayouts.liveWindows(), spaces: SpaceReader.read() ?? [],
+                                                          names: engine.prefs.spaceNames, screens: screens,
+                                                          ownBundleID: Bundle.main.bundleIdentifier),
+                                      for: screens.combinationKey)
+                render(DeskLayoutWindow().environment(engine).environment(sample),
+                       to: dir.appendingPathComponent("layout-\(name).png"), appearance: appearance,
+                       background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
+                UserDefaults().removePersistentDomain(forName: "dev.mwlr.seam.tests")
                 LinkRouter.shared.refresh()
                 render(LinkRulesWindow(router: LinkRouter.shared),
                        to: dir.appendingPathComponent("linkregeln-\(name).png"), appearance: appearance,

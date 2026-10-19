@@ -76,7 +76,7 @@ final class PairBookTests: XCTestCase {
 
     @MainActor
     func testKeepPairsDefaultsOn() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         XCTAssertTrue(Preferences(defaults: d).keepPairs)
     }
 }

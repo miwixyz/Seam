@@ -67,7 +67,7 @@ final class SpaceReaderTests: XCTestCase {
 
     @MainActor
     func testStoredNamesAreCleanedOnLoad() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         d.set(["A": "  Privat ", "B": "   ", "C": String(repeating: "y", count: 99)], forKey: "spaceNames")
         let p = Preferences(defaults: d)
         XCTAssertEqual(p.spaceNames["A"], "Privat")
@@ -97,7 +97,7 @@ final class MenuBarIconTests: XCTestCase {
     }
     @MainActor
     func testDefaultOff() {
-        let d = UserDefaults(suiteName: "seam.test.\(UUID().uuidString)")!
+        let d = freshDefaults()
         XCTAssertFalse(Preferences(defaults: d).hideIconWithSpaceName)
     }
 }

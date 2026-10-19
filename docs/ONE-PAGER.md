@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.7
+
+**Layouts pro Schreibtisch.** Seam merkt sich, welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind. Nach einem Neustart, wenn macOS wieder alles durcheinandergeworfen hat, räumt Seam von selbst auf, oder du drückst ⌃⌥⌘L. Hat macOS Schreibtische auf den falschen Bildschirm geschoben, sagt Seam dir genau, welche, und macht den Rest, sobald du sie in Mission Control zurückgezogen hast. Seam bewegt dafür sichtbar die Maus und bricht ab, sobald du eingreifst.
+
+---
+
 ## Neu in 0.6
 
 **Abdunkeln je Bildschirm.** Jeder Bildschirm bekommt seine eigene Einstellung: ganz abdunkeln, das oberste Fenster hell lassen oder gar nicht abdunkeln, dazu eine eigene Stärke. Einzelne Apps und Spaces kannst du ganz ausnehmen. Die Fenster dieser Apps bleiben hell, auch wenn sie hinten liegen. Und wer mag, lässt alle Fenster der aktiven App hell statt nur das oberste. Du findest das alles im neuen Fenster „Abdunkeln“.
@@ -95,8 +101,8 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 ## Deine Daten bleiben auf deinem Mac
 
 - Seam braucht die Bedienungshilfen-Freigabe von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
-- Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv.
-- Gespeichert werden nur deine Einstellungen. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
+- Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→, nur dafür und mit Abbruch, sobald du eingreifst.
+- Gespeichert werden nur deine Einstellungen und, wenn du eins speicherst, dein Layout: welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, ohne Fenstertitel und ohne Zeiten. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
 - Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.
 - Den einzigen Netzwerkzugriff, die Suche nach Updates bei GitHub, erlaubst du beim ersten Mal selbst. Jedes Update ist signiert.
 

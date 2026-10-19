@@ -19,6 +19,8 @@ enum AXAttribute: String, CaseIterable {
     case windows = "AXWindows"
     case focusedApplication = "AXFocusedApplication"
     case focusedWindow = "AXFocusedWindow"
+    /// E17a: Fenster, zu dem ein Element unter dem Griffpunkt gehört (nur dort gelesen).
+    case window = "AXWindow"
 }
 
 /// **Positivliste der Aktionen (docs/SECURE-DESIGN.md E12):** die einzige Aktion, die Seam
@@ -134,6 +136,24 @@ enum AXAccess {
 
     static func elements(_ e: AXUIElement, _ a: AXAttribute) -> [AXUIElement] {
         (copy(e, a) as? [AXUIElement]) ?? []
+    }
+
+    /// E17a: oberstes Bedienelement an einem Bildschirmpunkt (Bedienungshilfen-Koordinaten).
+    /// Nur für die Prüfung des Griffpunkts; liest selbst keine Attribute.
+    static func element(at p: CGPoint) -> AXUIElement? {
+        let system = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(system, AXWindow.timeout)
+        var hit: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(system, Float(p.x), Float(p.y), &hit) == .success else { return nil }
+        return hit
+    }
+
+    /// E17a: Namen der Aktionen eines Elements — nur um zu erkennen, ob es etwas auslöst
+    /// (Knopf, Link). Keine Inhalte.
+    static func actionNames(_ e: AXUIElement) -> [String] {
+        var names: CFArray?
+        guard AXUIElementCopyActionNames(e, &names) == .success else { return [] }
+        return (names as? [String]) ?? []
     }
 
     /// Zeitlimit für ALLE Bedienungshilfen-Aufrufe dieses Prozesses, einmal beim Start.
