@@ -311,8 +311,15 @@ SPARKLE_BIN="build/SourcePackages/artifacts/sparkle/Sparkle/bin"
 
 # Nur das aktuelle Archiv liegt in dist/; der Appcast enthält damit einen
 # Eintrag. Sparkle braucht nur den neuesten.
+# Versionshinweise fürs Update-Fenster: Abschnitt aus CHANGELOG.md als HTML neben dem Archiv,
+# Sparkle zeigt ihn mit --embed-release-notes an (wie TippAI, Michael 29.10.).
+for archive in "${DIST}"/*.zip; do
+    python3 -I scripts/release-notes.py "${VERSION}" CHANGELOG.md "${archive%.zip}.html" \
+        || fail "Versionshinweise für ${VERSION} nicht erzeugt (CHANGELOG-Abschnitt fehlt?)"
+done
 "${SPARKLE_BIN}/generate_appcast" "${DIST}" \
     --download-url-prefix "https://github.com/miwixyz/Seam/releases/download/${TAG}/" \
+    --embed-release-notes \
     --link "https://github.com/miwixyz/Seam" \
     -o appcast.xml \
     || fail "generate_appcast fehlgeschlagen"
