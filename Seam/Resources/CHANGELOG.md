@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an Seam.
 
-## [Unveröffentlicht]
+## [0.8.0] — 2026-11-06
 
 ### Neu
 
@@ -12,6 +12,14 @@ Alle nennenswerten Änderungen an Seam.
   Beim Aufwachen meldet sich ein Bildschirm kurz ab, macOS schiebt solche Fenster auf einen anderen
   und verkleinert sie. Zurückgeholt wird nur per Rahmen, ohne Maus und Tastatur. Danach einmal neu
   speichern, damit das Fenster ins Layout kommt.
+- **Das Update-Fenster zeigt, was neu ist.** Findet Seam ein Update, steht im Fenster direkt der
+  passende Abschnitt aus dieser Liste.
+
+### Geändert
+
+- **„Kontrast erhöhen“ wird beachtet.** Ist in den Systemeinstellungen → Bedienungshilfen → Anzeige
+  „Kontrast erhöhen“ an, nutzt Seam kräftigere Farben für Akzente, Text und Kartenränder.
+  Ohne den Schalter bleibt alles wie bisher.
 
 ### Behoben
 
@@ -26,6 +34,10 @@ Alle nennenswerten Änderungen an Seam.
 - **Mit drei Bildschirmen parkte Seam Fenster zufällig auf dem kleinsten.** Beim Wechsel auf demselben
   Bildschirm parkt Seam ein Fenster kurz auf einem anderen — jetzt immer auf dem größten, auf den es
   ohne Verkleinern passt.
+
+Geprüft mit drei Bildschirmen (Ultrawide, Hochkant, kleiner Zusatzbildschirm): Fenster zwischen
+Schreibtischen und Bildschirmen 6 von 6 am Ziel, Finder-Fenster nach dem Verschieben 3 von 3 zurück.
+Der automatische Lauf nach dem Aufwachen ist mit dieser Version noch nicht über Nacht beobachtet.
 
 ## [0.7.0] — 2026-10-19
 

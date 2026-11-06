@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.8
+
+**Aufräumen, das auch mit drei Bildschirmen sitzt.** Unter macOS 27.2 brach Seam das Aufräumen manchmal mittendrin ab, und Fenster blieben auf dem falschen Schreibtisch liegen. Das ist behoben. Neu dazu: Fenster, die auf allen Schreibtischen eines Bildschirms liegen, gehören jetzt zum Layout, zum Beispiel ein Finder-Fenster auf einem kleinen Zusatzbildschirm. Schiebt macOS so ein Fenster beim Aufwachen weg, setzt Seam es zurück. Maus und Tastatur braucht es dafür nicht.
+
+---
+
 ## Neu in 0.7
 
 **Layouts pro Schreibtisch.** Seam merkt sich, welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind. Nach einem Neustart, wenn macOS wieder alles durcheinandergeworfen hat, räumt Seam von selbst auf, oder du drückst ⌃⌥⌘L. Hat macOS Schreibtische auf den falschen Bildschirm geschoben, sagt Seam dir genau, welche, und macht den Rest, sobald du sie in Mission Control zurückgezogen hast. Seam bewegt dafür sichtbar die Maus und bricht ab, sobald du eingreifst.

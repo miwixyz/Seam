@@ -30,7 +30,9 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   speichern und wiederherstellen per Knopf, ⌃⌥⌘L oder automatisch nach Anmeldung und
   Bildschirmwechsel. Liegen Schreibtische nach einem Neustart auf dem falschen Bildschirm, nennt
   Seam sie und räumt nach dem Zurückziehen in Mission Control selbst auf. Seam bewegt dafür
-  sichtbar Maus und Tastatur und bricht ab, sobald du eingreifst.
+  sichtbar Maus und Tastatur und bricht ab, sobald du eingreifst. Seit 0.8 gehören auch Fenster
+  auf allen Schreibtischen eines Bildschirms dazu (z. B. ein Finder-Fenster); die holt Seam ohne
+  Maus und Tastatur zurück. Geprüft mit bis zu drei Bildschirmen.
 - **Hintergrund abdunkeln** (ab Werk aus): alle Fenster außer dem aktiven, bei einem Paar bleiben
   beide hell. Je Bildschirm wählbar: ganz dunkel, oberstes Fenster hell oder nicht abdunkeln,
   Stärke 20/35/50 %. Dazu Apps, die nie abgedunkelt werden, Spaces ohne Abdunkeln und wahlweise
