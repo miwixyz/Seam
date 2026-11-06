@@ -531,9 +531,15 @@ unter dem Zeiger und auf den WindowServer — nicht nur auf das Zielfenster.
 - **Höchstens ein automatischer Lauf je 2 Minuten** — ein flatternder Bildschirm (ASUS) darf Maus
   und Tastatur nicht in Dauerschleife übernehmen.
 - **Abbruch sofort,** wenn der Nutzer eingreift: Zeigerposition ≠ dort, wo Seam ihn hingesetzt hat
-  (abgefragt, kein Beobachter), oder `CGEventSource.secondsSinceLastEventType(.combinedSessionState,
-  .keyDown)` jünger als Seams eigene letzte Taste (nur Zeitpunkt, kein Tasteninhalt — E1 bleibt,
-  **kein** Tasten-Monitor; gemessen 19.10.: ohne Eingabeüberwachung lesbar). Frist 60 s für den
+  (abgefragt, kein Beobachter), oder der Tastenzähler `CGEventSource.counterForEventType(
+  .combinedSessionState, .keyDown)` stieg seit Beginn des Durchgangs um mehr als Seams eigene
+  Tastendrücke (nur eine Anzahl, kein Tasteninhalt — E1 bleibt, **kein** Tasten-Monitor; gemessen
+  06.11.: ohne Eingabeüberwachung lesbar, +1 je eigenem ⌃→). **Geändert 06.11.:** vorher
+  `secondsSinceLastEventType` — lag unter macOS 27.2 um bis zu 0,4 s daneben und hielt Seams eigene
+  Taste für einen Eingriff (Prüfstand: 7 von 7 Läufen abgebrochen, Fenster auf falschen Spaces).
+  Sondertasten allein (⇧ ⌘ ⌥ ⌃) erkennt das nicht, wie vorher; der `flagsChanged`-Zähler taugt
+  dafür nicht (macOS fügt zu Seams ⌃→ selbst bis zu 3 hinzu). Nach jedem ⌃←/⌃→ wartet Seam, bis
+  der Space wirklich gewechselt hat (höchstens 2,5 s), statt fest 0,9 s. Frist 60 s für den
   ganzen Lauf, geprüft vor jedem Griffpunkt-Kandidaten und jedem Tastendruck (code-audit 19.10.:
   vorher nur zwischen Fenstern); das Zurückschalten der Ansicht bekommt 20 s Nachlauf, damit der
   Nutzer nicht auf einem fremden Schreibtisch stehen bleibt. (Die frühere Angabe „3 s je Fenster“

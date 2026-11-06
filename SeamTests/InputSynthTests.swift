@@ -69,13 +69,35 @@ final class InputSynthTests: XCTestCase {
         XCTAssertTrue(InputSynth.mouseIntervened(current: CGPoint(x: 140, y: 100), expected: CGPoint(x: 100, y: 100)))
     }
 
-    func testKeyPressedAfterSeamsOwnKey() {
-        // Seams eigene Taste vor 0,5 s; letzte Taste im System auch vor 0,5 s → niemand sonst.
-        XCTAssertFalse(InputSynth.keyIntervened(idle: 0.5, ownAge: 0.5))
-        // Letzte Taste vor 0,1 s, Seams eigene vor 0,5 s → der Nutzer.
-        XCTAssertTrue(InputSynth.keyIntervened(idle: 0.1, ownAge: 0.5))
-        // Letzte Taste lange vor dem Lauf.
-        XCTAssertFalse(InputSynth.keyIntervened(idle: 300, ownAge: 2))
+    func testKeyPressedCountsAgainstOwnKeys() {
+        // Nur Seams eigene Tasten im Zähler → niemand sonst. Prüfstand 06.11.: Zähler +1, eigene 1,
+        // die alte Zeitprüfung meldete trotzdem „Nutzer“ (idle 0,80 s gegen 0,90 s eigene).
+        XCTAssertFalse(InputSynth.keyIntervened(counterDelta: 0, ownKeys: 0))
+        XCTAssertFalse(InputSynth.keyIntervened(counterDelta: 3, ownKeys: 3))
+        // Eine Taste mehr, als Seam selbst gedrückt hat → der Nutzer.
+        XCTAssertTrue(InputSynth.keyIntervened(counterDelta: 1, ownKeys: 0))
+        XCTAssertTrue(InputSynth.keyIntervened(counterDelta: 4, ownKeys: 3))
+    }
+
+    func testWaitsUntilTheSpaceReallyChanged() {
+        // Der Wechsel kommt erst beim dritten Blick (wie macOS 27.2 nach 1–1,4 s) → gewartet, nicht abgebrochen.
+        var reads = 0
+        let changed = InputSynth.waitForChange(from: 1, read: { reads += 1; return reads >= 3 ? 2 : 1 },
+                                               timeout: 1, poll: 1_000)
+        XCTAssertTrue(changed)
+        XCTAssertEqual(reads, 3)
+    }
+
+    func testWaitGivesUpAfterTheTimeout() {
+        let t0 = Date()
+        XCTAssertFalse(InputSynth.waitForChange(from: 1, read: { 1 }, timeout: 0.05, poll: 1_000))
+        XCTAssertLessThan(Date().timeIntervalSince(t0), 1)
+    }
+
+    func testKeyCounterSurvivesWrapAround() {
+        // Der Zähler von macOS ist 32 Bit; ein Überlauf mitten im Lauf darf keinen Eingriff vortäuschen.
+        XCTAssertEqual(InputSynth.counterDelta(from: UInt32.max, to: 1), 2)
+        XCTAssertFalse(InputSynth.keyIntervened(counterDelta: InputSynth.counterDelta(from: UInt32.max, to: 1), ownKeys: 2))
     }
 
     // MARK: code-audit 19.10.: Kurzbefehl muss auf ⌃← / ⌃→ liegen

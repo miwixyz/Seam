@@ -2,6 +2,22 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Behoben
+
+- **Aufräumen brach mitten drin ab und ließ Fenster auf falschen Schreibtischen liegen.** Seam hielt
+  seinen eigenen Tastendruck ⌃→ für deine Eingabe — unter macOS 27.2 liefert die Zeitabfrage, auf
+  die es sich verließ, um bis zu 0,4 s verschobene Werte. Jetzt zählt Seam Tastendrücke statt Zeiten:
+  Mehr Tastendrücke als die eigenen heißt, du hast getippt. Sondertasten allein (⇧ ⌘ ⌥ ⌃) brechen
+  wie bisher nicht ab, Mausbewegung und jede andere Taste schon.
+- **Fenster landeten einen Schreibtisch zu früh.** Ein Schreibtischwechsel dauert unter macOS 27.2
+  länger als die 0,9 s, die Seam nach jedem ⌃←/⌃→ wartete; ein Druck ging verloren. Seam wartet jetzt,
+  bis der Wechsel wirklich passiert ist.
+- **Mit drei Bildschirmen parkte Seam Fenster zufällig auf dem kleinsten.** Beim Wechsel auf demselben
+  Bildschirm parkt Seam ein Fenster kurz auf einem anderen — jetzt immer auf dem größten, auf den es
+  ohne Verkleinern passt.
+
 ## [0.7.0] — 2026-10-19
 
 ### Neu

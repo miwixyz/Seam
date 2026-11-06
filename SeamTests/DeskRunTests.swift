@@ -57,6 +57,36 @@ final class DeskRunTests: XCTestCase {
         XCTAssertNil(DeskRun.uniqueMatch([CGRect(x: 0, y: 0, width: 10, height: 10)], for: target))
     }
 
+    // MARK: Parkplatz bei drei Bildschirmen (Prüfstand 06.11.)
+
+    /// Bildschirme wie bei Michael (Bedienungshilfen-Koordinaten): Ultrawide, ASUS hochkant, kleiner Z1-2.
+    private let threeScreens: [String: CGRect] = [
+        "MAIN": CGRect(x: 0, y: 0, width: 3440, height: 1440),
+        "ASUS": CGRect(x: 3440, y: 595, width: 1080, height: 1920),
+        "Z12": CGRect(x: 1136, y: 1440, width: 1344, height: 504),
+    ]
+
+    func testParkNeverPicksTheSmallScreenWhenTheWindowDoesNotFit() {
+        // 900×700 passt auf den ASUS, nicht auf den 504 pt hohen Z1-2 — immer der ASUS, nicht zufällig.
+        for _ in 0..<20 {
+            XCTAssertEqual(DeskRun.parkScreen(for: CGSize(width: 900, height: 700), excluding: "MAIN", in: threeScreens),
+                           threeScreens["ASUS"])
+        }
+    }
+
+    func testParkPicksTheLargestFittingScreen() {
+        // Fenster auf dem ASUS: der Hauptbildschirm ist größer als der Z1-2 und passt.
+        XCTAssertEqual(DeskRun.parkScreen(for: CGSize(width: 1000, height: 400), excluding: "ASUS", in: threeScreens),
+                       threeScreens["MAIN"])
+    }
+
+    func testParkFallsBackToTheLargestWhenNothingFits() {
+        // 2000×2000 passt nirgends → größter anderer Bildschirm, damit Seam nicht ganz verzichten muss.
+        XCTAssertEqual(DeskRun.parkScreen(for: CGSize(width: 2000, height: 2000), excluding: "MAIN", in: threeScreens),
+                       threeScreens["ASUS"])
+        XCTAssertNil(DeskRun.parkScreen(for: CGSize(width: 10, height: 10), excluding: "MAIN", in: ["MAIN": threeScreens["MAIN"]!]))
+    }
+
     func testUnreadableSpacesAreReportedNotTreatedAsMissing() {
         XCTAssertEqual(DeskRun.blocker(.init(spacesReadable: false), automatic: false, lastAutomatic: nil, now: now), .spacesUnavailable)
     }

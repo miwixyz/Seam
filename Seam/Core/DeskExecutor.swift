@@ -57,6 +57,17 @@ enum DeskRun {
         return target.number - current.number
     }
 
+    /// Wohin ein Fenster kurz geparkt wird (`carryBounce`): ein anderer Bildschirm, auf den es ohne
+    /// Verkleinern passt, davon der größte; passt es nirgends, der größte andere. Fest statt zufällig —
+    /// Prüfstand 06.11.: mit drei Bildschirmen wählte Seam je Lauf mal den ASUS, mal den 504 pt
+    /// hohen Z1-2 (Reihenfolge eines Dictionary), dort schrumpfte das Fenster.
+    static func parkScreen(for size: CGSize, excluding display: String, in frames: [String: CGRect]) -> CGRect? {
+        let others = frames.filter { $0.key != display }.sorted { $0.key < $1.key }
+        let fitting = others.filter { $0.value.width >= size.width && $0.value.height >= size.height }
+        let pool = fitting.isEmpty ? others : fitting
+        return pool.max { $0.value.width * $0.value.height < $1.value.width * $1.value.height }?.value
+    }
+
     /// Welches Bedienungshilfen-Fenster gehört zu diesem Rahmen? Nur bei genau einem Treffer
     /// (±2 pt) — keine private Schnittstelle, im Zweifel auslassen (E17a).
     static func uniqueMatch(_ frames: [CGRect?], for target: CGRect) -> Int? {
@@ -188,12 +199,12 @@ enum DeskExecutor {
     /// das Fenster zurück ist, kommt es an seinen alten Platz zurück.
     private static func carryBounce(_ ax: AXWindow, live: LiveWindow, move: DeskMove, screens: DeskScreens,
                                     deadline: Date) -> Step? {
+        let size = move.frame?.size ?? live.frame.size
         guard let screen = screens.frame(of: move.target.display),
-              let other = screens.frames.first(where: { $0.key != move.target.display })?.value,
+              let other = DeskRun.parkScreen(for: size, excluding: move.target.display, in: screens.frames),
               let current = space(of: live.windowID), let steps = DeskRun.steps(from: current, to: move.target)
         else { return .skip(.notReachable) }
         let before = visibleSpace(on: move.target.display)
-        let size = move.frame?.size ?? live.frame.size
         ax.setFrame(Geometry.clamp(CGRect(origin: CGPoint(x: other.minX + 40, y: other.minY + 40), size: size), to: other))
         usleep(300_000)
         let viewTo = InputSynth.switchView(on: screen, by: steps, deadline: deadline)

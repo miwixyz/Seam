@@ -89,11 +89,23 @@ enum InputSynth {
         hypot(current.x - expected.x, current.y - expected.y) > 4
     }
 
-    /// Hat der Nutzer eine Taste gedrückt? `idle` = Sekunden seit der letzten Taste im System,
-    /// `ownAge` = Sekunden seit Seams eigener letzter Taste (bzw. seit Beginn des Laufs).
-    /// Kam danach noch eine, war es der Nutzer. Liest keine Tasteninhalte (E1).
-    static func keyIntervened(idle: Double, ownAge: Double) -> Bool {
-        idle + 0.05 < ownAge
+    /// Hat der Nutzer eine Taste gedrückt? `counterDelta` = Tastendrücke im System seit Beginn des
+    /// Durchgangs (Zähler von macOS), `ownKeys` = davon von Seam selbst gesendet. Mehr = der Nutzer.
+    /// Liest keine Tasteninhalte (E1), nur eine Anzahl. Sondertasten allein (shift, ⌘, ⌥, ⌃) erkennt
+    /// das nicht — wie bisher. Bewusst nicht über den `flagsChanged`-Zähler: macOS fügt zu Seams ⌃→
+    /// je nach Ausgangslage selbst bis zu 3 solche Ereignisse hinzu (Prüfstand 06.11.: +6 bei 3 eigenen).
+    /// Prüfstand 06.11. (macOS 27.2): Die frühere Zeitprüfung über `secondsSinceLastEventType` lag
+    /// um bis zu 0,4 s daneben und hielt Seams eigenes ⌃→ für einen Eingriff — 7 von 7 Läufen
+    /// brachen ab, Fenster blieben auf falschen Spaces. Der Zähler stieg genau um die eigene Taste.
+    static func keyIntervened(counterDelta: UInt32, ownKeys: Int) -> Bool {
+        Int(counterDelta) > ownKeys
+    }
+
+    /// Differenz zweier Zählerstände, auch über den 32-Bit-Überlauf hinweg.
+    static func counterDelta(from start: UInt32, to now: UInt32) -> UInt32 { now &- start }
+
+    static func keyDownCount() -> UInt32 {
+        CGEventSource.counterForEventType(.combinedSessionState, eventType: .keyDown)
     }
 
     // MARK: Vorbedingung
@@ -193,15 +205,40 @@ enum InputSynth {
         return .success(p)
     }
 
+    /// Längste Wartezeit auf einen Space-Wechsel nach einem Druck, danach Nachlauf der Animation.
+    static let switchTimeout: TimeInterval = 2.5
+    static let switchSettle: useconds_t = 250_000
+
     /// ⌃←/⌃→ `steps`-mal, vor jedem Druck Frist und Eingriff prüfen. `.moved` = alle gedrückt.
+    /// Nach jedem Druck warten, bis macOS den Space wirklich gewechselt hat, statt fest 0,9 s:
+    /// Prüfstand 06.11. (macOS 27.2) — ein Wechsel dauerte 1,0–1,4 s, ein Druck während der
+    /// Animation ging verloren, das Fenster landete einen Space zu früh (Platz 5 statt 6).
     private static func press(_ steps: Int, session: Session, deadline: Date) -> Outcome {
         for _ in 0..<abs(steps) {
             if Date() > deadline { return .timeUp }
             if session.userIntervened() { return .interrupted }
+            let before = visibleSpaceIDs()
             session.emit(.arrowWithControl, key: steps > 0 ? arrowRight : arrowLeft)
-            usleep(900_000)                          // Wechselanimation
+            _ = waitForChange(from: before, read: visibleSpaceIDs, timeout: switchTimeout)
+            usleep(switchSettle)                     // Animation ausklingen lassen
         }
         return session.userIntervened() ? .interrupted : .moved
+    }
+
+    /// Die gerade sichtbaren Spaces aller Bildschirme.
+    private static func visibleSpaceIDs() -> Set<Int> {
+        Set((SpaceReader.read() ?? []).filter(\.isCurrent).map(\.managedID))
+    }
+
+    /// Wartet, bis `read()` etwas anderes liefert als `before`. `true` = geändert, `false` = Frist um.
+    static func waitForChange<T: Equatable>(from before: T, read: () -> T, timeout: TimeInterval,
+                                            poll: useconds_t = 50_000) -> Bool {
+        let until = Date().addingTimeInterval(timeout)
+        repeat {
+            usleep(poll)
+            if read() != before { return true }
+        } while Date() < until
+        return false
     }
 
     /// Ansicht eines Bildschirms um `steps` Spaces umschalten, ohne etwas zu greifen — damit nach
@@ -239,7 +276,9 @@ enum InputSynth {
         private let source = CGEventSource(stateID: .hidSystemState)
         private let startCursor: CGPoint
         private var lastPoint: CGPoint?
-        private var lastOwnKey = Date()
+        /// Tastenzähler von macOS beim Start des Durchgangs und Zahl der eigenen Tastendrücke seither.
+        private let keyCountAtStart = InputSynth.keyDownCount()
+        private var ownKeys = 0
         private var buttonDown = false
 
         init() {
@@ -264,6 +303,7 @@ enum InputSynth {
                 if kind == .leftMouseUp { buttonDown = false }
             case .arrowWithControl:
                 guard let key, key == InputSynth.arrowLeft || key == InputSynth.arrowRight else { return }
+                ownKeys += 1                         // vor dem Senden: der Zähler darf nie vorauslaufen
                 for down in [true, false] {
                     let e = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: down)
                     e?.flags = [.maskControl, .maskSecondaryFn, .maskNumericPad]
@@ -271,7 +311,6 @@ enum InputSynth {
                     usleep(30_000)
                 }
                 releaseModifiers()
-                lastOwnKey = Date()
             case .releaseModifier:
                 guard let key, InputSynth.releasedKeys.contains(key) else { return }
                 let e = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: false)
@@ -296,8 +335,8 @@ enum InputSynth {
         func userIntervened() -> Bool {
             if let expected = lastPoint, let now = CGEvent(source: nil)?.location,
                InputSynth.mouseIntervened(current: now, expected: expected) { return true }
-            let idle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .keyDown)
-            return InputSynth.keyIntervened(idle: idle, ownAge: Date().timeIntervalSince(lastOwnKey))
+            let delta = InputSynth.counterDelta(from: keyCountAtStart, to: InputSynth.keyDownCount())
+            return InputSynth.keyIntervened(counterDelta: delta, ownKeys: ownKeys)
         }
 
         /// Pflicht 1: Maustaste los, Sondertasten los, Zeiger zurück (nicht, wenn der Nutzer ihn bewegt hat).
