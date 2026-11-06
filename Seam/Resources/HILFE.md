@@ -50,8 +50,11 @@ stellt das wieder her. Gedacht für den Fall, dass macOS nach einem Neustart all
 
 **Speichern:** Ordne deine Fenster an, wie du sie haben willst, dann im Seam-Fenster unter
 „Layout“ auf **Speichern**. Je Bildschirm-Kombination gibt es ein Layout (MacBook allein und
-MacBook mit zweitem Bildschirm also getrennt). Apps auf allen Schreibtischen (z. B. Finder),
-minimierte Fenster, Vollbild-Apps und reine Menüleisten-Apps zählen nicht dazu.
+MacBook mit zweitem Bildschirm also getrennt). Fenster, die auf allen Schreibtischen eines
+Bildschirms liegen (Dock → Optionen → „Alle Schreibtische“, z. B. ein Finder-Fenster), merkt sich Seam
+mit ihrem Bildschirm und ihrer Größe und holt sie zurück, wenn macOS sie verschoben hat — das
+passiert etwa, wenn sich ein Bildschirm beim Aufwachen kurz abmeldet. Minimierte Fenster,
+Vollbild-Apps und reine Menüleisten-Apps zählen nicht dazu.
 
 **Aufräumen:** im Seam-Fenster auf **Aufräumen** oder mit **⌃⌥⌘L**. Ab Werk räumt Seam auch selbst
 auf: nach der Anmeldung bzw. dem Start von Seam (auch nach einem Update) und wenn ein Bildschirm dazukommt, sobald die Bildschirme 10 Sekunden ruhig
@@ -71,7 +74,9 @@ Beispiel: „„Mail“ und „Notizen“ liegen nicht auf DELL U2723QE.“ Öff
 ziehe sie oben auf die Leiste des richtigen Bildschirms, und Seam räumt danach selbst auf.
 
 **Ändern:** Neu anordnen und erneut speichern, oder Einstellungen → Layouts → „Layout bearbeiten …“:
-dort je App den Schreibtisch wählen oder die App herausnehmen. Seam lässt Apps, die nicht im Layout
+dort je App den Schreibtisch wählen oder die App herausnehmen. Fenster auf allen Schreibtischen
+stehen dort in einer eigenen Liste und lassen sich herausnehmen; ihren Bildschirm änderst du durch
+Anordnen und neu Speichern. Seam lässt Apps, die nicht im Layout
 stehen, in Ruhe. Weicht deine Anordnung vom Layout ab, steht im Seam-Fenster „weicht ab“. Speichere
 dann, wenn die neue Anordnung bleiben soll.
 

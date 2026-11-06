@@ -81,6 +81,59 @@ final class ResultBox: @unchecked Sendable {
     }
 }
 
+/// Finder-Fall (06.11.): Finder-Fenster auf allen Schreibtischen eines Bildschirms. Nimmt sie als
+/// Layout auf (nur `everywhere`), setzt sie per Bedienungshilfen wie macOS beim Aufwachen auf den
+/// Hauptbildschirm (1080×427 bei 0,958) und lässt Seams Planer + Ausführer sie zurückholen.
+@MainActor func ueberallProbe(_ screens: DeskScreens) -> Int32 {
+    let spaces = SpaceReader.read() ?? []
+    let byID = Dictionary(spaces.map { ($0.managedID, $0) }, uniquingKeysWith: { a, _ in a })
+    func finder() -> [LiveWindow] {
+        DeskLayouts.liveWindows().filter { $0.bundleID == "com.apple.finder" && DeskLayouts.everywhereDisplay(of: $0, byID: byID) != nil }
+    }
+    func show(_ label: String) {
+        let now = SpaceReader.read() ?? []
+        let ids = Dictionary(now.map { ($0.managedID, $0) }, uniquingKeysWith: { a, _ in a })
+        for w in DeskLayouts.liveWindows() where w.bundleID == "com.apple.finder" {
+            let d = DeskLayouts.everywhereDisplay(of: w, byID: ids).map(screenName) ?? "\(w.spaceIDs.count) Space(s)"
+            print("\(label): Finder auf allen Schreibtischen von \(d) @\(Int(w.frame.minX)),\(Int(w.frame.minY)) \(Int(w.frame.width))×\(Int(w.frame.height))")
+        }
+    }
+    let captured = DeskLayouts.capture(windows: DeskLayouts.liveWindows(), spaces: spaces, names: [:], screens: screens, ownBundleID: nil)
+    let layout = DeskLayout(entries: [], everywhere: captured.everywhere.filter { $0.bundleID == "com.apple.finder" })
+    guard let entry = layout.everywhere.first, let primary = screens.primary, entry.display != primary,
+          let main = screens.frames[primary] else {
+        print("✗ Kein Finder-Fenster auf allen Schreibtischen eines Nebenbildschirms"); return 2
+    }
+    print("Aufgenommen: \(layout.everywhere.map { "\(screenName($0.display)) \($0.frames.count) Fenster" })")
+    show("vorher")
+    // Wie macOS beim Aufwachen: auf den Hauptbildschirm und kleiner.
+    for w in finder() {
+        let app = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first
+        let axs = app.map { AXAccess.elements(AXUIElementCreateApplication($0.processIdentifier), .windows).map(AXWindow.init) } ?? []
+        if let i = DeskRun.uniqueMatch(axs.map(\.frame), for: w.frame) {
+            axs[i].setFrame(CGRect(x: main.minX, y: main.minY + 958, width: 1080, height: 427))
+        }
+    }
+    usleep(500_000)
+    show("verschoben")
+    let now = SpaceReader.read() ?? []
+    let windows = DeskLayouts.liveWindows()
+    let plan = DeskPlanner.plan(layout: layout, spaces: now, names: [:], windows: windows, screens: screens)
+    print("Plan: \(plan.moves.count) Züge (\(plan.moves.filter(\.changesSpace).count) mit Space-Wechsel), ausgelassen \(plan.skipped.map { "\($0.reason)" })")
+    let r = DeskExecutor.execute(plan, windows: windows, screens: screens)
+    print("Ergebnis: \(r.moved) verschoben, \(r.framed) Rahmen, ausgelassen \(r.skipped.map { "\($0.reason)" }), Abbruch \(r.aborted.map { "\($0)" } ?? "nein")")
+    usleep(500_000)
+    show("nachher")
+    let after = SpaceReader.read() ?? []
+    let ids = Dictionary(after.map { ($0.managedID, $0) }, uniquingKeysWith: { a, _ in a })
+    let target = entry.frames[0].rect.offsetBy(dx: screens.frames[entry.display]!.minX, dy: screens.frames[entry.display]!.minY)
+    let ok = DeskLayouts.liveWindows().contains {
+        $0.bundleID == "com.apple.finder" && DeskLayouts.everywhereDisplay(of: $0, byID: ids) == entry.display && DeskPlanner.fits($0.frame, target)
+    }
+    print(ok ? "✓ Finder wieder auf allen Schreibtischen von \(screenName(entry.display)), Rahmen sitzt" : "✗ Finder NICHT zurück")
+    return ok ? 0 : 1
+}
+
 @MainActor func main() -> Int32 {
     let args = CommandLine.arguments
     if !AXAccess.isTrusted {
@@ -95,6 +148,7 @@ final class ResultBox: @unchecked Sendable {
           + " | Haupt \(screens.primary.map(screenName) ?? "?")")
     if args.count >= 2, args[1] == "lage" { lage("Lage"); return 0 }
     if args.count >= 2, args[1] == "taste" { tasteProbe(screens); return 0 }
+    if args.count >= 2, args[1] == "ueberall" { return ueberallProbe(screens) }
     guard args.count >= 3, let number = Int(args[2]),
           let display = screens.frames.keys.first(where: { screenName($0) == args[1] }) else {
         print("Aufruf: Pruefstand lage | <Bildschirmname> <Platz> [Wiederholungen]"); return 2

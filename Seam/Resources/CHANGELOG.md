@@ -4,6 +4,15 @@ Alle nennenswerten Änderungen an Seam.
 
 ## [Unveröffentlicht]
 
+### Neu
+
+- **Fenster auf allen Schreibtischen gehören jetzt zum Layout.** Ein Fenster, das auf allen
+  Schreibtischen eines Bildschirms liegt (z. B. ein Finder-Fenster auf einem kleinen Zusatzbildschirm),
+  merkt sich Seam mit Bildschirm und Größe und holt es zurück, wenn macOS es verschoben hat. Anlass:
+  Beim Aufwachen meldet sich ein Bildschirm kurz ab, macOS schiebt solche Fenster auf einen anderen
+  und verkleinert sie. Zurückgeholt wird nur per Rahmen, ohne Maus und Tastatur. Danach einmal neu
+  speichern, damit das Fenster ins Layout kommt.
+
 ### Behoben
 
 - **Aufräumen brach mitten drin ab und ließ Fenster auf falschen Schreibtischen liegen.** Seam hielt

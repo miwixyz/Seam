@@ -16,17 +16,32 @@ struct DeskLayoutView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
-            if let layout = prefs.deskLayouts[combination], !layout.entries.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(layout.entries, id: \.bundleID) { entry in
-                        row(entry)
-                        if entry.bundleID != layout.entries.last?.bundleID {
-                            Rectangle().fill(FamilyTheme.cardStroke).frame(height: 0.8)
+            if let layout = prefs.deskLayouts[combination], !layout.isEmpty {
+                if !layout.entries.isEmpty {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(layout.entries, id: \.bundleID) { entry in
+                            row(entry)
+                            if entry.bundleID != layout.entries.last?.bundleID {
+                                Rectangle().fill(FamilyTheme.cardStroke).frame(height: 0.8)
+                            }
                         }
                     }
+                    .padding(.horizontal, FamilyTheme.Space.m)
+                    .familyCard(radius: FamilyTheme.Radius.tile)
                 }
-                .padding(.horizontal, FamilyTheme.Space.m)
-                .familyCard(radius: FamilyTheme.Radius.tile)
+                if !layout.everywhere.isEmpty {
+                    Text("Auf allen Schreibtischen").font(FamilyTheme.font(.callout).weight(.semibold))
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(layout.everywhere, id: \.id) { entry in
+                            everywhereRow(entry)
+                            if entry.id != layout.everywhere.last?.id {
+                                Rectangle().fill(FamilyTheme.cardStroke).frame(height: 0.8)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, FamilyTheme.Space.m)
+                    .familyCard(radius: FamilyTheme.Radius.tile)
+                }
                 Text("Größen änderst du, indem du die Fenster anordnest und im Seam-Menü „Speichern“ wählst.")
                     .font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
                 HStack {
@@ -49,10 +64,11 @@ struct DeskLayoutView: View {
             engine.spaces.refresh()
             combination = DeskLayouts.liveScreens().combinationKey
             desks = engine.spaces.spaces.filter { !$0.isFullScreen }
-            for entry in prefs.deskLayouts[combination]?.entries ?? [] {
-                names[entry.bundleID] = DeskLayouts.appName(entry.bundleID)
-                if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: entry.bundleID) {
-                    icons[entry.bundleID] = NSWorkspace.shared.icon(forFile: url.path)
+            let layout = prefs.deskLayouts[combination]
+            for id in (layout?.entries.map(\.bundleID) ?? []) + (layout?.everywhere.map(\.bundleID) ?? []) where names[id] == nil {
+                names[id] = DeskLayouts.appName(id)
+                if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+                    icons[id] = NSWorkspace.shared.icon(forFile: url.path)
                 }
             }
         }
@@ -82,6 +98,33 @@ struct DeskLayoutView: View {
                 .accessibilityLabel("\(appName(entry.bundleID)) aus dem Layout nehmen")
         }
         .frame(minHeight: 36)
+    }
+
+    /// Fenster auf allen Schreibtischen: nur anzeigen und herausnehmen. Ziel ändern = neu speichern.
+    private func everywhereRow(_ entry: DeskEverywhereEntry) -> some View {
+        HStack(spacing: FamilyTheme.Space.s) {
+            appIcon(entry.bundleID).frame(width: 20, height: 20)
+            Text(appName(entry.bundleID)).lineLimit(1)
+            Spacer(minLength: FamilyTheme.Space.m)
+            Text(screenTitle(entry.display)).foregroundStyle(FamilyTheme.textSecondary).lineLimit(1)
+            Button {
+                prefs.removeEverywhere(entry.bundleID, display: entry.display, in: combination)
+            } label: { Image(systemName: "minus.circle") }
+                .buttonStyle(.plain)
+                .foregroundStyle(FamilyTheme.textSecondary)
+                .help("Aus dem Layout nehmen – Seam lässt diese Fenster dann in Ruhe")
+                .accessibilityLabel("\(appName(entry.bundleID)) auf allen Schreibtischen aus dem Layout nehmen")
+        }
+        .frame(minHeight: 36)
+    }
+
+    /// Bildschirmname, wie macOS ihn zeigt; sonst „Bildschirm N“.
+    private func screenTitle(_ display: String) -> String {
+        if let screen = NSScreen.screens.first(where: { SpaceReader.displayIdentifier(of: $0) == display }) {
+            return screen.localizedName
+        }
+        let displays = desks.map(\.display).reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        return "Bildschirm \((displays.firstIndex(of: display) ?? displays.count) + 1)"
     }
 
     /// Alle jetzigen Schreibtische als Ziel, plus der gespeicherte, falls es ihn gerade nicht gibt.

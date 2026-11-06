@@ -27,9 +27,38 @@ struct DeskLayoutEntry: Codable, Equatable, Sendable {
     let frames: [DeskFrame]
 }
 
+/// Fenster einer App, die auf **allen** Schreibtischen eines Bildschirms liegen („Optionen → Alle
+/// Schreibtische“). 06.11.: Michaels Finder-Fenster auf dem kleinen Z1-2 — beim Aufwachen meldet sich
+/// der Hauptbildschirm kurz ab und macOS schiebt es dorthin; vorher kannte Seam solche Fenster nicht.
+struct DeskEverywhereEntry: Codable, Equatable, Sendable {
+    let bundleID: String
+    /// Bildschirm-Kennung, auf dessen Schreibtischen die Fenster liegen.
+    let display: String
+    /// Rahmen der Fenster, vorderstes zuerst.
+    let frames: [DeskFrame]
+
+    /// Kennung für Listen (eine Zeile je App und Bildschirm).
+    var id: String { bundleID + "\n" + display }
+}
+
 /// Das Layout einer Bildschirm-Kombination (Michael 19.10.: „Erst eins.“).
 struct DeskLayout: Codable, Equatable, Sendable {
     let entries: [DeskLayoutEntry]
+    /// Fenster auf allen Schreibtischen eines Bildschirms. Fehlt in Layouts bis 0.7.0 → leer.
+    let everywhere: [DeskEverywhereEntry]
+
+    init(entries: [DeskLayoutEntry], everywhere: [DeskEverywhereEntry] = []) {
+        self.entries = entries
+        self.everywhere = everywhere
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        entries = try c.decode([DeskLayoutEntry].self, forKey: .entries)
+        everywhere = try c.decodeIfPresent([DeskEverywhereEntry].self, forKey: .everywhere) ?? []
+    }
+
+    var isEmpty: Bool { entries.isEmpty && everywhere.isEmpty }
 }
 
 /// Bildschirme für die Aufnahme: Kennung → Rahmen (Bedienungshilfen-Koordinaten) und der
@@ -83,16 +112,28 @@ enum DeskLayouts {
 
     // MARK: Aufnehmen
 
+    /// Auf welchem Bildschirm liegt ein Fenster auf allen (mehreren) Schreibtischen? Nur wenn alle
+    /// seine Spaces bekannte, normale Spaces genau eines Bildschirms sind — sonst nil.
+    static func everywhereDisplay(of w: LiveWindow, byID: [Int: SpaceInfo]) -> String? {
+        guard w.spaceIDs.count > 1 else { return nil }
+        let spaces = w.spaceIDs.compactMap { byID[$0] }
+        guard spaces.count == w.spaceIDs.count, !spaces.contains(where: \.isFullScreen),
+              let display = spaces.first?.display, spaces.allSatisfy({ $0.display == display }) else { return nil }
+        return display
+    }
+
     /// Aus der aktuellen Lage ein Layout machen (rein, testbar).
-    /// - Ausgelassen: eigene App, Fenster auf keinem oder mehreren Spaces, Vollbild-Spaces,
-    ///   Spaces ohne bekannten Bildschirm. Eine App gehört auf einen Space (Michael 19.10.):
-    ///   maßgeblich ist ihr vorderstes Fenster, Fenster auf anderen Spaces zählen nicht.
+    /// - Ausgelassen: eigene App, Fenster auf keinem Space, Vollbild-Spaces, Spaces ohne bekannten
+    ///   Bildschirm. Eine App gehört auf einen Space (Michael 19.10.): maßgeblich ist ihr vorderstes
+    ///   Fenster, Fenster auf anderen Spaces zählen nicht.
+    /// - Fenster auf allen Schreibtischen eines Bildschirms kommen getrennt in `everywhere` (06.11.).
     static func capture(windows: [LiveWindow], spaces: [SpaceInfo], names: [String: String],
                         screens: DeskScreens, ownBundleID: String?) -> DeskLayout {
         let byID = Dictionary(spaces.map { ($0.managedID, $0) }, uniquingKeysWith: { a, _ in a })
         var order: [String] = []
         var desks: [String: DeskRef] = [:]
         var frames: [String: [DeskFrame]] = [:]
+        let everywhere = captureEverywhere(windows: windows, byID: byID, screens: screens, ownBundleID: ownBundleID)
         for w in windows where w.bundleID != ownBundleID && w.spaceIDs.count == 1 {
             guard let space = byID[w.spaceIDs[0]], !space.isFullScreen,
                   let screen = screens.frame(of: space.display) else { continue }
@@ -110,7 +151,23 @@ enum DeskLayouts {
         }
         return DeskLayout(entries: order.map {
             DeskLayoutEntry(bundleID: $0, desk: desks[$0]!, frames: frames[$0] ?? [])
-        })
+        }, everywhere: everywhere)
+    }
+
+    private static func captureEverywhere(windows: [LiveWindow], byID: [Int: SpaceInfo], screens: DeskScreens,
+                                          ownBundleID: String?) -> [DeskEverywhereEntry] {
+        var out: [DeskEverywhereEntry] = []
+        for w in windows where w.bundleID != ownBundleID {
+            guard let display = everywhereDisplay(of: w, byID: byID), let screen = screens.frame(of: display) else { continue }
+            let rel = DeskFrame(w.frame.offsetBy(dx: -screen.minX, dy: -screen.minY))
+            if let i = out.firstIndex(where: { $0.bundleID == w.bundleID && $0.display == display }) {
+                guard out[i].frames.count < maxFramesPerApp else { continue }
+                out[i] = DeskEverywhereEntry(bundleID: w.bundleID, display: display, frames: out[i].frames + [rel])
+            } else if out.count < maxEntries {
+                out.append(DeskEverywhereEntry(bundleID: w.bundleID, display: display, frames: [rel]))
+            }
+        }
+        return out
     }
 
     // MARK: Laden mit Grenzen (E17c)
@@ -129,7 +186,15 @@ enum DeskLayouts {
                 let frames = e.frames.prefix(maxFramesPerApp).filter(isValidFrame)
                 return frames.isEmpty ? nil : DeskLayoutEntry(bundleID: e.bundleID, desk: desk, frames: Array(frames))
             }
-            if !entries.isEmpty { out[key] = DeskLayout(entries: entries) }
+            var seenEverywhere = Set<String>()
+            let everywhere = layout.everywhere.prefix(maxEntries).compactMap { e -> DeskEverywhereEntry? in
+                guard LinkRules.isBundleID(e.bundleID), isValidKey(e.display, maxLength: 80),
+                      seenEverywhere.insert(e.bundleID + "\n" + e.display).inserted else { return nil }
+                let frames = e.frames.prefix(maxFramesPerApp).filter(isValidFrame)
+                return frames.isEmpty ? nil : DeskEverywhereEntry(bundleID: e.bundleID, display: e.display, frames: Array(frames))
+            }
+            let checked = DeskLayout(entries: entries, everywhere: everywhere)
+            if !checked.isEmpty { out[key] = checked }
         }
         return out
     }

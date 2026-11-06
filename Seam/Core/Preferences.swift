@@ -160,20 +160,29 @@ final class Preferences {
     func setDesk(_ desk: DeskRef, for bundleID: String, in combination: String) {
         guard let layout = deskLayouts[combination] else { return }
         let entries = layout.entries.map { $0.bundleID == bundleID ? DeskLayoutEntry(bundleID: bundleID, desk: desk, frames: $0.frames) : $0 }
-        saveDeskLayout(DeskLayout(entries: entries), for: combination)
+        saveDeskLayout(DeskLayout(entries: entries, everywhere: layout.everywhere), for: combination)
     }
 
     /// App aus dem Layout nehmen — Seam lässt sie dann in Ruhe.
     func removeFromLayout(_ bundleID: String, in combination: String) {
         guard let layout = deskLayouts[combination] else { return }
-        saveDeskLayout(DeskLayout(entries: layout.entries.filter { $0.bundleID != bundleID }), for: combination)
+        saveDeskLayout(DeskLayout(entries: layout.entries.filter { $0.bundleID != bundleID }, everywhere: layout.everywhere),
+                       for: combination)
+    }
+
+    /// Fenster „auf allen Schreibtischen“ einer App auf einem Bildschirm aus dem Layout nehmen.
+    func removeEverywhere(_ bundleID: String, display: String, in combination: String) {
+        guard let layout = deskLayouts[combination] else { return }
+        saveDeskLayout(DeskLayout(entries: layout.entries,
+                                  everywhere: layout.everywhere.filter { !($0.bundleID == bundleID && $0.display == display) }),
+                       for: combination)
     }
 
     /// Layout für eine Bildschirm-Kombination speichern (ersetzt das alte, Michael 19.10.).
     /// Leeres Layout = für diese Kombination löschen. Neu ab dem 21. Kombinationsschlüssel abgelehnt.
     @discardableResult
     func saveDeskLayout(_ layout: DeskLayout, for combination: String) -> Bool {
-        if layout.entries.isEmpty { deskLayouts[combination] = nil; return true }
+        if layout.isEmpty { deskLayouts[combination] = nil; return true }
         // Durch dieselbe Prüfung wie beim Laden (E17c): was gespeichert wird, muss auch ladbar sein.
         guard let checked = DeskLayouts.decode(DeskLayouts.encode([combination: layout]))[combination],
               deskLayouts[combination] != nil || deskLayouts.count < DeskLayouts.maxCombinations else { return false }

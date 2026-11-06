@@ -348,12 +348,13 @@ final class Engine {
                                          screens: screens, ownBundleID: Bundle.main.bundleIdentifier)
         // Nichts erfasst (z. B. Spaces kurz nicht lesbar) → altes Layout behalten. Ein leeres Layout
         // hieße sonst „löschen“ (code-audit 19.10.).
-        guard !layout.entries.isEmpty else { showDesk(DeskMessages.saved(apps: 0)); return }
+        guard !layout.isEmpty else { showDesk(DeskMessages.saved(apps: 0)); return }
         prefs.rememberSpaceSlots(spaces)
         let ok = prefs.saveDeskLayout(layout, for: screens.combinationKey)
         deskIssues = []
-        Self.log.notice("Layout gespeichert: \(layout.entries.count) Apps")
-        showDesk(ok ? DeskMessages.saved(apps: layout.entries.count)
+        let apps = Set(layout.entries.map(\.bundleID) + layout.everywhere.map(\.bundleID)).count
+        Self.log.notice("Layout gespeichert: \(apps) Apps, davon \(layout.everywhere.count) auf allen Schreibtischen")
+        showDesk(ok ? DeskMessages.saved(apps: apps)
                     : "Layout nicht gespeichert: Seam merkt sich höchstens 20 "
                         + "Bildschirm-Kombinationen.\n→ ZU TUN: in den Einstellungen unter „Layouts“ das Layout löschen und neu speichern.")
     }

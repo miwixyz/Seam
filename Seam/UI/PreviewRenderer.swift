@@ -48,6 +48,11 @@ enum PreviewRenderer {
                 render(DeskLayoutWindow().environment(engine).environment(sample),
                        to: dir.appendingPathComponent("layout-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
+                // Ohne Rollbereich: auch die Liste „Auf allen Schreibtischen“ unter den Apps (06.11.).
+                render(ScrollView { DeskLayoutView().padding(16) }.frame(width: 480, height: 1300)
+                        .environment(engine).environment(sample),
+                       to: dir.appendingPathComponent("layout-voll-\(name).png"), appearance: appearance,
+                       background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
                 UserDefaults().removePersistentDomain(forName: "dev.mwlr.seam.tests")
                 LinkRouter.shared.refresh()
                 render(LinkRulesWindow(router: LinkRouter.shared),

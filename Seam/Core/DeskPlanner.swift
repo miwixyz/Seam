@@ -102,7 +102,37 @@ enum DeskPlanner {
                                            frame: wanted, changesSpace: !onTarget))
             }
         }
+        planEverywhere(layout.everywhere, desks: desks, windows: windows, screens: screens, into: &plan)
         return plan
+    }
+
+    /// Fenster „auf allen Schreibtischen“: zurück auf ihren Bildschirm und in ihre Größe — nur per
+    /// Rahmen, ohne Space-Wechsel (sie sind auf jedem Schreibtisch sichtbar, die Zuordnung „alle
+    /// Schreibtische“ wandert mit dem Fenster, gemessen 06.11.).
+    static func planEverywhere(_ everywhere: [DeskEverywhereEntry], desks: [SpaceInfo], windows: [LiveWindow],
+                               screens: DeskScreens, into plan: inout DeskPlan) {
+        let byID = Dictionary(desks.map { ($0.managedID, $0) }, uniquingKeysWith: { a, _ in a })
+        for entry in everywhere {
+            let mine = windows.filter { $0.bundleID == entry.bundleID && DeskLayouts.everywhereDisplay(of: $0, byID: byID) != nil }
+            guard !mine.isEmpty else {
+                plan.skipped.append(DeskSkip(bundleID: entry.bundleID, reason: .notRunning)); continue
+            }
+            let onDisplay = desks.filter { $0.display == entry.display }
+            guard let screen = screens.frame(of: entry.display),
+                  let target = onDisplay.first(where: \.isCurrent) ?? onDisplay.first else {
+                plan.skipped.append(DeskSkip(bundleID: entry.bundleID, reason: .deskUnavailable)); continue
+            }
+            let wantedFrames = entry.frames.map { Geometry.clamp($0.rect.offsetBy(dx: screen.minX, dy: screen.minY), to: screen) }
+            let assigned = assign(wantedFrames, to: mine.map(\.frame))
+            for (i, w) in mine.enumerated() {
+                let onTarget = DeskLayouts.everywhereDisplay(of: w, byID: byID) == entry.display
+                let wanted = assigned[i] ?? (onTarget ? nil
+                    : Geometry.clamp(CGRect(origin: CGPoint(x: screen.minX + 40, y: screen.minY + 40), size: w.frame.size), to: screen))
+                guard !(onTarget && (wanted.map { fits(w.frame, $0) } ?? true)) else { continue }
+                plan.moves.append(DeskMove(windowID: w.windowID, bundleID: entry.bundleID, target: target,
+                                           frame: wanted, changesSpace: false))
+            }
+        }
     }
 
     /// Welcher lebende Space ist mit diesem Layout-Schreibtisch gemeint?

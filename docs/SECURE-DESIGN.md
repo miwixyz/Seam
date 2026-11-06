@@ -585,6 +585,11 @@ unter dem Zeiger und auf den WindowServer — nicht nur auf das Zielfenster.
 - **Gespeichert:** je Bildschirm-Kombination (Menge der Bildschirm-UUIDs) **ein** Layout:
   Bundle-ID → Space-Schlüssel (Name, Bildschirm-UUID, Platz) und Rahmen relativ zum Bildschirm.
   Keine Titel, keine Inhalte, keine Zeitpunkte, keine Nutzungshäufigkeit.
+  **Ergänzt 06.11.:** eigene Liste `everywhere` für Fenster auf allen Schreibtischen eines
+  Bildschirms: Bundle-ID → Bildschirm-UUID und Rahmen. Gleiche Grenzen beim Laden (200 Einträge,
+  10 Rahmen, Bundle-ID-Muster, Rahmen endlich ≤ 32 000 pt, Bildschirm-Kennung ≤ 80 Zeichen ohne
+  Steuerzeichen, Doppelte verworfen); fehlt sie (Layouts bis 0.7.0), ist sie leer. Zurückgeholt nur
+  per Rahmen setzen — **keine** künstlichen Eingaben, kein Space-Wechsel.
 - **Einordnung:** Die Liste verrät, welche Apps Michael nutzt — dieselbe Information, die jeder
   Prozess des Nutzers über die Liste laufender Apps ohnehin hat. Akzeptiert, in der
   Datenschutzerklärung genannt.
