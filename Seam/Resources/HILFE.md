@@ -7,9 +7,9 @@ Hilfe und „Spaces benennen“ öffnen sich immer im Space, in dem du gerade bi
 
 ## Einrichten
 
-Seam braucht die Freigabe für die **Bedienungshilfen**, sonst darf es fremde Fenster nicht
-bewegen. Öffne Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen und schalte
-Seam ein. Seam merkt die Freigabe selbst, ein Neustart ist nicht nötig.
+Seam braucht die Freigabe **Gerätesteuerung und Datenzugriff** (früher „Bedienungshilfen“), sonst darf es
+fremde Fenster nicht bewegen. Öffne Systemeinstellungen → Datenschutz & Sicherheit →
+Gerätesteuerung und Datenzugriff und schalte Seam ein. Seam merkt die Freigabe selbst, ein Neustart ist nicht nötig.
 
 Damit Seam nach dem Anmelden läuft, setze in den Einstellungen (Zahnrad) den Haken bei „Bei Anmeldung starten“.
 

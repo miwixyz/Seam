@@ -60,7 +60,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 1. [Neueste Version](https://github.com/miwixyz/Seam/releases/latest) laden (`Seam-x.y.z.zip`),
    per Doppelklick entpacken und `Seam.app` in den Ordner Programme ziehen.
 2. Seam starten. Das Symbol erscheint in der Menüleiste.
-3. Systemeinstellungen → Datenschutz & Sicherheit → **Bedienungshilfen** → Seam einschalten.
+3. Systemeinstellungen → Datenschutz & Sicherheit → **Gerätesteuerung und Datenzugriff** (früher
+   „Bedienungshilfen“) → Seam einschalten.
 4. Seam-Symbol → Zahnrad (Einstellungen) → „Bei Anmeldung starten“ anhaken.
 
 Läuft ein anderer Fenstermanager mit denselben Kürzeln, beende ihn oder schalte dort die Kürzel
@@ -77,7 +78,7 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 ## Datenschutz und Berechtigung
 
-Seam braucht nur die **Bedienungshilfen**-Freigabe, keine Eingabeüberwachung und keine
+Seam braucht nur die Freigabe **Gerätesteuerung und Datenzugriff**, keine Eingabeüberwachung und keine
 Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
 ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie abgedunkelt werden,

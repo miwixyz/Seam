@@ -106,7 +106,7 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 
 ## Deine Daten bleiben auf deinem Mac
 
-- Seam braucht die Bedienungshilfen-Freigabe von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
+- Seam braucht die Freigabe „Gerätesteuerung und Datenzugriff“ von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Eine Bildschirmaufnahme-Freigabe braucht es nicht.
 - Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→, nur dafür und mit Abbruch, sobald du eingreifst.
 - Gespeichert werden nur deine Einstellungen und, wenn du eins speicherst, dein Layout: welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, ohne Fenstertitel und ohne Zeiten. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
 - Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.
@@ -118,6 +118,6 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 
 1. Lade das neueste Release unter **[github.com/miwixyz/Seam/releases/latest](https://github.com/miwixyz/Seam/releases/latest)** herunter.
 2. Öffne die ZIP-Datei per Doppelklick und zieh **Seam.app** in den Ordner *Programme*.
-3. Starte Seam und gib es in den Systemeinstellungen unter *Datenschutz & Sicherheit → Bedienungshilfen* frei.
+3. Starte Seam und gib es in den Systemeinstellungen unter *Datenschutz & Sicherheit → Gerätesteuerung und Datenzugriff* frei (früher „Bedienungshilfen“).
 
 Seam aktualisiert sich danach selbst, wenn du es erlaubst. Voraussetzung ist ein Mac mit Apple Silicon und macOS 27.

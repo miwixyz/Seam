@@ -350,7 +350,7 @@
 <section id="datenschutz">
   <div class="wrap">
     <h2>Seam sieht deine Fenster, nicht ihren Inhalt</h2>
-    <p class="lead">Um Fenster anderer Apps zu bewegen, braucht Seam die Bedienungshilfen-Freigabe von macOS. Diese Freigabe erlaubt sehr viel, doch Seam nutzt davon nur einen kleinen Teil.</p>
+    <p class="lead">Um Fenster anderer Apps zu bewegen, braucht Seam die Freigabe „Gerätesteuerung und Datenzugriff“ von macOS. Diese Freigabe erlaubt sehr viel, doch Seam nutzt davon nur einen kleinen Teil.</p>
     <div class="privacy-grid">
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-eyeoff"/></svg></span><p><strong>Nur Lage und Größe</strong>Von anderen Fenstern liest Seam Lage, Größe und Rolle, also ob es ein normales App-Fenster ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space gerade aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Fenstertitel und Inhalte liest es nicht, eine Bildschirmaufnahme-Freigabe braucht es nicht.</p></div>
       <div class="privacy-item"><span class="check"><svg class="ico" aria-hidden="true"><use href="#i-keyboard"/></svg></span><p><strong>Keine Tastatur mitlesen</strong>Seam meldet seine Kürzel bei macOS an und bekommt nur diese Kombinationen mitgeteilt. Die Maus beobachtet es nur, um das Ziehen zu erkennen, und verändert keine Klicks. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→.</p></div>
@@ -368,7 +368,7 @@
     <div class="steps">
       <div class="step card"><div class="n">1</div><h3>Laden</h3><p>Lade die ZIP-Datei des neuesten Release von <a href="https://github.com/miwixyz/Seam/releases/latest">GitHub</a> herunter.</p></div>
       <div class="step card"><div class="n">2</div><h3>Auspacken</h3><p>Öffne die ZIP-Datei per Doppelklick und zieh <strong>Seam.app</strong> in den Ordner <em>Programme</em>.</p></div>
-      <div class="step card"><div class="n">3</div><h3>Freigeben</h3><p>Starte Seam und schalte es in den Systemeinstellungen unter <em>Datenschutz &amp; Sicherheit → Bedienungshilfen</em> ein. Fehlt die Freigabe, zeigt das Seam-Fenster einen Knopf, der die Stelle direkt öffnet.</p></div>
+      <div class="step card"><div class="n">3</div><h3>Freigeben</h3><p>Starte Seam und schalte es in den Systemeinstellungen unter <em>Datenschutz &amp; Sicherheit → Gerätesteuerung und Datenzugriff</em> ein (früher hieß die Liste „Bedienungshilfen“). Fehlt die Freigabe, zeigt das Seam-Fenster einen Knopf, der die Stelle direkt öffnet.</p></div>
     </div>
   </div>
 </section>
@@ -378,7 +378,7 @@
     <h2>Häufige Fragen</h2>
     <div class="faq">
       <details><summary>Was kostet Seam?</summary><p>Seam kostet nichts. Es ist Open Source unter der MIT-Lizenz, ohne Abo und ohne Werbung.</p></details>
-      <details><summary>Warum braucht Seam die Bedienungshilfen?</summary><p>Ohne diese Freigabe darf keine App die Fenster anderer Apps verschieben. Weitere Freigaben braucht Seam nicht, also weder Eingabeüberwachung noch Bildschirmaufnahme.</p></details>
+      <details><summary>Warum braucht Seam diese Freigabe?</summary><p>Ohne diese Freigabe darf keine App die Fenster anderer Apps verschieben. Weitere Freigaben braucht Seam nicht, also weder Eingabeüberwachung noch Bildschirmaufnahme.</p></details>
       <details><summary>Warum folgt das Nachbarfenster erst beim Loslassen?</summary><p>Manche Apps brauchen für jede Größenänderung spürbar lange, Outlook in Messungen bis zu 56 Millisekunden. Live mitgezogen hätte das geruckelt. Deshalb bewegt sich während des Ziehens nur dein Fenster, und beim Loslassen setzt Seam den Nachbarn in einem Schritt an die neue Kante.</p></details>
       <details><summary>Warum bleibt die Kante manchmal stehen?</summary><p>Viele Apps legen fest, wie klein ihr Fenster höchstens werden darf. Erreicht das Nachbarfenster diese Grenze, bleibt die Naht dort stehen, damit sich die Fenster nicht überlappen.</p></details>
       <details><summary>Welche Fenster fasst Seam an?</summary><p>Seam bewegt nur normale App-Fenster. Dialoge, das Dock und andere Systemflächen lässt Seam in Ruhe, ebenso Fenster im Vollbild. Minimierte Fenster verschiebt es nicht. Nur den Partner eines geteilten Paars minimiert es mit und holt ihn zurück.</p></details>

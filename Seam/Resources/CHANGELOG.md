@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Geändert
+
+- **Neuer Name der Freigabe in allen Texten.** macOS nennt die Liste unter Datenschutz & Sicherheit
+  inzwischen „Gerätesteuerung und Datenzugriff“ statt „Bedienungshilfen“. Hinweis im Seam-Fenster,
+  Meldung beim Aufräumen, Hilfe, README und Website nennen jetzt den neuen Namen.
+
 ## [0.8.0] — 2026-11-06
 
 ### Neu

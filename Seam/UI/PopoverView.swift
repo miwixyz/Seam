@@ -81,7 +81,7 @@ struct PopoverView: View {
     @ViewBuilder
     private var notices: some View {
         if !engine.isTrusted {
-            notice(icon: "exclamationmark.triangle", text: "Bedienungshilfen-Freigabe fehlt",
+            notice(icon: "exclamationmark.triangle", text: "Freigabe „Gerätesteuerung und Datenzugriff“ fehlt",
                    action: "Öffnen", color: FamilyTheme.warning) { engine.openAccessibilitySettings() }
         }
         if !engine.failedShortcuts.isEmpty {

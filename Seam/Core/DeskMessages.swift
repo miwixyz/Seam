@@ -22,8 +22,8 @@ enum DeskMessages {
         case .noLayout:
             return automatic ? nil : "Noch kein Layout gespeichert.\n→ ZU TUN: Fenster anordnen, dann im Seam-Menü „Speichern“."
         case .noAccessibility:
-            return "Seam fehlt die Bedienungshilfen-Freigabe.\n→ ZU TUN: "
-                + "Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → Seam einschalten."
+            return "Seam fehlt die Freigabe „Gerätesteuerung und Datenzugriff“.\n→ ZU TUN: "
+                + "Systemeinstellungen → Datenschutz & Sicherheit → Gerätesteuerung und Datenzugriff → Seam einschalten."
         case .switchKeysOff:
             return "Aufräumen braucht die Kurzbefehle ⌃← / ⌃→.\n→ ZU TUN: Systemeinstellungen → Tastatur → "
                 + "Tastaturkurzbefehle → Mission Control → „Einen Schreibtisch nach links/rechts“ einschalten."
