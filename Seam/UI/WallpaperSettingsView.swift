@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 struct WallpaperSettingsView: View {
     @Environment(Engine.self) private var engine
     @Environment(Preferences.self) private var prefs
+    @Environment(\.openWindow) private var openWindow
     @State private var monitors: [DimSettingsView.Monitor] = []
 
     var body: some View {
@@ -48,6 +49,18 @@ struct WallpaperSettingsView: View {
             fileRow(label: "Hell", symbol: "sun.max", name: fileName(prefs.wallpaperPath) ?? "Keine Datei gewählt", dark: false)
             divider
             fileRow(label: "Dunkel", symbol: "moon", name: fileName(prefs.wallpaperPathDark) ?? "wie hell", dark: true)
+            divider
+            HStack {
+                Text("Kostenlose Fotos und Videos von Pexels und Wikimedia")
+                    .foregroundStyle(FamilyTheme.textSecondary)
+                Spacer()
+                Button {
+                    openWindow(id: "online")
+                } label: { Label("Online aussuchen …", systemImage: "globe") }
+                    .buttonStyle(.familyGlass(.capsule, size: 26))
+                    .help("Fenster „Online-Auswahl“ öffnen: suchen, aussuchen, für hell oder dunkel setzen")
+            }
+            .frame(minHeight: 34)
             note("Video (mp4, mov) läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen. "
                  + "Ein Bild setzt Seam als macOS-Hintergrund. Bei einem Video wird das erste Bild "
                  + "ebenfalls als macOS-Hintergrund gesetzt (Mission Control, Sperrbildschirm). "

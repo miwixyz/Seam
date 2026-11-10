@@ -2,6 +2,26 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Hintergründe online aussuchen.** „Online aussuchen …“ im Fenster „Hintergrund“ zeigt kostenlose
+  Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Suchen, anklicken, „Für hell“ oder
+  „Für dunkel“: Seam lädt die Datei und setzt sie. Pixabay und Pexels brauchen einen kostenlosen
+  Schlüssel, den Seam in deinem Schlüsselbund ablegt.
+- **Eigener Hintergrund für hell und dunkel.** Schaltet macOS um, wechselt Seam die Datei mit.
+- **Ausgleich je Monitor.** Mit ↑ und ↓ setzt du einen Monitor in 2-mm-Schritten höher oder tiefer,
+  bis das Gesamtbild über die Kante gerade weiterläuft — auch wenn ein Monitor tiefer steht.
+- **Die runden Knöpfe im Seam-Fenster sagen, was sie tun.** Fährst du darüber, steht es darunter.
+  Die Hinweise von macOS erscheinen in diesem Fenster nicht.
+
+### Behoben
+
+- **Gesamtbild auf unterschiedlich großen Monitoren versetzt.** Seam richtete nebeneinander stehende
+  Monitore an ihrer Mitte aus; ein kleinerer, hochkant gestellter Monitor rutschte dadurch um mehrere
+  Zentimeter nach unten. Jetzt zählt die Oberkante.
+
 ## [0.9.0] — 2026-11-10
 
 ### Neu

@@ -97,6 +97,16 @@ struct SeamApp: App {
         // Wie die anderen Fenster: öffnet nur der Nutzer, nie ein Ereignis von außen (E16).
         .handlesExternalEvents(matching: [])
 
+        Window("Online-Auswahl", id: "online") {
+            OnlineGalleryWindow()
+                .environment(engine)
+                .environment(engine.prefs)
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        // E19f: Netz nur, wenn der Nutzer dieses Fenster öffnet; nie von außen.
+        .handlesExternalEvents(matching: [])
+
         Window("Layout bearbeiten", id: "layout") {
             DeskLayoutWindow()
                 .environment(engine)

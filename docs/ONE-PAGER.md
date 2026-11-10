@@ -117,7 +117,7 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 - Tastatureingaben liest Seam nicht mit. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→, nur dafür und mit Abbruch, sobald du eingreifst.
 - Gespeichert werden nur deine Einstellungen und, wenn du eins speicherst, dein Layout: welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, ohne Fenstertitel und ohne Zeiten. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
 - Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.
-- Den einzigen Netzwerkzugriff, die Suche nach Updates bei GitHub, erlaubst du beim ersten Mal selbst. Jedes Update ist signiert.
+- Ins Netz geht Seam nur für Updates bei GitHub (die erlaubst du beim ersten Mal selbst) und, wenn du Hintergründe online aussuchst, zu Pixabay, Pexels oder Wikimedia Commons. Jedes Update ist signiert.
 
 ---
 

@@ -763,6 +763,72 @@ Stück-Namen anlegen (Zeitstempel in ms) — gleiche Rechte wie Seam, keine Rech
 - **Fund 1 (mittel, CWE-400):** Bildgrenze 16384 px erlaubte ~1 GB je Bild bei verändertem Pfad.
   **Behoben:** 8192 px (`Wallpaper.maxImageEdge`).
 
+### E19 – Online-Auswahl: Pexels und Wikimedia Commons (0.10, Durchgang 2026-11-10, VOR dem Code)
+
+Michael, 10.11.: „eine Online-Auswahl von Bildern und Videodateien kostenlos integrieren, wo ich
+Bilder aussuchen kann“; Quellen „Pexels + Wikimedia“. **Erster Netzzugriff neben den Updates** (E9).
+Gemessen 10.11.: Pexels ohne Schlüssel → 401; Wikimedia liefert Fotos von `upload.wikimedia.org`,
+Vorschauen von `thumb.wikimedia.org`, Lizenz und Urheber über `extmetadata`; Wikimedia-Videos sind
+`video/webm` (AVFoundation spielt das nicht) → von Wikimedia nur Fotos. Durchgang nach
+rafter-secure-design `ingestion.md` (Fetcher, Größen, Parser, Ablage).
+
+**Datenfluss neu:**
+```
+[Nutzer: Suchwort, Quelle, Foto/Video] ──▶ [Seam: OnlineGallery]
+   ──(12) HTTPS-Suche ──▶ api.pexels.com (Kopf Authorization = Schlüssel) | commons.wikimedia.org
+   ◀─ JSON (Codable, Größe begrenzt)
+   ──(13) Vorschauen / Datei laden ──▶ images.pexels.com, videos.pexels.com, upload./thumb.wikimedia.org
+   └──(14) Datei ──▶ ~/Library/Application Support/Seam/Hintergrund/Online/ ──▶ E18 (Pfad hell/dunkel)
+[Schlüssel] ──▶ Schlüsselbund (generisches Passwort, Dienst `dev.mwlr.seam.pexels`)
+```
+
+- **E19a – Nur feste Server (SSRF-Form).** Seam ruft keine Adresse auf, die der Nutzer eintippt;
+  Adressen kommen aus den API-Antworten und sind trotzdem nicht vertrauenswürdig. Vor JEDEM Abruf
+  und bei jeder Weiterleitung: Schema `https`, Host exakt auf der Liste `api.pexels.com`,
+  `images.pexels.com`, `videos.pexels.com`, `commons.wikimedia.org`, `upload.wikimedia.org`,
+  `thumb.wikimedia.org`, kein Port, kein Benutzer/Passwort in der Adresse. Weiterleitung auf einen
+  anderen Host → abbrechen. Kommt eine Pexels-Videoadresse von einem anderen Server (Host
+  `videos.pexels.com` ist **vermutet**, ohne Schlüssel nicht messbar), zeigt Seam einen Hinweis mit
+  dem Hostnamen — erweitert wird die Liste nur per Code-Änderung. Eigene `URLSession`
+  (ephemeral, kein Cookie-Speicher, kein Cache auf Platte), App Transport Security bleibt an.
+- **E19b – Der Schlüssel.** Gehört dem Nutzer (kostenlos bei pexels.com/api), steht nie im Code oder
+  Repo, liegt im Schlüsselbund (nicht UserDefaults), geht nur im Kopf `Authorization` an
+  `api.pexels.com` — nie an andere Hosts, nie in eine Adresse, nie ins Protokoll. Prüfung beim
+  Eingeben: 20–100 Zeichen, nur Buchstaben/Ziffern. 401 → Hinweis „Schlüssel stimmt nicht“.
+- **E19c – Größen und Zeiten.** Suchwort ≤ 100 Zeichen, über `URLComponents` kodiert. JSON-Antwort
+  ≤ 2 MB, Vorschau ≤ 2 MB, Foto ≤ 60 MB, Video ≤ 600 MB (gezählt beim Empfangen, nicht nur
+  `Content-Length`), bis 80 Treffer je Seite. Zeitlimit Suche 20 s, Datei 10 min. 429 → Hinweis
+  „Zu viele Anfragen, bitte später“, kein automatisches Wiederholen.
+- **E19d – Ablage.** Dateiname nie vom Server: `<quelle>-<id>.<endung>`, `id` nur Ziffern (Pexels-ID,
+  Wikimedia-`pageid`), Endung aus der Liste `jpg/jpeg/png/mp4/mov` (aus dem MIME-Typ, nicht der
+  Adresse). Erst in eine Temp-Datei, dann umbenennen. Höchstens 30 Dateien im Ordner; ältere werden
+  gelöscht, aber nie die gerade gewählte helle oder dunkle Datei. Danach greift E18 (System-Decoder).
+- **E19e – Inhalte der Antworten.** JSON nur über `Codable` (keine dynamische Auswertung). Urheber-
+  und Lizenztext von Wikimedia enthält HTML → Tags entfernt, auf 120 Zeichen gekürzt, als reiner
+  Text angezeigt (kein HTML-Rendern). Fotograf/Urheber und Lizenz stehen unter der Vorschau, dazu
+  „Fotos und Videos von Pexels“ bzw. „Wikimedia Commons“.
+- **E19f – Nur auf Handlung.** Kein Netz beim Start oder im Hintergrund: Abrufe nur, wenn der Nutzer
+  das Fenster „Online-Auswahl“ benutzt (Suchen, Weiterblättern, Laden). Kopf `User-Agent: Seam/<Version>
+  (https://github.com/miwixyz/Seam)` (Wikimedia-Richtlinie verlangt Kontakt; Projektadresse, keine
+  Mail). Protokoll: Quelle, Statuscode, Trefferzahl — kein Suchwort, kein Schlüssel, keine Adresse.
+- **E19g – Pixabay (ergänzt 10.11., nach dem Code für Pexels).** Pexels gibt seit 10.11. keine neuen
+  Schlüssel aus (Michael). Pixabay-Doku an der Quelle gelesen (pixabay.com/api/docs): Schlüssel als
+  Parameter `key` **in der Adresse**, 100 Anfragen/60 s, Antworten 24 h speichern, Herkunft zeigen,
+  Bilder herunterladen statt verlinken; Fotos im normalen Zugang höchstens 1280 px, Videos ab 1920 px.
+  Folgen: Hosts `pixabay.com` (Suche, `/get/`-Bilder) und `cdn.pixabay.com` auf der Liste; eigener
+  Schlüsselbund-Eintrag `dev.mwlr.seam.pixabay` (Prüfung 20–100 Zeichen, Buchstaben/Ziffern/Bindestrich,
+  damit kein `&` oder `=` die Adresse verändert); trägt eine Anfrage einen Schlüssel (Kopf oder `key=`),
+  folgt sie Weiterleitungen nur auf denselben Host; Adressen bleiben aus dem Protokoll (sie enthalten
+  den Schlüssel); Suchantworten 24 h im Arbeitsspeicher (höchstens 200), nicht auf der Platte; leere
+  Adressfelder in der Antwort werden übersprungen statt die Seite zu verwerfen. Fotos unter 2560 px
+  zeigen einen Hinweis „auf großen Monitoren unscharf“.
+
+**Restrisiken (akzeptiert):** Pixabay, Pexels und Wikimedia sehen IP-Adresse, Suchwort und Zeitpunkt
+(Datenschutzerklärung nachziehen). Pixabays Schlüssel steht in der Adresse; Seam protokolliert sie
+nicht, macOS-Netzwerkdiagnosen des Nutzers könnten sie aber zeigen. Ein manipulierter Server auf der Liste könnte eine bösartige
+Datei liefern → trifft die System-Decoder wie E18. Der Schlüssel ist für jeden Prozess desselben
+Nutzers lesbar, der im Schlüsselbund-Dialog zugelassen wird.
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |
