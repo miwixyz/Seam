@@ -30,6 +30,7 @@ final class Preferences {
         static let wallpaperEnabled = "wallpaperEnabled"
         static let wallpaperPath = "wallpaperPath"
         static let wallpaperPathDark = "wallpaperPathDark"
+        static let wallpaperOffsets = "wallpaperOffsets"
         static let wallpaperLayout = "wallpaperLayout"
         static let wallpaperOffScreens = "wallpaperOffScreens"
     }
@@ -84,6 +85,9 @@ final class Preferences {
     private(set) var wallpaperPathDark: String? { didSet { defaults.set(wallpaperPathDark, forKey: Key.wallpaperPathDark) } }
     /// Gesamtbild über alle Bildschirme oder je Bildschirm ganz. Ab Werk Gesamtbild.
     var wallpaperLayout: WallpaperLayout { didSet { defaults.set(wallpaperLayout.rawValue, forKey: Key.wallpaperLayout) } }
+    /// Höhenausgleich je Bildschirm (UUID → mm, positiv = höher), nur fürs Gesamtbild.
+    private(set) var wallpaperOffsets: [String: Int] { didSet { defaults.set(wallpaperOffsets, forKey: Key.wallpaperOffsets) } }
+    static let maxWallpaperOffset = 300
     /// Bildschirme (UUID), auf denen Seam den Hintergrund nicht setzt.
     private(set) var wallpaperOffScreens: [String] { didSet { defaults.set(wallpaperOffScreens, forKey: Key.wallpaperOffScreens) } }
 
@@ -273,6 +277,10 @@ final class Preferences {
         wallpaperPath = (defaults.string(forKey: Key.wallpaperPath)).flatMap { Self.validPath($0) ? $0 : nil }
         wallpaperPathDark = (defaults.string(forKey: Key.wallpaperPathDark)).flatMap { Self.validPath($0) ? $0 : nil }
         wallpaperLayout = defaults.string(forKey: Key.wallpaperLayout).flatMap(WallpaperLayout.init(rawValue:)) ?? .span
+        let offsets = defaults.dictionary(forKey: Key.wallpaperOffsets) as? [String: Int] ?? [:]
+        wallpaperOffsets = offsets.reduce(into: [:]) { r, e in
+            if r.count < Self.maxDimScreens, Self.validKey(e.key), abs(e.value) <= Self.maxWallpaperOffset { r[e.key] = e.value }
+        }
         wallpaperOffScreens = Self.uniqueCapped(defaults.stringArray(forKey: Key.wallpaperOffScreens) ?? [],
                                                 max: Self.maxDimScreens, valid: Self.validKey)
     }
@@ -288,6 +296,15 @@ final class Preferences {
     func setWallpaperPath(_ path: String, dark: Bool = false) {
         guard Self.validPath(path) else { return }
         if dark { wallpaperPathDark = path } else { wallpaperPath = path }
+    }
+
+    /// Höhenausgleich ändern, begrenzt auf ±300 mm; 0 = Eintrag weg.
+    func nudgeWallpaperOffset(_ delta: Int, for screen: String) {
+        guard Self.validKey(screen) else { return }
+        let v = max(-Self.maxWallpaperOffset, min(Self.maxWallpaperOffset, (wallpaperOffsets[screen] ?? 0) + delta))
+        if v == 0 { wallpaperOffsets[screen] = nil; return }
+        guard wallpaperOffsets[screen] != nil || wallpaperOffsets.count < Self.maxDimScreens else { return }
+        wallpaperOffsets[screen] = v
     }
 
     /// Dunkle Datei entfernen: dann gilt auch im Dunkeln die helle.

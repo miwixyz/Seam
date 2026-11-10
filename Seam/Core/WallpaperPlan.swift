@@ -6,6 +6,9 @@ struct WallpaperScreen: Equatable {
     let id: String
     let frame: CGRect
     let millimeters: CGSize
+    /// Höhenausgleich in mm (Michael, 10.11.: „der rechte Bildschirm ist noch ein Tick zu weit
+    /// unten“; Z1-2 steht ~13 cm unter dem PA34, macOS kennt die Lücke nicht). Positiv = höher.
+    var offsetY: CGFloat = 0
 }
 
 /// Wie das Bild auf die Bildschirme kommt.
@@ -51,9 +54,13 @@ enum WallpaperPlan {
         for i in order {
             let s = screens[i]
             let sz = size(s)
-            // Erst um die Mitte (umgerechnet mit der Bezugsdichte) …
-            var r = CGRect(x: s.frame.midX / refDensity - sz.width / 2,
-                           y: s.frame.midY / refDensity - sz.height / 2,
+            // Erst an Oberkante und linker Kante (umgerechnet mit der Bezugsdichte) …
+            // Bis 0.9.0 um die Mitte: Ein Monitor, der in mm viel kürzer ist als in Punkten (MB169:
+            // 338 mm statt 447 mm), rutschte damit um die halbe Differenz nach unten. Michaels Foto
+            // 10.11.: Oberkante MB169 laut Anordnung 133 mm unter der des PA34, auf dem Tisch 131 mm
+            // (Mitte: 191 mm, Welle 6 cm versetzt). Z1-2 links: 265 mm laut Anordnung, Tisch 268 mm.
+            var r = CGRect(x: s.frame.minX / refDensity,
+                           y: s.frame.maxY / refDensity - sz.height,
                            width: sz.width, height: sz.height)
             // … dann an berührende, schon gesetzte Bildschirme anlegen (sonst Lücke oder Überlappung).
             var snappedX = false, snappedY = false
@@ -66,6 +73,8 @@ enum WallpaperPlan {
                 if !snappedY, overlapX, near(s.frame.minY, p.maxY) { r.origin.y = pr.maxY; snappedY = true }
                 if !snappedY, overlapX, near(s.frame.maxY, p.minY) { r.origin.y = pr.minY - r.height; snappedY = true }
             }
+            // Ausgleich des Nutzers zuletzt, auch nach dem Anlegen an einen Nachbarn.
+            r.origin.y += s.offsetY
             out[i] = r
         }
         return out.map { $0! }

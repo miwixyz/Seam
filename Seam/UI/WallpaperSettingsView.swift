@@ -137,8 +137,50 @@ struct WallpaperSettingsView: View {
                         .labelsHidden()
                         .toggleStyle(FamilySwitchStyle())
                 }
+                if prefs.wallpaperLayout == .span, !prefs.wallpaperOffScreens.contains(m.id) {
+                    offsetRow(m)
+                }
+            }
+            if prefs.wallpaperLayout == .span {
+                note("Läuft eine Linie auf einem Monitor zu tief weiter, setze ihn „höher“, bis sie passt. "
+                     + "So gleichst du auch Abstände aus, etwa wenn ein Monitor unter einem anderen steht.",
+                     symbol: "arrow.up.and.down")
             }
         }
+    }
+
+    /// Höhenausgleich je Monitor (Michael, 10.11.): 2-mm-Schritte, jeder Klick schneidet neu zu.
+    private func offsetRow(_ m: DimSettingsView.Monitor) -> some View {
+        let value = prefs.wallpaperOffsets[m.id] ?? 0
+        return HStack(spacing: FamilyTheme.Space.s) {
+            Text("Ausgleich")
+                .font(FamilyTheme.font(.callout))
+                .foregroundStyle(FamilyTheme.textSecondary)
+            Spacer()
+            Text(value == 0 ? "0 mm" : String(format: "%+d mm", value))
+                .font(FamilyTheme.font(.callout).monospacedDigit())
+                .frame(minWidth: 64, alignment: .trailing)
+            Button { nudge(-2, m) } label: { Image(systemName: "arrow.down") }
+                .buttonStyle(.familyGlass(.circle, size: 26))
+                .help("\(m.name) in der Rechnung 2 mm tiefer setzen")
+                .accessibilityLabel("\(m.name) tiefer")
+            Button { nudge(2, m) } label: { Image(systemName: "arrow.up") }
+                .buttonStyle(.familyGlass(.circle, size: 26))
+                .help("\(m.name) in der Rechnung 2 mm höher setzen")
+                .accessibilityLabel("\(m.name) höher")
+            if value != 0 {
+                Button { nudge(-value, m) } label: { Image(systemName: "arrow.uturn.backward") }
+                    .buttonStyle(.familyGlass(.circle, size: 26))
+                    .help("Ausgleich zurücksetzen")
+                    .accessibilityLabel("Ausgleich für \(m.name) zurücksetzen")
+            }
+        }
+        .frame(minHeight: 30)
+    }
+
+    private func nudge(_ delta: Int, _ m: DimSettingsView.Monitor) {
+        prefs.nudgeWallpaperOffset(delta, for: m.id)
+        engine.applyWallpaper()
     }
 
     // MARK: - Status (nie stumm scheitern)

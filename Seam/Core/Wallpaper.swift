@@ -136,7 +136,8 @@ final class Wallpaper {
             guard let id = SpaceReader.displayIdentifier(of: s), !off.contains(id),
                   let n = s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
             let mm = CGDisplayScreenSize(n.uint32Value)
-            return (s, WallpaperScreen(id: id, frame: s.frame, millimeters: mm))
+            let offset = CGFloat(prefs.wallpaperOffsets[id] ?? 0)
+            return (s, WallpaperScreen(id: id, frame: s.frame, millimeters: mm, offsetY: offset))
         }
     }
 

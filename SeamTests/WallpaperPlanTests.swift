@@ -7,7 +7,7 @@ final class WallpaperPlanTests: XCTestCase {
 
     private let pa34 = WallpaperScreen(id: "PA34", frame: CGRect(x: 0, y: 0, width: 3440, height: 1440),
                                        millimeters: CGSize(width: 801.61, height: 338.67))
-    private let mb169 = WallpaperScreen(id: "MB169", frame: CGRect(x: 3440, y: -1075, width: 1080, height: 1920),
+    private let mb169 = WallpaperScreen(id: "MB169", frame: CGRect(x: 3440, y: -1053, width: 1080, height: 1920),
                                         millimeters: CGSize(width: 190.5, height: 341.03))
     private let z12 = WallpaperScreen(id: "Z1-2", frame: CGRect(x: 1136, y: -504, width: 1344, height: 504),
                                       millimeters: CGSize(width: 289.3, height: 110.36))
@@ -25,6 +25,28 @@ final class WallpaperPlanTests: XCTestCase {
         assertClose(p[1].width, 190.5)
         // Z1-2 darunter: obere Kante = untere Kante des PA34.
         assertClose(p[2].maxY, p[0].minY)
+    }
+
+    func testAlignsTopEdgeNotCenter() {
+        // Michaels Foto 10.11.: Oberkante MB169 auf dem Tisch 131 mm unter der des PA34.
+        // Anordnung: 1440 − 867 = 573 pt bei 4,29 pt/mm = 133,5 mm. Mitte ergab 191 mm (Fehler 0.9.0).
+        let p = WallpaperPlan.physical([pa34, mb169, z12])
+        XCTAssertEqual(p[0].maxY - p[1].maxY, 133.5, accuracy: 1)
+        // Z1-2: linke Kante 1136 pt = 264,7 mm (Tisch 268 mm).
+        XCTAssertEqual(p[2].minX - p[0].minX, 264.7, accuracy: 1)
+    }
+
+    func testOffsetMovesOnlyThatScreen() {
+        var raised = mb169
+        raised.offsetY = 4
+        var lowered = z12
+        lowered.offsetY = -130
+        let base = WallpaperPlan.physical([pa34, mb169, z12])
+        let p = WallpaperPlan.physical([pa34, raised, lowered])
+        assertClose(p[0].maxY, base[0].maxY)
+        assertClose(p[1].maxY - base[1].maxY, 4)
+        assertClose(p[2].maxY - base[2].maxY, -130)
+        assertClose(p[1].minX, base[1].minX)
     }
 
     func testSpanIsOneImageInMillimeters() {
