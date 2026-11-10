@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an Seam.
 
-## [Unveröffentlicht]
+## [0.10.0] — 2026-11-10
 
 ### Neu
 

@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.10
+
+**Hintergründe online aussuchen, für hell und für dunkel.** Im Fenster „Hintergrund“ öffnet „Online aussuchen …“ kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Ein Klick auf „Für hell“ oder „Für dunkel“ lädt die Datei und setzt sie, und schaltet macOS um, wechselt der Hintergrund mit. Für das Gesamtbild über mehrere Monitore gibt es je Monitor einen Ausgleich in 2-mm-Schritten, falls einer tiefer steht als gedacht. Außerdem behoben: Ein kleinerer Monitor neben einem großen rutschte im Gesamtbild um ein paar Zentimeter nach unten.
+
+---
+
 ## Neu in 0.9
 
 **Ein Hintergrund über alle Monitore.** Im neuen Fenster „Hintergrund“ wählst du ein Video oder ein Bild. Das Video läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen, das Bild wird ein ganz normaler macOS-Hintergrund. Mit mehreren Monitoren kann es auch ein Gesamtbild sein. Dafür rechnet Seam in Millimetern. Nach Bildpunkten verteilt, würde das Bild an der Kante springen, sobald ein Monitor feiner auflöst als sein Nachbar. So läuft es gerade weiter.
