@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.9.0</title>
+            <pubDate>Tue, 10 Nov 2026 17:17:24 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>73</sparkle:version>
+            <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Eigener Hintergrund: Video oder Bild, auch als ein Gesamtbild über alle Monitore.</b> Neuer Bild-Knopf unten im Seam-Fenster öffnet „Hintergrund“. Ein Video läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen, ein Bild setzt Seam als normalen macOS-Hintergrund. Das Gesamtbild verteilt Seam nach der echten Größe der Monitore, damit Linien über die Kante gerade weiterlaufen, auch wenn ein Monitor feiner auflöst. Einzelne Bildschirme lassen sich ausnehmen. Braucht keine zusätzliche Freigabe.</li></ul><h3>Geändert</h3><ul><li><b>Neuer Name der Freigabe in allen Texten.</b> macOS nennt die Liste unter Datenschutz &amp; Sicherheit inzwischen „Gerätesteuerung und Datenzugriff“ statt „Bedienungshilfen“. Hinweis im Seam-Fenster, Meldung beim Aufräumen, Hilfe, README und Website nennen jetzt den neuen Namen.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.9.0/Seam-0.9.0.zip" length="3740899" type="application/octet-stream" sparkle:edSignature="AchhT201Dzap6Og01txFTGPOwfGM0iYqEgA4gVtKsVRiJ4/cXGhtmcYb6uDrfOiaMS/nVP524wpHKlKw8WdJAg=="/>
+        </item>
+        <item>
             <title>0.8.0</title>
             <pubDate>Fri, 06 Nov 2026 12:37:25 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -24,18 +34,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.7.0/Seam-0.7.0.zip" length="3671583" type="application/octet-stream" sparkle:edSignature="3BzhwZidGsD1DUGZwwzyD9itJdND5f2V+rzRKOxL5NH//+ENAHASjxcTZ6E+xGEm+wBoPVAxjb7X3owSw26mDQ=="/>
         </item>
-        <item>
-            <title>0.6.1</title>
-            <pubDate>Fri, 16 Oct 2026 17:21:05 +0200</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>58</sparkle:version>
-            <sparkle:shortVersionString>0.6.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.6.1/Seam-0.6.1.zip" length="3567406" type="application/octet-stream" sparkle:edSignature="qtUUJ/Ff3pAGcEKQk077/JAbufIDLSCu4rVxSb83Y5PPOc3UvlJ0ckFQ1ijxQtJI0COpA7Q6tjy/eY3XMym8Bw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: ex6+H8rCqM3U9RP2MNyvB85lH9ZYmk0KUcZnQE5Jmzy0ONBbMKOv2GcUms8Ud3PdCZJv6ADijUMaCtvv76eDBQ==
-length: 4763
+edSignature: 30FN8VUFyK4pYnR0c2/H3S0AUdcjTwTh/IDzpRi1ui2hj3cJ0T9+SprMHLpkOxRN3O+djmqvf+N0IIH2ub0pCA==
+length: 5716
 -->
