@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.10.0</title>
+            <pubDate>Tue, 10 Nov 2026 18:12:09 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>78</sparkle:version>
+            <sparkle:shortVersionString>0.10.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hintergründe online aussuchen.</b> „Online aussuchen …“ im Fenster „Hintergrund“ zeigt kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Suchen, anklicken, „Für hell“ oder „Für dunkel“: Seam lädt die Datei und setzt sie. Pixabay und Pexels brauchen einen kostenlosen Schlüssel, den Seam in deinem Schlüsselbund ablegt.</li><li><b>Eigener Hintergrund für hell und dunkel.</b> Schaltet macOS um, wechselt Seam die Datei mit.</li><li><b>Ausgleich je Monitor.</b> Mit ↑ und ↓ setzt du einen Monitor in 2-mm-Schritten höher oder tiefer, bis das Gesamtbild über die Kante gerade weiterläuft — auch wenn ein Monitor tiefer steht.</li><li><b>Die runden Knöpfe im Seam-Fenster sagen, was sie tun.</b> Fährst du darüber, steht es darunter. Die Hinweise von macOS erscheinen in diesem Fenster nicht.</li></ul><h3>Behoben</h3><ul><li><b>Gesamtbild auf unterschiedlich großen Monitoren versetzt.</b> Seam richtete nebeneinander stehende Monitore an ihrer Mitte aus; ein kleinerer, hochkant gestellter Monitor rutschte dadurch um mehrere Zentimeter nach unten. Jetzt zählt die Oberkante.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.10.0/Seam-0.10.0.zip" length="3879882" type="application/octet-stream" sparkle:edSignature="kvmnyIJnNjlc2nMGafKmfG9krtRj5TH1f4TUkDz69q1+SQqDSv0GQ99S6H4c/WwlS9df/a0eQ4ayZKbNZ8t8CQ=="/>
+        </item>
+        <item>
             <title>0.9.0</title>
             <pubDate>Tue, 10 Nov 2026 17:17:24 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,18 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Fenster auf allen Schreibtischen gehören jetzt zum Layout.</b> Ein Fenster, das auf allen Schreibtischen eines Bildschirms liegt (z. B. ein Finder-Fenster auf einem kleinen Zusatzbildschirm), merkt sich Seam mit Bildschirm und Größe und holt es zurück, wenn macOS es verschoben hat. Anlass: Beim Aufwachen meldet sich ein Bildschirm kurz ab, macOS schiebt solche Fenster auf einen anderen und verkleinert sie. Zurückgeholt wird nur per Rahmen, ohne Maus und Tastatur. Danach einmal neu speichern, damit das Fenster ins Layout kommt.</li><li><b>Das Update-Fenster zeigt, was neu ist.</b> Findet Seam ein Update, steht im Fenster direkt der passende Abschnitt aus dieser Liste.</li></ul><h3>Geändert</h3><ul><li><b>„Kontrast erhöhen“ wird beachtet.</b> Ist in den Systemeinstellungen → Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Seam kräftigere Farben für Akzente, Text und Kartenränder. Ohne den Schalter bleibt alles wie bisher.</li></ul><h3>Behoben</h3><ul><li><b>Aufräumen brach mitten drin ab und ließ Fenster auf falschen Schreibtischen liegen.</b> Seam hielt seinen eigenen Tastendruck ⌃→ für deine Eingabe — unter macOS 27.2 liefert die Zeitabfrage, auf die es sich verließ, um bis zu 0,4 s verschobene Werte. Jetzt zählt Seam Tastendrücke statt Zeiten: Mehr Tastendrücke als die eigenen heißt, du hast getippt. Sondertasten allein (⇧ ⌘ ⌥ ⌃) brechen wie bisher nicht ab, Mausbewegung und jede andere Taste schon.</li><li><b>Fenster landeten einen Schreibtisch zu früh.</b> Ein Schreibtischwechsel dauert unter macOS 27.2 länger als die 0,9 s, die Seam nach jedem ⌃←/⌃→ wartete; ein Druck ging verloren. Seam wartet jetzt, bis der Wechsel wirklich passiert ist.</li><li><b>Mit drei Bildschirmen parkte Seam Fenster zufällig auf dem kleinsten.</b> Beim Wechsel auf demselben Bildschirm parkt Seam ein Fenster kurz auf einem anderen — jetzt immer auf dem größten, auf den es ohne Verkleinern passt.</li></ul><p>Geprüft mit drei Bildschirmen (Ultrawide, Hochkant, kleiner Zusatzbildschirm): Fenster zwischen Schreibtischen und Bildschirmen 6 von 6 am Ziel, Finder-Fenster nach dem Verschieben 3 von 3 zurück. Der automatische Lauf nach dem Aufwachen ist mit dieser Version noch nicht über Nacht beobachtet.</p>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.8.0/Seam-0.8.0.zip" length="3690994" type="application/octet-stream" sparkle:edSignature="pXP+3qwIHiPf92KNeiXq+EKFtMbxe1W7DnMiGOzywMMVhv2OKBo04hl2wdD41u1Va4dWGlP9sas4yXqLUa4yCw=="/>
         </item>
-        <item>
-            <title>0.7.0</title>
-            <pubDate>Mon, 19 Oct 2026 15:35:14 +0200</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>61</sparkle:version>
-            <sparkle:shortVersionString>0.7.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.7.0/Seam-0.7.0.zip" length="3671583" type="application/octet-stream" sparkle:edSignature="3BzhwZidGsD1DUGZwwzyD9itJdND5f2V+rzRKOxL5NH//+ENAHASjxcTZ6E+xGEm+wBoPVAxjb7X3owSw26mDQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 30FN8VUFyK4pYnR0c2/H3S0AUdcjTwTh/IDzpRi1ui2hj3cJ0T9+SprMHLpkOxRN3O+djmqvf+N0IIH2ub0pCA==
-length: 5716
+edSignature: 2xXR2StwtHn8k6AtI11WhdqJTVOxveLUMaqA2XG1RN+dLH8LZZjdEsGVkdoG1Yn4AxjQZmtUAZw8aj8AgsVuDw==
+length: 6960
 -->
