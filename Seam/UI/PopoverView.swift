@@ -13,6 +13,8 @@ struct PopoverView: View {
 
     @State private var orientation: Orientation = .landscape
     @State private var hovered: Command?
+    /// Beschriftung des runden Knopfs unter der Maus (Fuß), nil = keiner.
+    @State private var footerHint: String?
     /// Beim Öffnen gelesen, nicht beobachtet (siehe `Engine.targetInfo`).
     @State private var targetName: String?
     /// Beim Öffnen berechnet (E17): weicht die Anordnung vom Layout ab? nil = kein Layout.
@@ -298,50 +300,63 @@ struct PopoverView: View {
 
     // MARK: - Fuß
 
+    /// Michael, 10.11.: Die macOS-Hinweise (`.help`) erscheinen im Menüleisten-Fenster nicht, die
+    /// runden Knöpfe blieben rätselhaft. `onHover` kommt dort an (wie bei den Kacheln), also zeigt
+    /// eine eigene Zeile unter den Knöpfen sofort, was der Knopf unter der Maus tut.
     private var footer: some View {
         @Bindable var prefs = prefs
-        return HStack(spacing: FamilyTheme.Space.s) {
-            Button {
-                prefs.dimEnabled.toggle()
-                engine.applyDimSetting()
-            } label: {
-                Image(systemName: prefs.dimEnabled ? "circle.lefthalf.filled.inverse" : "circle.lefthalf.filled")
-                    .foregroundStyle(prefs.dimEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
-            }
-            .buttonStyle(.familyGlass(.circle, size: 30))
-            .help(prefs.dimEnabled ? "Hintergrund abdunkeln: an" : "Hintergrund abdunkeln: aus")
-            .accessibilityLabel("Hintergrund abdunkeln")
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: FamilyTheme.Space.s) {
+                Button {
+                    prefs.dimEnabled.toggle()
+                    engine.applyDimSetting()
+                } label: {
+                    Image(systemName: prefs.dimEnabled ? "circle.lefthalf.filled.inverse" : "circle.lefthalf.filled")
+                        .foregroundStyle(prefs.dimEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
+                }
+                .buttonStyle(.familyGlass(.circle, size: 30))
+                .modifier(HoverHint(text: prefs.dimEnabled ? "Hintergrund abdunkeln ist an – klicken zum Ausschalten"
+                                                         : "Hintergrund abdunkeln ist aus – klicken zum Einschalten",
+                                    current: $footerHint))
+                .accessibilityLabel("Hintergrund abdunkeln")
 
-            if engine.spaces.available {
-                Button { openSpaces() } label: { Image(systemName: "square.on.square") }
+                if engine.spaces.available {
+                    Button { openSpaces() } label: { Image(systemName: "square.on.square") }
+                        .buttonStyle(.familyGlass(.circle, size: 30))
+                        .modifier(HoverHint(text: "Spaces benennen", current: $footerHint))
+                        .accessibilityLabel("Spaces benennen")
+                }
+                Button { open("hintergrund") } label: {
+                    Image(systemName: "photo.on.rectangle")
+                        .foregroundStyle(prefs.wallpaperEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
+                }
+                .buttonStyle(.familyGlass(.circle, size: 30))
+                .modifier(HoverHint(text: "Eigener Hintergrund: Video oder Bild", current: $footerHint))
+                .accessibilityLabel("Hintergrund")
+                Spacer()
+                Button {
+                    open("einstellungen")
+                } label: { Image(systemName: "gearshape") }
                     .buttonStyle(.familyGlass(.circle, size: 30))
-                    .help("Spaces benennen")
-                    .accessibilityLabel("Spaces benennen")
+                    .modifier(HoverHint(text: "Einstellungen", current: $footerHint))
+                    .accessibilityLabel("Einstellungen")
+                Button {
+                    open("hilfe")
+                } label: { Image(systemName: "questionmark") }
+                    .buttonStyle(.familyGlass(.circle, size: 30))
+                    .modifier(HoverHint(text: "Hilfe", current: $footerHint))
+                    .accessibilityLabel("Hilfe")
+                Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
+                    .buttonStyle(.familyGlass(.circle, size: 30))
+                    .modifier(HoverHint(text: "Seam beenden", current: $footerHint))
+                    .accessibilityLabel("Seam beenden")
             }
-            Button { open("hintergrund") } label: {
-                Image(systemName: "photo.on.rectangle")
-                    .foregroundStyle(prefs.wallpaperEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
-            }
-            .buttonStyle(.familyGlass(.circle, size: 30))
-            .help("Hintergrund")
-            .accessibilityLabel("Hintergrund")
-            Spacer()
-            Button {
-                open("einstellungen")
-            } label: { Image(systemName: "gearshape") }
-                .buttonStyle(.familyGlass(.circle, size: 30))
-                .help("Einstellungen")
-                .accessibilityLabel("Einstellungen")
-            Button {
-                open("hilfe")
-            } label: { Image(systemName: "questionmark") }
-                .buttonStyle(.familyGlass(.circle, size: 30))
-                .help("Hilfe")
-                .accessibilityLabel("Hilfe")
-            Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
-                .buttonStyle(.familyGlass(.circle, size: 30))
-                .help("Seam beenden")
-                .accessibilityLabel("Seam beenden")
+            // Leerzeichen hält die Höhe, damit das Fenster beim Darüberfahren nicht springt.
+            Text(verbatim: footerHint ?? " ")
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(FamilyTheme.textSecondary)
+                .lineLimit(1)
+                .accessibilityIdentifier("seam.footerHint")
         }
     }
 
@@ -362,5 +377,20 @@ struct PopoverView: View {
             NSApp.activate()
             NSApp.windows.first { $0.identifier?.rawValue.hasPrefix(id) == true }?.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+/// Beschriftung beim Darüberfahren: setzt `current`, solange die Maus auf dem Knopf steht.
+/// `.help` bleibt dabei (für Fenster, in denen macOS Hinweise zeigt, und für Bedienungshilfen).
+private struct HoverHint: ViewModifier {
+    let text: String
+    @Binding var current: String?
+
+    func body(content: Content) -> some View {
+        content
+            .help(text)
+            .onHover { inside in
+                if inside { current = text } else if current == text { current = nil }
+            }
     }
 }

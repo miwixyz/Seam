@@ -45,32 +45,59 @@ struct WallpaperSettingsView: View {
                     .toggleStyle(FamilySwitchStyle())
             }
             divider
-            row(fileName) {
-                Button("Datei wählen …", action: choose)
-                    .buttonStyle(.familyGlass(.capsule, size: 26))
-            }
+            fileRow(label: "Hell", symbol: "sun.max", name: fileName(prefs.wallpaperPath) ?? "Keine Datei gewählt", dark: false)
+            divider
+            fileRow(label: "Dunkel", symbol: "moon", name: fileName(prefs.wallpaperPathDark) ?? "wie hell", dark: true)
             note("Video (mp4, mov) läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen. "
                  + "Ein Bild setzt Seam als macOS-Hintergrund. Bei einem Video wird das erste Bild "
                  + "ebenfalls als macOS-Hintergrund gesetzt (Mission Control, Sperrbildschirm). "
-                 + "Ausschalten beendet das Video, das macOS-Bild bleibt.",
+                 + "Schaltet macOS zwischen hell und dunkel um, wechselt Seam die Datei mit; ohne "
+                 + "eigene dunkle Datei bleibt die helle. Ausschalten beendet das Video, das macOS-Bild bleibt.",
                  symbol: "info.circle")
         }
     }
 
-    private var fileName: String {
-        prefs.wallpaperPath.map { ($0 as NSString).lastPathComponent } ?? "Keine Datei gewählt"
+    /// Eine Zeile je Darstellung: Symbol, Dateiname, wählen (und bei dunkel: entfernen).
+    private func fileRow(label: String, symbol: String, name: String, dark: Bool) -> some View {
+        HStack(spacing: FamilyTheme.Space.s) {
+            Label(label, systemImage: symbol)
+                .frame(width: 84, alignment: .leading)
+            Text(verbatim: name)
+                .foregroundStyle(FamilyTheme.textSecondary)
+                .lineLimit(1).truncationMode(.middle)
+            Spacer(minLength: FamilyTheme.Space.s)
+            if dark, prefs.wallpaperPathDark != nil {
+                Button {
+                    prefs.clearWallpaperPathDark()
+                    engine.applyWallpaper()
+                } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.familyGlass(.circle, size: 26))
+                    .help("Dunkle Datei entfernen, dann gilt auch im Dunkeln die helle")
+                    .accessibilityLabel("Dunkle Datei entfernen")
+            }
+            Button("Wählen …") { choose(dark: dark) }
+                .buttonStyle(.familyGlass(.capsule, size: 26))
+                .help(dark ? "Video oder Bild für die dunkle Darstellung wählen"
+                           : "Video oder Bild für die helle Darstellung wählen")
+        }
+        .frame(minHeight: 34)
+    }
+
+    private func fileName(_ path: String?) -> String? {
+        path.map { ($0 as NSString).lastPathComponent }
     }
 
     /// E18a: Der Pfad kommt nur aus diesem Dialog.
-    private func choose() {
+    private func choose(dark: Bool) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.movie, .image]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.message = "Video oder Bild für den Hintergrund wählen"
+        panel.message = dark ? "Video oder Bild für die dunkle Darstellung wählen"
+                             : "Video oder Bild für die helle Darstellung wählen"
         NSApp.activate()
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        prefs.setWallpaperPath(url.path)
+        prefs.setWallpaperPath(url.path, dark: dark)
         prefs.wallpaperEnabled = true
         engine.applyWallpaper()
     }

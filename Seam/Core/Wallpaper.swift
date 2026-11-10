@@ -44,8 +44,25 @@ final class Wallpaper {
     @ObservationIgnored private var screenChange: Task<Void, Never>?
     /// Zählt jeden Neuaufbau; ein älterer Ladevorgang, der spät fertig wird, verwirft sein Ergebnis.
     @ObservationIgnored private var generation = 0
+    /// Hell/Dunkel (Michael, 10.11.): macOS-Darstellung beim letzten Aufbau, und ihr Beobachter.
+    @ObservationIgnored private var lastDark: Bool?
+    @ObservationIgnored private var appearanceWatch: NSKeyValueObservation?
 
     init(prefs: Preferences) { self.prefs = prefs }
+
+    /// Ist macOS gerade dunkel? Eine Menüleisten-App folgt der Systemdarstellung.
+    static var isDark: Bool {
+        NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    }
+
+    /// Darstellung gewechselt: nur neu aufbauen, wenn hell und dunkel verschiedene Dateien haben.
+    private func appearanceChanged() {
+        let dark = Self.isDark
+        guard dark != lastDark else { return }
+        lastDark = dark
+        guard prefs.wallpaperPathDark != nil, prefs.wallpaperPathDark != prefs.wallpaperPath else { return }
+        apply()
+    }
 
     // MARK: - Ein/Aus
 
@@ -61,7 +78,9 @@ final class Wallpaper {
             return
         }
         addObservers()
-        guard let path = prefs.wallpaperPath else {
+        let dark = Self.isDark
+        lastDark = dark
+        guard let path = Preferences.wallpaperPath(light: prefs.wallpaperPath, dark: prefs.wallpaperPathDark, isDark: dark) else {
             status = .problem("Noch keine Datei gewählt.")
             return
         }
@@ -304,11 +323,17 @@ final class Wallpaper {
                                                              object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.scheduleRebuild() }
         })
+        // Hell/Dunkel: macOS meldet den Wechsel über die Darstellung der App.
+        appearanceWatch = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, _ in
+            Task { @MainActor in self?.appearanceChanged() }
+        }
     }
 
     private func removeObservers() {
         tokens.forEach { NotificationCenter.default.removeObserver($0); NSWorkspace.shared.notificationCenter.removeObserver($0) }
         tokens = []
+        appearanceWatch?.invalidate()
+        appearanceWatch = nil
         screenChange?.cancel()
     }
 

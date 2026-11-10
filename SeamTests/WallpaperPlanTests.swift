@@ -73,3 +73,20 @@ final class WallpaperPlanTests: XCTestCase {
         XCTAssertEqual(WallpaperPlan.mediaRects(media: CGSize(width: 1, height: 1), screens: [], layout: .span), [])
     }
 }
+
+/// Hell/Dunkel (Michael, 10.11.): welche Datei gilt?
+final class WallpaperAppearanceTests: XCTestCase {
+    func testDarkUsesDarkFile() {
+        XCTAssertEqual(Preferences.wallpaperPath(light: "/a.mp4", dark: "/b.mp4", isDark: true), "/b.mp4")
+        XCTAssertEqual(Preferences.wallpaperPath(light: "/a.mp4", dark: "/b.mp4", isDark: false), "/a.mp4")
+    }
+
+    func testMissingDarkFallsBackToLight() {
+        XCTAssertEqual(Preferences.wallpaperPath(light: "/a.mp4", dark: nil, isDark: true), "/a.mp4")
+    }
+
+    func testOnlyDarkChosenAlsoServesLight() {
+        XCTAssertEqual(Preferences.wallpaperPath(light: nil, dark: "/b.mp4", isDark: false), "/b.mp4")
+        XCTAssertNil(Preferences.wallpaperPath(light: nil, dark: nil, isDark: false))
+    }
+}

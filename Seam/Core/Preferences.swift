@@ -29,6 +29,7 @@ final class Preferences {
         static let hideIconWithSpaceName = "hideIconWithSpaceName"
         static let wallpaperEnabled = "wallpaperEnabled"
         static let wallpaperPath = "wallpaperPath"
+        static let wallpaperPathDark = "wallpaperPathDark"
         static let wallpaperLayout = "wallpaperLayout"
         static let wallpaperOffScreens = "wallpaperOffScreens"
     }
@@ -79,6 +80,8 @@ final class Preferences {
     var wallpaperEnabled: Bool { didSet { defaults.set(wallpaperEnabled, forKey: Key.wallpaperEnabled) } }
     /// Vom Nutzer gewählte Datei (Video oder Bild), nur über `setWallpaperPath` (E18a).
     private(set) var wallpaperPath: String? { didSet { defaults.set(wallpaperPath, forKey: Key.wallpaperPath) } }
+    /// Datei für die dunkle Darstellung (Michael, 10.11.). nil = wie hell.
+    private(set) var wallpaperPathDark: String? { didSet { defaults.set(wallpaperPathDark, forKey: Key.wallpaperPathDark) } }
     /// Gesamtbild über alle Bildschirme oder je Bildschirm ganz. Ab Werk Gesamtbild.
     var wallpaperLayout: WallpaperLayout { didSet { defaults.set(wallpaperLayout.rawValue, forKey: Key.wallpaperLayout) } }
     /// Bildschirme (UUID), auf denen Seam den Hintergrund nicht setzt.
@@ -268,6 +271,7 @@ final class Preferences {
         }
         wallpaperEnabled = defaults.object(forKey: Key.wallpaperEnabled) as? Bool ?? false
         wallpaperPath = (defaults.string(forKey: Key.wallpaperPath)).flatMap { Self.validPath($0) ? $0 : nil }
+        wallpaperPathDark = (defaults.string(forKey: Key.wallpaperPathDark)).flatMap { Self.validPath($0) ? $0 : nil }
         wallpaperLayout = defaults.string(forKey: Key.wallpaperLayout).flatMap(WallpaperLayout.init(rawValue:)) ?? .span
         wallpaperOffScreens = Self.uniqueCapped(defaults.stringArray(forKey: Key.wallpaperOffScreens) ?? [],
                                                 max: Self.maxDimScreens, valid: Self.validKey)
@@ -281,9 +285,19 @@ final class Preferences {
         p.hasPrefix("/") && p.count <= 1024 && !p.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }
     }
 
-    func setWallpaperPath(_ path: String) {
+    func setWallpaperPath(_ path: String, dark: Bool = false) {
         guard Self.validPath(path) else { return }
-        wallpaperPath = path
+        if dark { wallpaperPathDark = path } else { wallpaperPath = path }
+    }
+
+    /// Dunkle Datei entfernen: dann gilt auch im Dunkeln die helle.
+    func clearWallpaperPathDark() {
+        wallpaperPathDark = nil
+    }
+
+    /// Welche Datei gilt gerade? Dunkel ohne eigene Datei → die helle (getestet).
+    nonisolated static func wallpaperPath(light: String?, dark: String?, isDark: Bool) -> String? {
+        isDark ? (dark ?? light) : (light ?? dark)
     }
 
     func setWallpaperScreen(_ on: Bool, id: String) {
