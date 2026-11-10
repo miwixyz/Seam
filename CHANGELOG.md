@@ -4,6 +4,15 @@ Alle nennenswerten Änderungen an Seam.
 
 ## [Unveröffentlicht]
 
+### Neu
+
+- **Eigener Hintergrund: Video oder Bild, auch als ein Gesamtbild über alle Monitore.** Neuer
+  Bild-Knopf unten im Seam-Fenster öffnet „Hintergrund“. Ein Video läuft ohne Ton in Endlosschleife
+  hinter den Schreibtisch-Symbolen, ein Bild setzt Seam als normalen macOS-Hintergrund. Das
+  Gesamtbild verteilt Seam nach der echten Größe der Monitore, damit Linien über die Kante gerade
+  weiterlaufen, auch wenn ein Monitor feiner auflöst. Einzelne Bildschirme lassen sich ausnehmen.
+  Braucht keine zusätzliche Freigabe.
+
 ### Geändert
 
 - **Neuer Name der Freigabe in allen Texten.** macOS nennt die Liste unter Datenschutz & Sicherheit

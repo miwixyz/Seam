@@ -87,6 +87,16 @@ struct SeamApp: App {
         // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
         .handlesExternalEvents(matching: [])
 
+        Window("Hintergrund", id: "hintergrund") {
+            WallpaperSettingsWindow()
+                .environment(engine)
+                .environment(engine.prefs)
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        // Wie die anderen Fenster: öffnet nur der Nutzer, nie ein Ereignis von außen (E16).
+        .handlesExternalEvents(matching: [])
+
         Window("Layout bearbeiten", id: "layout") {
             DeskLayoutWindow()
                 .environment(engine)
@@ -132,6 +142,8 @@ final class Engine {
     @ObservationIgnored private lazy var drag = DragController(prefs: prefs, actions: actions)
     @ObservationIgnored private lazy var pairs = PairKeeper(prefs: prefs, writer: actions.writer)
     @ObservationIgnored private lazy var dimmer = Dimmer(prefs: prefs)
+    /// Hintergrund (E18). Selbst beobachtbar (Status fürs Fenster), läuft ohne Bedienungshilfen.
+    @ObservationIgnored private(set) lazy var wallpaper = Wallpaper(prefs: prefs)
     @ObservationIgnored private let hotkeys = Hotkeys()
     @ObservationIgnored private var trustTimer: Timer?
     /// Prüft auch nach dem Start weiter, ob die Freigabe noch da ist (Code-Audit 09.10., C8/R9:
@@ -198,6 +210,8 @@ final class Engine {
     }
 
     private func boot() {
+        // E18: braucht keine Freigabe, startet also vor der Prüfung.
+        wallpaper.apply()
         if AXAccess.isTrusted {
             startEngines()
         } else {
@@ -439,6 +453,12 @@ final class Engine {
     func applyDimSetting() {
         guard running else { return }
         dimmer.apply()
+    }
+
+    /// Hintergrund (E18): jede Änderung im Fenster baut neu auf. Nicht im Test/in der Vorschau.
+    func applyWallpaper() {
+        guard !Self.isRunningTests, !Self.isPreview else { return }
+        wallpaper.apply()
     }
 
     /// Abdunkeln je Bildschirm, App, Space, Stärke (0.6): nur neu einsortieren und zeichnen,

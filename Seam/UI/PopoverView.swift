@@ -318,6 +318,13 @@ struct PopoverView: View {
                     .help("Spaces benennen")
                     .accessibilityLabel("Spaces benennen")
             }
+            Button { open("hintergrund") } label: {
+                Image(systemName: "photo.on.rectangle")
+                    .foregroundStyle(prefs.wallpaperEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
+            }
+            .buttonStyle(.familyGlass(.circle, size: 30))
+            .help("Hintergrund")
+            .accessibilityLabel("Hintergrund")
             Spacer()
             Button {
                 open("einstellungen")

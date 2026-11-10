@@ -27,6 +27,10 @@ final class Preferences {
         static let deskLayouts = "deskLayouts"
         static let deskAutoTidy = "deskAutoTidy"
         static let hideIconWithSpaceName = "hideIconWithSpaceName"
+        static let wallpaperEnabled = "wallpaperEnabled"
+        static let wallpaperPath = "wallpaperPath"
+        static let wallpaperLayout = "wallpaperLayout"
+        static let wallpaperOffScreens = "wallpaperOffScreens"
     }
 
     private let defaults: UserDefaults
@@ -71,6 +75,14 @@ final class Preferences {
     }
     /// Seam-Symbol weglassen, solange ein Space-Name in der Menüleiste steht (Michael, 09.10.).
     var hideIconWithSpaceName: Bool { didSet { defaults.set(hideIconWithSpaceName, forKey: Key.hideIconWithSpaceName) } }
+    /// Eigener Hintergrund (E18). Ab Werk aus.
+    var wallpaperEnabled: Bool { didSet { defaults.set(wallpaperEnabled, forKey: Key.wallpaperEnabled) } }
+    /// Vom Nutzer gewählte Datei (Video oder Bild), nur über `setWallpaperPath` (E18a).
+    private(set) var wallpaperPath: String? { didSet { defaults.set(wallpaperPath, forKey: Key.wallpaperPath) } }
+    /// Gesamtbild über alle Bildschirme oder je Bildschirm ganz. Ab Werk Gesamtbild.
+    var wallpaperLayout: WallpaperLayout { didSet { defaults.set(wallpaperLayout.rawValue, forKey: Key.wallpaperLayout) } }
+    /// Bildschirme (UUID), auf denen Seam den Hintergrund nicht setzt.
+    private(set) var wallpaperOffScreens: [String] { didSet { defaults.set(wallpaperOffScreens, forKey: Key.wallpaperOffScreens) } }
 
     static let gapChoices = [0, 5, 10, 20]
     static let dimChoices = [20, 35, 50]
@@ -253,6 +265,32 @@ final class Preferences {
         spaceSlotNames = rawSlots.sorted { $0.key < $1.key }.prefix(Self.maxSlotNames).reduce(into: [:]) { r, e in
             let n = SpaceNames.sanitize(e.value)
             if !n.isEmpty, Self.validKey(e.key) { r[e.key] = n }
+        }
+        wallpaperEnabled = defaults.object(forKey: Key.wallpaperEnabled) as? Bool ?? false
+        wallpaperPath = (defaults.string(forKey: Key.wallpaperPath)).flatMap { Self.validPath($0) ? $0 : nil }
+        wallpaperLayout = defaults.string(forKey: Key.wallpaperLayout).flatMap(WallpaperLayout.init(rawValue:)) ?? .span
+        wallpaperOffScreens = Self.uniqueCapped(defaults.stringArray(forKey: Key.wallpaperOffScreens) ?? [],
+                                                max: Self.maxDimScreens, valid: Self.validKey)
+    }
+
+    // MARK: - Hintergrund (E18)
+
+    /// Gültiger Pfad (E18a): absolut, nicht zu lang, ohne Steuerzeichen. Ob die Datei da ist, prüft
+    /// erst der Hintergrund selbst (sie kann zwischendurch fehlen, dann Hinweis statt Löschen).
+    static func validPath(_ p: String) -> Bool {
+        p.hasPrefix("/") && p.count <= 1024 && !p.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }
+    }
+
+    func setWallpaperPath(_ path: String) {
+        guard Self.validPath(path) else { return }
+        wallpaperPath = path
+    }
+
+    func setWallpaperScreen(_ on: Bool, id: String) {
+        if on {
+            wallpaperOffScreens.removeAll { $0 == id }
+        } else if Self.validKey(id), !wallpaperOffScreens.contains(id), wallpaperOffScreens.count < Self.maxDimScreens {
+            wallpaperOffScreens.append(id)
         }
     }
 }

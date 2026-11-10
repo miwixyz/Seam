@@ -100,6 +100,29 @@ ohne eigenes Fenster nach vorn, etwa eines aus der Menüleiste, bleibt die Abdun
 wie sie war (seit 0.5.5, vorher ging sie kurz aus und wieder an). Klicks gehen durch
 die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte eines davon ab.
 
+## Eigener Hintergrund
+
+Mit dem Bild-Knopf unten im Seam-Fenster öffnest du „Hintergrund“ (seit 0.9). Dort wählst du ein
+Video (mp4, mov) oder ein Bild.
+
+- **Video** läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen. Symbole, Widgets
+  und Klicks auf den Schreibtisch funktionieren wie immer. Das erste Bild des Videos setzt Seam
+  zusätzlich als macOS-Hintergrund, damit Mission Control und der Sperrbildschirm dazu passen.
+  Schlafen die Bildschirme, hält das Video an.
+- **Bild** setzt Seam als normalen macOS-Hintergrund. Das kostet keine Leistung und bleibt, auch
+  wenn Seam nicht läuft.
+
+**Verteilung:** „Ein Bild über alle“ legt ein Gesamtbild über alle eingeschalteten Bildschirme.
+Seam verteilt es nach der echten Größe der Monitore: Linien laufen über die Kante gerade weiter,
+auch wenn ein Monitor feiner auflöst als der andere. Die Lage folgt der Anordnung unter
+Systemeinstellungen → Displays. Rahmen und Lücken zwischen den Monitoren kennt macOS nicht; ordne
+die Bildschirme dort so an, wie sie auf dem Tisch stehen. „Jeder Bildschirm ganz“ zeigt auf jedem
+Bildschirm das ganze Bild. Unter „Bildschirme“ schaltest du einzelne Monitore aus; dort bleibt
+der bisherige Hintergrund.
+
+Ausschalten beendet das Video, das macOS-Hintergrundbild bleibt. Ist die Datei verschoben oder
+gelöscht, sagt es das Fenster; wähle sie dann neu.
+
 ## Links verteilen
 
 Seam kann wie Velja dein Standardbrowser sein und jeden Link an den passenden Browser
@@ -174,6 +197,8 @@ Einzige Ausnahme beim Steuern: Beim Aufräumen der Layouts bewegt Seam selbst di
 ⌃← / ⌃→ — nur dafür, nur diese Tasten, mit Abbruch, sobald du eingreifst.
 Links, die Seam als Standardbrowser bekommt, reicht es nur an einen Browser weiter; Adressen
 landen weder im Protokoll noch in einem Verlauf. Gespeichert werden nur die Einstellungen, deine Link-Regeln und dein Layout (je App: Kennung,
-Schreibtisch, Fenstergröße — keine Titel, keine Zeiten). Die ursprüngliche Größe eines Fensters und welche
+Schreibtisch, Fenstergröße — keine Titel, keine Zeiten), dazu der Pfad der Datei, die du als
+Hintergrund gewählt hast. Die zugeschnittenen Hintergrundbilder liegen in
+`~/Library/Application Support/Seam/Hintergrund/`; deine Datei selbst verändert Seam nie. Die ursprüngliche Größe eines Fensters und welche
 Fenster ein Paar bilden, liegen nur im Arbeitsspeicher und sind nach dem Beenden weg. Der einzige Netzzugriff ist die Update-Prüfung
 bei GitHub.

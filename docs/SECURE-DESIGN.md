@@ -719,6 +719,50 @@ unter dem Zeiger und auf den WindowServer — nicht nur auf das Zielfenster.
 für einige Sekunden Maus und Tastatur. Die Layout-Liste in UserDefaults nennt genutzte Apps.
 Private CGS-Leseaufrufe können mit einem macOS-Update brechen → Funktion schaltet sich ab (E14-Muster).
 
+### E18 – Hintergrund: Video und Standbild über alle Bildschirme (0.9, Durchgang 2026-11-10, VOR dem Code)
+
+Michael, 10.11.: bewegter Hintergrund wie Motion Desktop, „auch mit einem Wallpaper für alle meine
+Monitor als Gesamtbild“. Entschieden: Verteilung nach echter Größe (mm), Video + Standbild, eigenes
+Fenster „Hintergrund“.
+
+**Datenfluss neu:**
+```
+[Nutzer: Datei wählen (NSOpenPanel)] ──▶ [UserDefaults: Pfad, Art, Bildschirme]
+[Seam: Wallpaper] ──(9) Datei lesen (AVFoundation / ImageIO) ──▶ [Datei des Nutzers]
+   │   ──(10) Bildstücke schreiben ──▶ [~/Library/Application Support/Seam/Hintergrund/]
+   └──(11) NSWorkspace.setDesktopImageURL je Bildschirm ──▶ [macOS-Hintergrund]
+```
+Braucht **keine** Bedienungshilfen und kein Netz; läuft auch ohne Freigabe.
+
+- **E18a – Nur der Nutzer wählt die Datei.** Pfad kommt ausschließlich aus dem Öffnen-Dialog
+  (Typen: Film, Bild). Gespeichert wird der Pfad als Text (Erweiterung von E10: eine vom Nutzer
+  gewählte Datei, keine Daten fremder Apps). Beim Laden geprüft: absoluter Pfad, ≤ 1024 Zeichen,
+  Datei vorhanden und lesbar, Typ Film oder Bild — sonst Hinweis im Fenster, nichts abgespielt.
+- **E18b – Inhalte parst nur das System.** AVFoundation (Video, ohne Ton) und ImageIO (Bild).
+  Kein eigener Dateiparser. Bilder werden vor dem Zerschneiden auf höchstens 8192 px Kante
+  begrenzt (Speicher).
+- **E18c – Schreiben nur im eigenen Ordner.** Bildstücke heißen `seam-<Bildschirm>-<Zeit>.png`
+  in `Application Support/Seam/Hintergrund/`; gelöscht werden nur Dateien mit Präfix `seam-` in
+  genau diesem Ordner (alte Stücke), nie die Datei des Nutzers.
+- **E18d – Protokoll ohne Pfad** (E11): nur Art (Video/Bild), Zahl der Bildschirme, Fehlercode.
+- **E18e – Fenster nehmen keine Eingaben.** Video-Fenster: randlos, `ignoresMouseEvents`,
+  Ebene `desktopWindow` (gemessen 10.11.: über dem macOS-Hintergrund −2147483624, unter den
+  Finder-Symbolen −2147483603), auf allen Spaces. Pausiert, wenn die Bildschirme schlafen.
+
+**Restrisiken (akzeptiert):** Ein manipuliertes Video/Bild trifft die System-Decoder (wie in
+Vorschau oder QuickTime). Der Pfad in UserDefaults verrät, welche Datei als Hintergrund dient.
+Ein Prozess desselben Nutzers könnte im eigenen Ordner einen Symlink unter dem nächsten
+Stück-Namen anlegen (Zeitstempel in ms) — gleiche Rechte wie Seam, keine Rechte-Grenze.
+
+**rafter-code-review 10.11. (lokal, `rafter run` folgt vor dem Release):**
+- Belegt sauber: Dateiname des Stücks nur aus Buchstaben/Ziffern/Bindestrich (`Wallpaper.safe`),
+  kein `/` möglich (CWE-22); Löschen nur Namen aus der Liste des eigenen Ordners mit Präfix
+  `seam-<Bildschirm>-` und `.png`, erst nach erfolgreichem Setzen (`removeOld`); Protokoll nur
+  feste Texte und Fehlercodes, Dateiname nur im Fenster (`fail`, `apply`); späte Ladevorgänge
+  verwerfen ihr Ergebnis (`generation`); `rafter secrets .` ohne Fund.
+- **Fund 1 (mittel, CWE-400):** Bildgrenze 16384 px erlaubte ~1 GB je Bild bei verändertem Pfad.
+  **Behoben:** 8192 px (`Wallpaper.maxImageEdge`).
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |
