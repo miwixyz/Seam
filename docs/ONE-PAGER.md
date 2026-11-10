@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.9
+
+**Ein Hintergrund über alle Monitore.** Im neuen Fenster „Hintergrund“ wählst du ein Video oder ein Bild. Das Video läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen, das Bild wird ein ganz normaler macOS-Hintergrund. Mit mehreren Monitoren kann es auch ein Gesamtbild sein. Dafür rechnet Seam in Millimetern. Nach Bildpunkten verteilt, würde das Bild an der Kante springen, sobald ein Monitor feiner auflöst als sein Nachbar. So läuft es gerade weiter.
+
+---
+
 ## Neu in 0.8
 
 **Aufräumen, das auch mit drei Bildschirmen sitzt.** Unter macOS 27.2 brach Seam das Aufräumen manchmal mittendrin ab, und Fenster blieben auf dem falschen Schreibtisch liegen. Das ist behoben. Neu dazu: Fenster, die auf allen Schreibtischen eines Bildschirms liegen, gehören jetzt zum Layout, zum Beispiel ein Finder-Fenster auf einem kleinen Zusatzbildschirm. Schiebt macOS so ein Fenster beim Aufwachen weg, setzt Seam es zurück. Maus und Tastatur braucht es dafür nicht.
@@ -91,6 +97,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Zwei Fenster gemeinsam nach vorn holen | Ein Klick auf eines der geteilten Fenster holt beide nach vorn, Minimieren gilt für beide |
 | Wissen, auf welchem Space du bist | Namen für Spaces: der Name des aktuellen Space steht in der Menüleiste |
 | Links im passenden Browser öffnen | Seam als Standardbrowser: Regeln nach Website oder Quell-App, Fn oder ⌥ beim Klick zeigt eine Auswahl (Taste wählbar) |
+| Ein Video oder Bild über alle Monitore | Fenster „Hintergrund“: Video ohne Ton hinter den Schreibtisch-Symbolen oder Bild als macOS-Hintergrund, als Gesamtbild nach echter Monitorgröße oder auf jedem Bildschirm ganz |
 | Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück, je Bildschirm einstellbar, Apps und Spaces lassen sich ausnehmen (ab Werk aus) |
 | Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 
