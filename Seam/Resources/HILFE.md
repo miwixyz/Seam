@@ -105,12 +105,8 @@ die Abdunklung hindurch. Läuft HazeOver oder ein ähnliches Programm, schalte e
 Mit dem Bild-Knopf unten im Seam-Fenster öffnest du „Hintergrund“ (seit 0.9). Dort wählst du ein
 Video (mp4, mov) oder ein Bild.
 
-- **Video** läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen. Symbole, Widgets
-  und Klicks auf den Schreibtisch funktionieren wie immer. Das erste Bild des Videos setzt Seam
-  zusätzlich als macOS-Hintergrund, damit Mission Control und der Sperrbildschirm dazu passen.
-  Schlafen die Bildschirme, hält das Video an.
-- **Bild** setzt Seam als normalen macOS-Hintergrund. Das kostet keine Leistung und bleibt, auch
-  wenn Seam nicht läuft.
+- **Video** läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen. Symbole, Widgets und Klicks auf den Schreibtisch funktionieren wie immer. Das erste Bild des Videos setzt Seam zusätzlich als macOS-Hintergrund, damit Mission Control und der Sperrbildschirm dazu passen. Schlafen die Bildschirme, hält das Video an.
+- **Bild** setzt Seam als normalen macOS-Hintergrund. Das kostet keine Leistung und bleibt, auch wenn Seam nicht läuft.
 
 **Verteilung:** „Ein Bild über alle“ legt ein Gesamtbild über alle eingeschalteten Bildschirme.
 Seam verteilt es nach der echten Größe der Monitore: Linien laufen über die Kante gerade weiter,
