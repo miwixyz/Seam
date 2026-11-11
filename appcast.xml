@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.11.0</title>
+            <pubDate>Wed, 11 Nov 2026 11:38:47 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>80</sparkle:version>
+            <sparkle:shortVersionString>0.11.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>„Alles öffnen“.</b> Neben „Aufräumen“ im Seam-Fenster: öffnet die Apps aus dem Layout, die noch nicht offen sind, und räumt danach auf. „Aufräumen“ und ⌃⌥⌘L sortieren weiter nur Fenster, die schon offen sind. Apps öffnet Seam nur auf diesen Knopf, nie von selbst.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.11.0/Seam-0.11.0.zip" length="3894493" type="application/octet-stream" sparkle:edSignature="S7gwB+IAf5dlQBaMIrnX0PogMw6L+lJVrQjSn2qxojYJ/pe24ZSVWCClJEHZH5azRzyXf/qrrVI/NAKb8Z0ECw=="/>
+        </item>
+        <item>
             <title>0.10.0</title>
             <pubDate>Tue, 10 Nov 2026 18:12:09 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Eigener Hintergrund: Video oder Bild, auch als ein Gesamtbild über alle Monitore.</b> Neuer Bild-Knopf unten im Seam-Fenster öffnet „Hintergrund“. Ein Video läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen, ein Bild setzt Seam als normalen macOS-Hintergrund. Das Gesamtbild verteilt Seam nach der echten Größe der Monitore, damit Linien über die Kante gerade weiterlaufen, auch wenn ein Monitor feiner auflöst. Einzelne Bildschirme lassen sich ausnehmen. Braucht keine zusätzliche Freigabe.</li></ul><h3>Geändert</h3><ul><li><b>Neuer Name der Freigabe in allen Texten.</b> macOS nennt die Liste unter Datenschutz &amp; Sicherheit inzwischen „Gerätesteuerung und Datenzugriff“ statt „Bedienungshilfen“. Hinweis im Seam-Fenster, Meldung beim Aufräumen, Hilfe, README und Website nennen jetzt den neuen Namen.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.9.0/Seam-0.9.0.zip" length="3740899" type="application/octet-stream" sparkle:edSignature="AchhT201Dzap6Og01txFTGPOwfGM0iYqEgA4gVtKsVRiJ4/cXGhtmcYb6uDrfOiaMS/nVP524wpHKlKw8WdJAg=="/>
         </item>
-        <item>
-            <title>0.8.0</title>
-            <pubDate>Fri, 06 Nov 2026 12:37:25 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>67</sparkle:version>
-            <sparkle:shortVersionString>0.8.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Fenster auf allen Schreibtischen gehören jetzt zum Layout.</b> Ein Fenster, das auf allen Schreibtischen eines Bildschirms liegt (z. B. ein Finder-Fenster auf einem kleinen Zusatzbildschirm), merkt sich Seam mit Bildschirm und Größe und holt es zurück, wenn macOS es verschoben hat. Anlass: Beim Aufwachen meldet sich ein Bildschirm kurz ab, macOS schiebt solche Fenster auf einen anderen und verkleinert sie. Zurückgeholt wird nur per Rahmen, ohne Maus und Tastatur. Danach einmal neu speichern, damit das Fenster ins Layout kommt.</li><li><b>Das Update-Fenster zeigt, was neu ist.</b> Findet Seam ein Update, steht im Fenster direkt der passende Abschnitt aus dieser Liste.</li></ul><h3>Geändert</h3><ul><li><b>„Kontrast erhöhen“ wird beachtet.</b> Ist in den Systemeinstellungen → Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Seam kräftigere Farben für Akzente, Text und Kartenränder. Ohne den Schalter bleibt alles wie bisher.</li></ul><h3>Behoben</h3><ul><li><b>Aufräumen brach mitten drin ab und ließ Fenster auf falschen Schreibtischen liegen.</b> Seam hielt seinen eigenen Tastendruck ⌃→ für deine Eingabe — unter macOS 27.2 liefert die Zeitabfrage, auf die es sich verließ, um bis zu 0,4 s verschobene Werte. Jetzt zählt Seam Tastendrücke statt Zeiten: Mehr Tastendrücke als die eigenen heißt, du hast getippt. Sondertasten allein (⇧ ⌘ ⌥ ⌃) brechen wie bisher nicht ab, Mausbewegung und jede andere Taste schon.</li><li><b>Fenster landeten einen Schreibtisch zu früh.</b> Ein Schreibtischwechsel dauert unter macOS 27.2 länger als die 0,9 s, die Seam nach jedem ⌃←/⌃→ wartete; ein Druck ging verloren. Seam wartet jetzt, bis der Wechsel wirklich passiert ist.</li><li><b>Mit drei Bildschirmen parkte Seam Fenster zufällig auf dem kleinsten.</b> Beim Wechsel auf demselben Bildschirm parkt Seam ein Fenster kurz auf einem anderen — jetzt immer auf dem größten, auf den es ohne Verkleinern passt.</li></ul><p>Geprüft mit drei Bildschirmen (Ultrawide, Hochkant, kleiner Zusatzbildschirm): Fenster zwischen Schreibtischen und Bildschirmen 6 von 6 am Ziel, Finder-Fenster nach dem Verschieben 3 von 3 zurück. Der automatische Lauf nach dem Aufwachen ist mit dieser Version noch nicht über Nacht beobachtet.</p>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.8.0/Seam-0.8.0.zip" length="3690994" type="application/octet-stream" sparkle:edSignature="pXP+3qwIHiPf92KNeiXq+EKFtMbxe1W7DnMiGOzywMMVhv2OKBo04hl2wdD41u1Va4dWGlP9sas4yXqLUa4yCw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 2xXR2StwtHn8k6AtI11WhdqJTVOxveLUMaqA2XG1RN+dLH8LZZjdEsGVkdoG1Yn4AxjQZmtUAZw8aj8AgsVuDw==
-length: 6960
+edSignature: Z5/b/7bq70ZAEHTUhXF8WHTbNflJUF112gyr5GfrffrSBMjod11IXPHWhi1FAbFxm+CqxEJ3ghHBngpvYxiKBw==
+length: 4973
 -->
