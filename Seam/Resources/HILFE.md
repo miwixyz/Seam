@@ -59,6 +59,9 @@ Vollbild-Apps und reine Menüleisten-Apps zählen nicht dazu.
 **Aufräumen:** im Seam-Fenster auf **Aufräumen** oder mit **⌃⌥⌘L**. Ab Werk räumt Seam auch selbst
 auf: nach der Anmeldung bzw. dem Start von Seam (auch nach einem Update) und wenn ein Bildschirm dazukommt, sobald die Bildschirme 10 Sekunden ruhig
 sind, höchstens alle zwei Minuten. Abschalten: Einstellungen → Layouts.
+**Alles öffnen:** Der Knopf daneben im Seam-Fenster öffnet zuerst die Apps aus dem Layout, die noch
+kein Fenster haben, und räumt dann auf. „Aufräumen“ und ⌃⌥⌘L sortieren nur Fenster, die schon offen
+sind. Apps öffnet Seam nur auf diesen Knopf, nie von selbst.
 Dabei bewegt Seam **sichtbar** Maus und Tastatur: Es greift ein Fenster an der Titelleiste und
 trägt es mit ⌃← / ⌃→ auf seinen Schreibtisch. Einen anderen Weg lässt macOS ohne abgeschalteten
 Systemschutz nicht zu. Ein Hinweis zeigt an, dass Seam gerade aufräumt. **Bewegst du die Maus

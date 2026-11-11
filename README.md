@@ -28,7 +28,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   per Klick. Ideen aus [NameSpace](https://github.com/hyperjeff/NameSpace) (MIT), eigener Code.
 - **Layouts pro Schreibtisch** (0.7): welche App auf welchem Schreibtisch, in welcher Größe —
   speichern und wiederherstellen per Knopf, ⌃⌥⌘L oder automatisch nach Anmeldung und
-  Bildschirmwechsel. Liegen Schreibtische nach einem Neustart auf dem falschen Bildschirm, nennt
+  Bildschirmwechsel; „Alles öffnen“ startet dabei auch die Apps, die noch nicht offen sind. Liegen Schreibtische nach einem Neustart auf dem falschen Bildschirm, nennt
   Seam sie und räumt nach dem Zurückziehen in Mission Control selbst auf. Seam bewegt dafür
   sichtbar Maus und Tastatur und bricht ab, sobald du eingreifst. Seit 0.8 gehören auch Fenster
   auf allen Schreibtischen eines Bildschirms dazu (z. B. ein Finder-Fenster); die holt Seam ohne

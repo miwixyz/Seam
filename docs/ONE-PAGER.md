@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 0.11
+
+**Alles öffnen.** Neben „Aufräumen“ steht im Seam-Fenster jetzt „Alles öffnen“. Der Knopf startet die Apps aus deinem Layout, die noch nicht offen sind, und räumt danach auf. „Aufräumen“ und ⌃⌥⌘L sortieren weiter nur Fenster, die schon offen sind. Apps startet Seam nur über diesen Knopf, nie von selbst. Tipp: Weise jeder App im Dock über Optionen → „Zuweisen zu“ ihren Schreibtisch zu. Dann legt macOS sie schon beim Öffnen richtig ab, und Seam muss nur noch die Größe setzen.
+
+---
+
 ## Neu in 0.10
 
 **Hintergründe online aussuchen, für hell und für dunkel.** Im Fenster „Hintergrund“ öffnet „Online aussuchen …“ kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Ein Klick auf „Für hell“ oder „Für dunkel“ lädt die Datei und setzt sie, und schaltet macOS um, wechselt der Hintergrund mit. Für das Gesamtbild über mehrere Monitore gibt es je Monitor einen Ausgleich in 2-mm-Schritten, falls einer tiefer steht als gedacht. Außerdem behoben: Ein kleinerer Monitor neben einem großen rutschte im Gesamtbild um ein paar Zentimeter nach unten.

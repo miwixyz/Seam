@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.11.0] — 2026-11-11
+
+### Neu
+
+- **„Alles öffnen“.** Neben „Aufräumen“ im Seam-Fenster: öffnet die Apps aus dem Layout, die noch
+  nicht offen sind, und räumt danach auf. „Aufräumen“ und ⌃⌥⌘L sortieren weiter nur Fenster, die
+  schon offen sind. Apps öffnet Seam nur auf diesen Knopf, nie von selbst.
+
 ## [0.10.0] — 2026-11-10
 
 ### Neu

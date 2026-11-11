@@ -95,6 +95,21 @@ enum DeskMessages {
 
     static let running = "Seam räumt die Schreibtische auf …\nMaus und Tastatur bitte kurz nicht benutzen."
 
+    /// „Alles öffnen“ (E17k).
+    static func opening(_ apps: Int) -> String {
+        "Seam öffnet \(apps) \(apps == 1 ? "App" : "Apps") aus dem Layout und räumt danach auf …"
+    }
+
+    static func notFound(_ apps: [String]) -> String {
+        "Nicht gefunden: \(joined(apps)). Diese \(apps.count == 1 ? "App ist" : "Apps sind") nicht mehr installiert.\n"
+            + "→ ZU TUN: installieren oder unter Einstellungen → Layouts → „Layout bearbeiten …“ herausnehmen."
+    }
+
+    static func notStarted(_ apps: [String]) -> String {
+        "macOS hat \(joined(apps)) nicht gestartet.\n→ ZU TUN: \(apps.count == 1 ? "die App" : "diese Apps") einmal von Hand öffnen; "
+            + "erscheint eine Meldung von macOS, steht dort der Grund."
+    }
+
     static func saved(apps: Int) -> String {
         apps == 0 ? "Kein Fenster zum Speichern gefunden.\n→ ZU TUN: Apps öffnen und anordnen, dann erneut speichern."
                   : "Layout gespeichert: \(apps) \(apps == 1 ? "App" : "Apps").\n→ Nichts zu tun. Seam räumt nach "

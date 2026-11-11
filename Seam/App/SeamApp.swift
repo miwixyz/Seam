@@ -395,6 +395,31 @@ final class Engine {
         showDesk(DeskMessages.running, for: .seconds(600))
     }
 
+    /// Popover „Alles öffnen“ (E17k): Apps des Layouts ohne Fenster öffnen, dann aufräumen. Nur auf
+    /// Knopfdruck. Fehlt nichts, ist das ein normales Aufräumen.
+    func openAllAndTidy() {
+        guard running, !deskRunning else { return }
+        guard let plan = desks.currentPlan() else {
+            if let text = DeskMessages.blocked(.noLayout, automatic: false) { showDesk(text) }
+            return
+        }
+        let missing = AppOpener.missing(in: plan)
+        guard !missing.isEmpty else { tidyUp(automatic: false); return }
+        deskRunning = true
+        showDesk(DeskMessages.opening(missing.count), for: .seconds(60))
+        Task { [weak self] in
+            let result = await AppOpener.open(missing)
+            guard let self else { return }
+            self.deskRunning = false
+            // Erst melden, was nicht ging (Vault-Regel 7), dann aufräumen.
+            for (ids, text) in [(result.notFound, DeskMessages.notFound), (result.failed, DeskMessages.notStarted)] where !ids.isEmpty {
+                self.showDesk(text(ids.map { DeskLayouts.appName($0) }), for: .seconds(12))
+                try? await Task.sleep(for: .seconds(4))
+            }
+            self.tidyUp(automatic: false)
+        }
+    }
+
     /// Popover beim Öffnen: Weicht die Anordnung vom Layout ab? nil = kein Layout.
     func deskDeviates() -> Bool? {
         desks.currentPlan()?.deviates

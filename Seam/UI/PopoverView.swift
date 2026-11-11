@@ -258,7 +258,8 @@ struct PopoverView: View {
             HStack {
                 Text("Layout").font(FamilyTheme.font(.headline)).foregroundStyle(FamilyTheme.textPrimary)
                 Spacer()
-                Text(layoutStatus).font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
+                Text("\(layoutStatus) · \(DeskMessages.shortcut)").font(FamilyTheme.font(.caption))
+                    .foregroundStyle(FamilyTheme.textSecondary)
             }
             if !engine.deskIssues.isEmpty, let text = engine.deskMessage {
                 Label(text, systemImage: "exclamationmark.triangle")
@@ -279,10 +280,20 @@ struct PopoverView: View {
                 } label: { Label("Aufräumen", systemImage: "rectangle.3.group") }
                     .buttonStyle(.familyGlass(.capsule, size: 26))
                     .disabled(deskDeviates == nil || engine.deskRunning)
-                    .help("Alle Fenster auf ihren Schreibtisch und in ihre Größe (\(DeskMessages.shortcut))")
-                Spacer()
-                Text(DeskMessages.shortcut).font(FamilyTheme.font(.caption)).foregroundStyle(FamilyTheme.textSecondary)
+                    .help("Nur offene Fenster auf ihren Schreibtisch und in ihre Größe (\(DeskMessages.shortcut))")
+                Button {
+                    dismiss()
+                    engine.openAllAndTidy()
+                } label: { Label("Alles öffnen", systemImage: "macwindow.badge.plus") }
+                    .buttonStyle(.familyGlass(.capsule, size: 26))
+                    .disabled(deskDeviates == nil || engine.deskRunning)
+                    .help("Apps aus dem Layout öffnen, die noch nicht offen sind, dann aufräumen")
+                Spacer(minLength: 0)
             }
+            // Drei Knöpfe: Beschriftung nie umbrechen (Vorschau 11.11.: „Spei-cher-n“); mit Symbol
+            // passten sie nicht nebeneinander („Speic…“), deshalb nur Text.
+            .lineLimit(1)
+            .labelStyle(.titleOnly)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(FamilyTheme.Space.m)

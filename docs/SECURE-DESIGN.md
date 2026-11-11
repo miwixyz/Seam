@@ -550,7 +550,8 @@ unter dem Zeiger und auf den WindowServer — nicht nur auf das Zielfenster.
 - **Notschalter:** „Nach Anmeldung und Bildschirmwechsel aufräumen“ aus = auch kein Nachräumen
   nach dem Zurückziehen in Mission Control (code-audit 19.10.: vorher umging das Nachräumen den
   Schalter). Von Hand (Knopf, ⌃⌥⌘L) geht weiter.
-- Seam startet **keine** Apps und schließt keine Fenster.
+- Seam startet **keine** Apps und schließt keine Fenster. **Ausnahme ab 11.11. (E17k):** der Knopf
+  „Alles öffnen“ startet fehlende Apps des Layouts, nur auf Knopfdruck.
 
 - **Umgesetzt 19.10. (Schritt 5, uncommittet, Sichttest steht aus):** `DeskExecutor.swift`
   (Regeln `DeskRun`: Bedingungen in der Reihenfolge „was zuerst beheben“, 2-Minuten-Sperre nur
@@ -718,6 +719,45 @@ unter dem Zeiger und auf den WindowServer — nicht nur auf das Zielfenster.
 **Restrisiken (bewusst akzeptiert, Michael 19.10.):** Während eines Laufs übernimmt Seam sichtbar
 für einige Sekunden Maus und Tastatur. Die Layout-Liste in UserDefaults nennt genutzte Apps.
 Private CGS-Leseaufrufe können mit einem macOS-Update brechen → Funktion schaltet sich ab (E14-Muster).
+
+#### E17k – „Alles öffnen“: fehlende Apps des Layouts starten (Durchgang 2026-11-11, VOR dem Code)
+
+Anlass: Michael (11.11.): „Es muss noch eine Option geben, die Fenster dann auch zu öffnen, wenn sie
+nicht offen sind, und auch eine Option, dass nur die geöffneten Fenster sortiert werden.“ Gewählt:
+zwei Knöpfe. „Aufräumen“ (Popover, ⌃⌥⌘L, Automatik) bleibt wie bisher **nur für geöffnete
+Fenster**. Neu ist der Knopf „Alles öffnen“: Er öffnet die Apps des Layouts, die kein Fenster
+haben, und räumt danach auf. **Ändert E17b** („Seam startet keine Apps“) — nur für diesen Knopf,
+nie automatisch.
+
+- **Entschieden – welche Apps:** nur Bundle-IDs aus dem Layout der jetzigen Bildschirm-Kombination
+  (beim Laden geprüft, E17c), für die der Plan „kein Fenster“ meldet (`notRunning`), höchstens
+  `DeskLayouts.maxEntries`. Ort der App nur über `NSWorkspace.urlForApplication(withBundleIdentifier:)`
+  (Launch Services), nie ein gespeicherter Pfad. Nicht gefunden → auslassen und melden.
+- **Entschieden – wie:** `NSWorkspace.openApplication(at:configuration:)`, ohne Argumente, ohne
+  Umgebung, `activates = false`, nicht in „Zuletzt benutzt“. Läuft die App schon ohne Fenster,
+  bekommt sie das normale Wieder-Öffnen-Ereignis von macOS. Kein Prozessstart über Shell.
+- **Entschieden – Ablauf:** Schild „Seam öffnet n Apps …“, dann warten, bis jede App ein Fenster
+  hat, das 1 s stillsteht (höchstens 30 s), dann normales Aufräumen von Hand (E17b: Abbruch bei
+  Eingriff, Frist 60 s). Weil die Dock-Zuweisungen stimmen (gemessen 11.11.), legt macOS die Apps
+  meist schon richtig ab; das Aufräumen setzt dann nur noch die Größen.
+- **Verworfen:** Fehlende Apps automatisch nach der Anmeldung öffnen (Michael wählte zwei Knöpfe;
+  dafür gibt es „Bei Anmeldung öffnen“ von macOS).
+
+**STRIDE (nur neue Grenzen):**
+
+| | Grenze | Bedrohung | Antwort |
+|---|---|---|---|
+| **S** | Layout-Daten → Launch Services | Veränderte Einstellungen lassen Seam eine fremde App starten | Nur gültige Bundle-IDs (E17c), nur auf Knopfdruck, Launch Services wählt die App, keine Argumente; Wer die Einstellungen ändern kann, kann die App auch selbst starten → kein Rechtegewinn |
+| **T** | — | — | — |
+| **R** | Seam → Protokoll | Unklar, warum Apps aufgingen | Protokoll „Alles öffnen: n Apps, k nicht gefunden“, nur Zahlen |
+| **I** | — | keine neuen Daten | — |
+| **D** | Seam → System | Viele Apps auf einmal | höchstens `maxEntries`, nur auf Knopfdruck, ein Lauf zugleich |
+| **E** | — | Apps laufen mit Michaels Rechten wie bei einem Doppelklick | — |
+
+**rafter-code-review 11.11.** (CWE Top 25, App): keine Shell (CWE-78), Bundle-IDs geprüft (CWE-20),
+Menge und Wartezeit begrenzt, ein Lauf zugleich (CWE-400). **Fund 1 (niedrig):** Startfehler wurden
+mit `try?` still verschluckt → gezählt, protokolliert (nur Fehlercode) und gemeldet
+(`DeskMessages.notStarted`). `rafter secrets .` sauber; `rafter run` bis 09.12. leer.
 
 ### E18 – Hintergrund: Video und Standbild über alle Bildschirme (0.9, Durchgang 2026-11-10, VOR dem Code)
 
