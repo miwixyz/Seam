@@ -11,3 +11,6 @@ build-test/
 
 # Code-Abdeckung/LLVM-Messdateien (Code-Audit 09.10.)
 *.profraw
+
+# Lokale Claude-Code-Freigaben (koennen Zugangsdaten enthalten)
+.claude/settings.local.json
