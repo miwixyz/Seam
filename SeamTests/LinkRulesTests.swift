@@ -22,6 +22,16 @@ final class LinkRulesTests: XCTestCase {
         XCTAssertNil(LinkRules.accept(""))
     }
 
+    /// Foundation liest `\` im Host-/Pfadteil als Benutzerinfo, Browser (WHATWG) als `/`:
+    /// `evil.com\@cineweb.de` hiesse für Seam cineweb.de, für den Browser evil.com.
+    func testRejectsBackslashBeforeQuery() {
+        XCTAssertNil(LinkRules.accept("http://evil.com\\@cineweb.de/x"))
+        XCTAssertNil(LinkRules.accept("https://evil.com\\.cineweb.de/"))
+        XCTAssertNil(LinkRules.accept("https://cineweb.de/a\\b"))
+        XCTAssertNotNil(LinkRules.accept("https://cineweb.de/kino?q=a%5Cb"))
+        XCTAssertNotNil(LinkRules.accept("https://cineweb.de/kino?q=a\\b"))
+    }
+
     func testRejectsOverlongURL() {
         let long = "https://example.com/?q=" + String(repeating: "a", count: LinkRules.maxURLLength)
         XCTAssertNil(LinkRules.accept(long))

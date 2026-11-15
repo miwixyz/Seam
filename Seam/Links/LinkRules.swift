@@ -66,7 +66,11 @@ enum LinkRules {
 
     /// Nur http/https mit Host, Länge begrenzt. Alles andere: nil (wird verworfen).
     static func accept(_ raw: String) -> URL? {
+        // `\` vor Abfrage/Fragment: Browser lesen es als `/`, Foundation als Benutzerinfo. Dann
+        // ginge der Link an die Regel eines anderen Hosts (code-audit 15.11.).
+        let beforeQuery = raw.prefix { $0 != "?" && $0 != "#" }
         guard raw.utf8.count <= maxURLLength,
+              !beforeQuery.contains("\\"),
               let c = URLComponents(string: raw),
               let scheme = c.scheme?.lowercased(), scheme == "http" || scheme == "https",
               let host = c.host, !host.isEmpty,

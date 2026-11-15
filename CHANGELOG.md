@@ -2,6 +2,24 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.11.1] — 2026-11-15
+
+### Behoben
+
+- **Links mit `\` vor dem Fragezeichen reicht Seam nicht mehr weiter.** Ein Browser liest `\` wie
+  `/`, Seam las es als Teil einer Benutzerangabe. So sah `evil.com\@cineweb.de` für Seam wie
+  `cineweb.de` aus und bekam dessen Regel, also den dafür gewählten Browser. Solche Links werden
+  jetzt verworfen. Normale Links ändern sich nicht; ein `\` hinter `?` oder `#` bleibt erlaubt.
+- **Online-Hintergründe laden sauberer.** macOS lädt die Datei jetzt blockweise statt Byte für Byte.
+  Seam bricht ab, sobald mehr als das Limit kommt oder der Server nicht mit „200“ antwortet, auch
+  wenn er keine Größe ankündigt. Eine schon vorhandene Datei bleibt, bis die neue komplett da ist.
+
+### Intern
+
+- Sparkle 2.10.1 (Fehlerkorrekturen und Übersetzungen).
+- Neue Tests für Link-Annahme und Datei-Ladung gegen einen Server auf 127.0.0.1 (268 Tests).
+- Compiler-Warnung in `DeskExecutor` behoben.
+
 ## [0.11.0] — 2026-11-11
 
 ### Neu

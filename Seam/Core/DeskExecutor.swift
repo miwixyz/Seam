@@ -168,7 +168,7 @@ enum DeskExecutor {
             return carryAcross(ax, live: live, move: move, screens: screens, deadline: deadline)
         }
         guard let current = space(of: live.windowID), let steps = DeskRun.steps(from: current, to: move.target),
-              let screen = screens.frame(of: move.target.display) else { return .skip(.notReachable) }
+              screens.frame(of: move.target.display) != nil else { return .skip(.notReachable) }
         guard steps != 0 else { return nil }
         // Gibt es einen zweiten Bildschirm mit eigenen Spaces, geht es ganz ohne Greifen (19.10.,
         // WhatsApp: Web-Oberfläche oben, Ziehen bewegte das Fenster nicht).

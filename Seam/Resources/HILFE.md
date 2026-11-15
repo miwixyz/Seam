@@ -165,6 +165,9 @@ ohne Regel. Ausschalten gibt die Rolle an diesen Browser zurück.
   `utm_source` oder `fbclid` ab, bevor der Browser den Link bekommt. Der Rest der Adresse bleibt
   unverändert.
 - HTML-Dateien öffnet Seam ohne Regeln im Standard-Browser.
+- Links mit einem `\` vor dem Fragezeichen verwirft Seam (ab 0.11.1): Browser und Seam lesen sie
+  verschieden, und die Regel eines anderen Hosts könnte greifen. Ein `\` hinter `?` oder `#` ist
+  unkritisch.
 
 Seam ruft die Links nicht selbst ab und speichert keinen Verlauf. Läuft Velja noch, schalte es ab
 oder lass es aus dem Autostart, damit nur einer von beiden Standardbrowser ist.

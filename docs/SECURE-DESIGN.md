@@ -112,7 +112,7 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
   Vollständige Begründung in Kallis `docs/AUTO-UPDATE-DESIGN.md`, gleiche Vorlage.
 - **Einziger Netzwerkzugriff** der App ist diese Update-Prüfung.
 - **Umgesetzt 2026-10-08 (0.1.0):** Sparkle 2.10.0 `exactVersion`, `Package.resolved` im Repo
-  (Sparkle-Revision `eef1a539`), `SUFeedURL` = `raw.githubusercontent.com/miwixyz/Seam/main/appcast.xml`,
+  (Sparkle-Revision `eef1a539`; seit 0.11.1 2.10.1, Revision `ab7d7129`), `SUFeedURL` = `raw.githubusercontent.com/miwixyz/Seam/main/appcast.xml`,
   `SUPublicEDKey` derselbe öffentliche Schlüssel wie Kalli/Tippi, `SUVerifyUpdateBeforeExtraction`
   = YES, `SUEnableAutomaticChecks` nicht gesetzt. Abweichung von Kalli: keine Mitteilung bei
   gefundenem Update (Seam fragt keine Mitteilungs-Erlaubnis an), stattdessen Menüeintrag; Sparkle
@@ -341,7 +341,10 @@ Bedienungshilfen-Freigabe nie erreicht.
 - **E16b – Nur http/https, Größe begrenzt:** Annahme nur, wenn `URLComponents` die Adresse
   parst, Schema genau `http` oder `https`, Host nicht leer, Länge ≤ 32 768 Zeichen. Alles andere
   wird verworfen und einmal ohne Inhalt protokolliert. Kein `file:`, kein `javascript:`, keine
-  fremden Schemata werden je weitergereicht. Kein Shell-Aufruf, kein `Process`.
+  fremden Schemata werden je weitergereicht. Kein Shell-Aufruf, kein `Process`. Ab 0.11.1 auch
+  verworfen: `\` vor `?`/`#`. Gemessen 15.11.: Foundation liest in `http://evil.com\@cineweb.de/`
+  den Host `cineweb.de`, ein Browser (WHATWG) `evil.com` — die Regel eines fremden Hosts hätte
+  gegriffen (code-audit, ⚪).
 - **E16c – Keine Schleife:** Ziel ist nur eine App, die macOS selbst für https **und**
   HTML-Dateien meldet (`NSWorkspace.urlsForApplications(toOpen:)`), **ohne Seam selbst** und
   **ohne andere Link-Verteiler wie Velja** (würden zurückreichen). Ausschluss kleingeschrieben
@@ -841,7 +844,10 @@ rafter-secure-design `ingestion.md` (Fetcher, Größen, Parser, Ablage).
   „Zu viele Anfragen, bitte später“, kein automatisches Wiederholen.
 - **E19d – Ablage.** Dateiname nie vom Server: `<quelle>-<id>.<endung>`, `id` nur Ziffern (Pexels-ID,
   Wikimedia-`pageid`), Endung aus der Liste `jpg/jpeg/png/mp4/mov` (aus dem MIME-Typ, nicht der
-  Adresse). Erst in eine Temp-Datei, dann umbenennen. Höchstens 30 Dateien im Ordner; ältere werden
+  Adresse). Ab 0.11.1: macOS lädt blockweise in eine Temp-Datei, Seam zählt beim Empfangen mit
+  einem Sitzungs-Delegate je Datei (Gemessen 15.11.: ein Abbruch über Task-Delegate greift nicht)
+  und bricht bei Überschreitung oder Status ≠ 200 ab; die fertige Datei ersetzt das Ziel in einem
+  Schritt (`replaceItemAt`). Höchstens 30 Dateien im Ordner; ältere werden
   gelöscht, aber nie die gerade gewählte helle oder dunkle Datei. Danach greift E18 (System-Decoder).
 - **E19e – Inhalte der Antworten.** JSON nur über `Codable` (keine dynamische Auswertung). Urheber-
   und Lizenztext von Wikimedia enthält HTML → Tags entfernt, auf 120 Zeichen gekürzt, als reiner

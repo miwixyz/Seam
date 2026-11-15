@@ -14,7 +14,7 @@ Seam selbst steht unter der MIT-Lizenz, siehe `LICENSE`.
 Verwendet für die automatische Update-Funktion.
 
 - Projekt: <https://github.com/sparkle-project/Sparkle>
-- Version: **2.10.0** (festgelegt auf Commit `eef1a539`, siehe `Package.resolved`)
+- Version: **2.10.1** (festgelegt auf Commit `ab7d7129`, siehe `Package.resolved`)
 - Lizenz: **MIT**
 
 ```

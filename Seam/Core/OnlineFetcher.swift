@@ -41,6 +41,11 @@ final class OnlineFetcher: Sendable {
     private let session: URLSession
 
     private init() {
+        session = URLSession(configuration: Self.makeConfiguration(), delegate: OnlineRedirectGuard(), delegateQueue: nil)
+    }
+
+    /// Eine Fassung für die gemeinsame Sitzung und jede Datei-Ladung.
+    fileprivate static func makeConfiguration() -> URLSessionConfiguration {
         let c = URLSessionConfiguration.ephemeral
         c.httpCookieStorage = nil
         c.httpShouldSetCookies = false
@@ -51,7 +56,7 @@ final class OnlineFetcher: Sendable {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
         // E19f: Wikimedia verlangt einen Kontakt; Projektadresse, keine Mail.
         c.httpAdditionalHeaders = ["User-Agent": "Seam/\(version) (https://github.com/miwixyz/Seam)"]
-        session = URLSession(configuration: c, delegate: OnlineRedirectGuard(), delegateQueue: nil)
+        return c
     }
 
     // MARK: - Abrufe
@@ -70,38 +75,21 @@ final class OnlineFetcher: Sendable {
         return data
     }
 
-    /// Datei auf die Platte (E19d): erst Temp-Datei, Größe beim Empfangen gezählt, dann umbenannt.
+    /// Datei auf die Platte (E19d): URLSession schreibt blockweise selbst in eine Temp-Datei (vorher
+    /// Byte für Byte über `bytes`, code-audit 15.11.). `FileDownload` zählt beim Empfangen und
+    /// bricht bei Überschreitung oder Status ≠ 200 ab; die fertige Datei liegt neben dem Ziel und
+    /// ersetzt es in einem Schritt.
     func download(_ url: URL, to target: URL, limit: Int) async throws {
         let req = try request(url, key: nil)
-        let (bytes, response) = try await session.bytes(for: req)
-        try check(response, limit: limit)
-        let temp = target.deletingLastPathComponent().appendingPathComponent(".laden-\(UUID().uuidString)")
-        guard FileManager.default.createFile(atPath: temp.path, contents: nil),
-              let handle = try? FileHandle(forWritingTo: temp) else { throw Failure.badData }
-        var ok = false
-        defer {
-            try? handle.close()
-            if !ok { try? FileManager.default.removeItem(at: temp) }
+        let fm = FileManager.default
+        let staged = target.deletingLastPathComponent().appendingPathComponent(".laden-\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: staged) }
+        try await FileDownload(limit: Int64(limit), staged: staged).run(req)
+        if fm.fileExists(atPath: target.path) {
+            _ = try fm.replaceItemAt(target, withItemAt: staged)
+        } else {
+            try fm.moveItem(at: staged, to: target)
         }
-        var buffer = Data()
-        buffer.reserveCapacity(1 << 20)
-        var total = 0
-        for try await b in bytes {
-            buffer.append(b)
-            if buffer.count >= 1 << 20 {
-                total += buffer.count
-                if total > limit { throw Failure.tooLarge }
-                try handle.write(contentsOf: buffer)
-                buffer.removeAll(keepingCapacity: true)
-            }
-        }
-        total += buffer.count
-        if total > limit { throw Failure.tooLarge }
-        try handle.write(contentsOf: buffer)
-        try handle.close()
-        if FileManager.default.fileExists(atPath: target.path) { try FileManager.default.removeItem(at: target) }
-        try FileManager.default.moveItem(at: temp, to: target)
-        ok = true
     }
 
     private func request(_ url: URL, key: String?) throws -> URLRequest {
@@ -117,21 +105,99 @@ final class OnlineFetcher: Sendable {
 
     private func check(_ response: URLResponse, limit: Int) throws {
         guard let http = response as? HTTPURLResponse else { throw Failure.badData }
-        // E19f: nur Statuscode ins Protokoll, keine Adresse.
-        if http.statusCode != 200 { Self.log.notice("Online: Status \(http.statusCode)") }
-        switch http.statusCode {
-        case 200: break
-        case 401, 403: throw Failure.unauthorized
-        case 429: throw Failure.rateLimited
-        default: throw Failure.status(http.statusCode)
-        }
+        try Self.checkStatus(http.statusCode)
         if http.expectedContentLength > Int64(limit) { throw Failure.tooLarge }
+    }
+
+    static func checkStatus(_ code: Int) throws {
+        if let f = statusFailure(code) { throw f }
+    }
+
+    fileprivate static func statusFailure(_ code: Int) -> Failure? {
+        // E19f: nur Statuscode ins Protokoll, keine Adresse.
+        if code != 200 { log.notice("Online: Status \(code)") }
+        switch code {
+        case 200: return nil
+        case 401, 403: return .unauthorized
+        case 429: return .rateLimited
+        default: return .status(code)
+        }
+    }
+}
+
+/// Eine Datei-Ladung mit eigener Sitzung (E19c/d). Gemessen 15.11.: Der Abbruch über einen
+/// Task-Delegate von `session.download(for:delegate:)` greift nicht (Limit 20 MB, 120 MB kamen an),
+/// darum Sitzungs-Delegate. Die Datei wandert schon in `didFinishDownloadingTo` nach `staged`,
+/// denn URLSession löscht sie danach. Weiterleitungs-Regel kommt von der Basisklasse.
+final class FileDownload: OnlineRedirectGuard, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let limit: Int64
+    private let staged: URL
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Error>?
+    private var failure: OnlineFetcher.Failure?
+    private var moved = false
+
+    init(limit: Int64, staged: URL) {
+        self.limit = limit
+        self.staged = staged
+    }
+
+    func run(_ request: URLRequest) async throws {
+        let session = URLSession(configuration: OnlineFetcher.makeConfiguration(), delegate: self, delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+        try await withCheckedThrowingContinuation { (c: CheckedContinuation<Void, Error>) in
+            lock.lock(); continuation = c; lock.unlock()
+            session.downloadTask(with: request).resume()
+        }
+    }
+
+    private func fail(_ f: OnlineFetcher.Failure, cancel task: URLSessionTask) {
+        lock.lock()
+        if failure == nil { failure = f }
+        lock.unlock()
+        task.cancel()
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64,
+                    totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        if let code = (downloadTask.response as? HTTPURLResponse)?.statusCode, let f = OnlineFetcher.statusFailure(code) {
+            fail(f, cancel: downloadTask)
+        } else if totalBytesWritten > limit || totalBytesExpectedToWrite > limit {
+            fail(.tooLarge, cancel: downloadTask)
+        }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        let ok = (try? FileManager.default.moveItem(at: location, to: staged)) != nil
+        lock.lock(); moved = ok; lock.unlock()
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        lock.lock()
+        let c = continuation
+        continuation = nil
+        var result = failure
+        let didMove = moved
+        lock.unlock()
+        guard let c else { return }
+        if result == nil, error == nil {
+            if let http = task.response as? HTTPURLResponse {
+                result = OnlineFetcher.statusFailure(http.statusCode)
+            } else {
+                result = .badData
+            }
+        }
+        if result == nil, error == nil {
+            let size = (try? FileManager.default.attributesOfItem(atPath: staged.path))?[.size] as? Int64
+            if !didMove || size == nil { result = .badData } else if let size, size > limit { result = .tooLarge }
+        }
+        if let result { c.resume(throwing: result) } else if let error { c.resume(throwing: error) } else { c.resume() }
     }
 }
 
 /// E19a: Weiterleitungen nur auf die Liste. Trägt die Anfrage einen Schlüssel (Kopf bei Pexels,
 /// Parameter `key` bei Pixabay), nur auf denselben Server — sonst ginge der Schlüssel mit.
-private final class OnlineRedirectGuard: NSObject, URLSessionTaskDelegate, Sendable {
+class OnlineRedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest) async -> URLRequest? {
         guard OnlineHosts.isAllowed(request.url) else { return nil }
