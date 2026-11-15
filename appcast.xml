@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.11.1</title>
+            <pubDate>Sun, 15 Nov 2026 10:30:52 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>84</sparkle:version>
+            <sparkle:shortVersionString>0.11.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Links mit <code>\</code> vor dem Fragezeichen reicht Seam nicht mehr weiter.</b> Ein Browser liest <code>\</code> wie <code>/</code>, Seam las es als Teil einer Benutzerangabe. So sah <code>evil.com\@cineweb.de</code> für Seam wie <code>cineweb.de</code> aus und bekam dessen Regel, also den dafür gewählten Browser. Solche Links werden jetzt verworfen. Normale Links ändern sich nicht; ein <code>\</code> hinter <code>?</code> oder <code>#</code> bleibt erlaubt.</li><li><b>Online-Hintergründe laden sauberer.</b> macOS lädt die Datei jetzt blockweise statt Byte für Byte. Seam bricht ab, sobald mehr als das Limit kommt oder der Server nicht mit „200“ antwortet, auch wenn er keine Größe ankündigt. Eine schon vorhandene Datei bleibt, bis die neue komplett da ist.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.11.1/Seam-0.11.1.zip" length="3898814" type="application/octet-stream" sparkle:edSignature="jzskmm235brsuB0roKVtdUW6cp/vGFf1EssBU4dqS6vEY7Px8cdiXKQtJkm9NfXyrViGpoT1qZmcmsq0r4KDDA=="/>
+        </item>
+        <item>
             <title>0.11.0</title>
             <pubDate>Wed, 11 Nov 2026 11:38:47 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hintergründe online aussuchen.</b> „Online aussuchen …“ im Fenster „Hintergrund“ zeigt kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Suchen, anklicken, „Für hell“ oder „Für dunkel“: Seam lädt die Datei und setzt sie. Pixabay und Pexels brauchen einen kostenlosen Schlüssel, den Seam in deinem Schlüsselbund ablegt.</li><li><b>Eigener Hintergrund für hell und dunkel.</b> Schaltet macOS um, wechselt Seam die Datei mit.</li><li><b>Ausgleich je Monitor.</b> Mit ↑ und ↓ setzt du einen Monitor in 2-mm-Schritten höher oder tiefer, bis das Gesamtbild über die Kante gerade weiterläuft — auch wenn ein Monitor tiefer steht.</li><li><b>Die runden Knöpfe im Seam-Fenster sagen, was sie tun.</b> Fährst du darüber, steht es darunter. Die Hinweise von macOS erscheinen in diesem Fenster nicht.</li></ul><h3>Behoben</h3><ul><li><b>Gesamtbild auf unterschiedlich großen Monitoren versetzt.</b> Seam richtete nebeneinander stehende Monitore an ihrer Mitte aus; ein kleinerer, hochkant gestellter Monitor rutschte dadurch um mehrere Zentimeter nach unten. Jetzt zählt die Oberkante.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.10.0/Seam-0.10.0.zip" length="3879882" type="application/octet-stream" sparkle:edSignature="kvmnyIJnNjlc2nMGafKmfG9krtRj5TH1f4TUkDz69q1+SQqDSv0GQ99S6H4c/WwlS9df/a0eQ4ayZKbNZ8t8CQ=="/>
         </item>
-        <item>
-            <title>0.9.0</title>
-            <pubDate>Tue, 10 Nov 2026 17:17:24 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>73</sparkle:version>
-            <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Eigener Hintergrund: Video oder Bild, auch als ein Gesamtbild über alle Monitore.</b> Neuer Bild-Knopf unten im Seam-Fenster öffnet „Hintergrund“. Ein Video läuft ohne Ton in Endlosschleife hinter den Schreibtisch-Symbolen, ein Bild setzt Seam als normalen macOS-Hintergrund. Das Gesamtbild verteilt Seam nach der echten Größe der Monitore, damit Linien über die Kante gerade weiterlaufen, auch wenn ein Monitor feiner auflöst. Einzelne Bildschirme lassen sich ausnehmen. Braucht keine zusätzliche Freigabe.</li></ul><h3>Geändert</h3><ul><li><b>Neuer Name der Freigabe in allen Texten.</b> macOS nennt die Liste unter Datenschutz &amp; Sicherheit inzwischen „Gerätesteuerung und Datenzugriff“ statt „Bedienungshilfen“. Hinweis im Seam-Fenster, Meldung beim Aufräumen, Hilfe, README und Website nennen jetzt den neuen Namen.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.9.0/Seam-0.9.0.zip" length="3740899" type="application/octet-stream" sparkle:edSignature="AchhT201Dzap6Og01txFTGPOwfGM0iYqEgA4gVtKsVRiJ4/cXGhtmcYb6uDrfOiaMS/nVP524wpHKlKw8WdJAg=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: Z5/b/7bq70ZAEHTUhXF8WHTbNflJUF112gyr5GfrffrSBMjod11IXPHWhi1FAbFxm+CqxEJ3ghHBngpvYxiKBw==
-length: 4973
+edSignature: fWFczGAgOl98+JlZdhJbeIQDwItweCvrSeB85vHGQznOg4c87L743LY5DWK5DuzbPv0y2wTh4rwXF+w5QMLhBg==
+length: 4915
 -->
