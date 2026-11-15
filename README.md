@@ -124,6 +124,8 @@ Voraussetzungen: macOS 27, Xcode, `xcodegen`, `swiftlint`.
 | `Seam/Core/DragController.swift` | Maus-Gesten: Andocken und Mitziehen |
 | `Seam/Core/Hotkeys.swift` | Tastenkürzel über `RegisterEventHotKey` |
 | `Seam/Core/Updater.swift` | Sparkle |
+| `Seam/Core/OnlineMedia.swift` | Online-Auswahl für Hintergründe: Quellen, Treffer, Adressen, Dateinamen (reine Rechnung, ohne Netz) |
+| `Seam/Core/OnlineFetcher.swift` | Netzabrufe der Online-Auswahl: nur auf Handlung, feste Server, Größen- und Zeitgrenzen, Dateien blockweise in eigener Sitzung, keine Cookies |
 | `spike/` | Machbarkeits-Prototyp vom 2026-10-08 mit Messwerten |
 
 ## Lizenz
