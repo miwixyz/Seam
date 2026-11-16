@@ -198,6 +198,10 @@ final class Engine {
             // Code-Audit 09.10., C12: vorher verworfen, SwiftUI fiel still auf die Systemschrift zurück.
             Self.log.error("Schrift Plus Jakarta Sans nicht registriert, Systemschrift im Einsatz")
         }
+        #if DEBUG
+        // Selbsttest (nur Debug, nur Testkopie): VOR Sparkle, Freigabe, Kürzeln und allen Beobachtern, siehe SelfTest.swift.
+        if SelfTest.isRequested, !Self.isRunningTests { SelfTest.start(engine: self); return }
+        #endif
         guard !Self.isRunningTests else { return }
         AXAccess.setGlobalTimeout()
         updater = Updater()
