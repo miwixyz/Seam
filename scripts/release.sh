@@ -235,7 +235,18 @@ echo "  ✓ Gatekeeper akzeptiert (source: $(echo "${SPCTL}" | awk -F'=' '/sourc
 # ---------------------------------------------------------------------------
 step "[7/10] ZIP packen und ALS AUSGELIEFERTES ARTEFAKT pruefen"
 ZIP="${DIST}/${APP}-${VERSION}.zip"
-ditto -c -k --keepParent "${APP_PATH}" "${ZIP}"
+# --norsrc --noextattr: Ohne das packt ditto Attribute (com.apple.provenance) als ._-Dateien ins ZIP. Wer mit unzip
+# o. ä. entpackt, bekommt „beschädigt“ (Signatursiegel gebrochen); ditto -x und Sparkle setzen sie wieder zusammen und
+# verdecken den Fehler (MacStd 1.3.2 am 2026-11-17 bei Michael; damals hatten alle sechs Apps solche ZIPs).
+ditto -c -k --norsrc --noextattr --keepParent "${APP_PATH}" "${ZIP}"
+[ "$(unzip -l "${ZIP}" | grep -cE '/\._|__MACOSX')" = 0 ] || fail "ZIP enthält ._-/__MACOSX-Einträge – bricht die Signatur beim Entpacken"
+# Wie ein Browser-Download: Quarantäne setzen, mit unzip (nicht ditto) entpacken, Siegel und Gatekeeper prüfen.
+UNZ=$(mktemp -d)
+cp "${ZIP}" "$UNZ/q.zip"
+xattr -w com.apple.quarantine "0081;$(printf %x "$(date +%s)");Browser;" "$UNZ/q.zip"
+(cd "$UNZ" && unzip -q q.zip) || fail "ZIP lässt sich mit unzip nicht entpacken"
+codesign --verify --deep --strict "$UNZ/${APP}.app" 2>/dev/null || fail "Signatur nach unzip ungültig („beschädigt“ beim Nutzer)"
+spctl --assess --type execute "$UNZ/${APP}.app" 2>/dev/null || fail "Gatekeeper lehnt das mit unzip entpackte ZIP ab"
 rm -f "${DIST}/notarize.zip"
 echo "  ✓ ${ZIP} ($(du -h "${ZIP}" | cut -f1))"
 
