@@ -213,6 +213,14 @@ enum AXAccess {
         return (url, CGRect(origin: p, size: s))
     }
 
+    /// E21f: App nach vorn holen, wenn macOS `activate()` abgelehnt hat (Seam ist nicht aktiv).
+    /// Einziges neue Schreib-Attribut, nur am App-Element, nur auf die Geste im Umschalter/Dock.
+    static func setFrontmost(_ pid: pid_t) {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        AXUIElementSetAttributeValue(app, "AXFrontmost" as CFString, kCFBooleanTrue)
+    }
+
     /// Alle Fenster einer App (auch minimierte), um ein gewähltes Fenster wiederzufinden (E21f).
     static func allWindows(of pid: pid_t) -> [AXWindow] {
         let app = AXUIElementCreateApplication(pid)

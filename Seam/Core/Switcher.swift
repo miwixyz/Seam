@@ -38,13 +38,30 @@ final class Switcher {
     private var loadTask: Task<Void, Never>?
     private var imageTask: Task<Void, Never>?
 
+    /// Apps in der Reihenfolge der Nutzung (zuletzt aktiv zuerst), von macOS gemeldet. Nur Prozessnummern.
+    private var appOrder: [pid_t] = []
+    private var activationToken: NSObjectProtocol?
+
     init(prefs: Preferences) {
         self.prefs = prefs
+        if let front = NSWorkspace.shared.frontmostApplication?.processIdentifier { appOrder = [front] }
+        activationToken = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
+            guard let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier,
+                  pid != ProcessInfo.processInfo.processIdentifier else { return }
+            MainActor.assumeIsolated { self?.noteActivated(pid) }
+        }
         model.onHover = { [weak self] i in self?.model.selection = i }
         model.onClick = { [weak self] i in
             self?.model.selection = i
             self?.commit()
         }
+    }
+
+    private func noteActivated(_ pid: pid_t) {
+        appOrder.removeAll { $0 == pid }
+        appOrder.insert(pid, at: 0)
+        if appOrder.count > 100 { appOrder.removeLast() }
     }
 
     /// Kürzel gedrückt. true = gehört dem Umschalter.
@@ -69,8 +86,11 @@ final class Switcher {
         startPolling()
         let pid = m == .frontApp ? previousApp?.processIdentifier : nil
         if m == .frontApp, pid == nil { close(); return }
+        // Vorderste App immer zuerst, auch wenn Seam ihre Aktivierung verpasst hat.
+        if let front = previousApp?.processIdentifier { noteActivated(front) }
+        let order = appOrder
         loadTask = Task { [weak self, prefs] in
-            let list = await WindowCatalog.windows(pid: pid, currentSpaceOnly: prefs.switcherCurrentSpaceOnly)
+            let list = await WindowCatalog.windows(pid: pid, currentSpaceOnly: prefs.switcherCurrentSpaceOnly, appOrder: order)
             self?.loaded(list)
         }
     }

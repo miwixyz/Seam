@@ -115,51 +115,68 @@ enum WindowCatalog {
 
     // MARK: Liste
 
-    /// Normale App-Fenster, vorn zuerst (Reihenfolge der Fensterliste des Systems ≈ zuletzt benutzt).
-    /// Mit Freigabe über ScreenCaptureKit (mit Titeln, auch andere Spaces und minimierte Fenster),
-    /// ohne Freigabe über die Fensterliste (ohne Titel). `pid` = nur Fenster dieser App.
-    static func windows(pid: pid_t? = nil, currentSpaceOnly: Bool) async -> [CatalogWindow] {
-        let order = stackOrder()
-        var list: [CatalogWindow]
+    /// Normale App-Fenster in der Reihenfolge der Nutzung: Apps nach `appOrder` (zuletzt aktiv zuerst),
+    /// innerhalb einer App nach der Stapelfolge. Gemessen 18.11.: Die Stapelfolge des Systems allein
+    /// taugt dafür nicht — unsichtbare 500×500-Hilfsfenster und Fenster anderer Schreibtische stehen
+    /// darin vor dem vordersten sichtbaren Fenster (schnelles ⌘Tab sprang immer zu Notizen).
+    /// Titel aus ScreenCaptureKit, Lage immer aus der Fensterliste (gleiche Koordinaten wie die
+    /// Bedienungshilfen, damit das Fenster beim Wechseln wiedergefunden wird). `pid` = nur diese App.
+    static func windows(pid: pid_t? = nil, currentSpaceOnly: Bool, appOrder: [pid_t] = []) async -> [CatalogWindow] {
+        let infos = systemWindows()
+        var titles: [CGWindowID: String] = [:]
         if canCapture, let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false) {
             scWindows = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
-            list = content.windows.compactMap { w in
-                guard let owner = w.owningApplication else { return nil }
-                return CatalogWindow(id: w.windowID, pid: owner.processID, title: sanitize(w.title),
-                                     frame: w.frame, onScreen: w.isOnScreen)
-            }
-        } else {
-            list = fallbackWindows()
+            for w in content.windows { titles[w.windowID] = sanitize(w.title) }
         }
         let own = ProcessInfo.processInfo.processIdentifier
-        list = list.filter { w in
-            w.pid != own && (pid == nil || w.pid == pid)
-                && w.frame.width >= 80 && w.frame.height >= 60
-                && WindowList.isRegularApp(w.pid)
-                && order[w.id] != nil                                  // Ebene 0, wirklich ein Fenster
-                && (w.onScreen || !w.title.isEmpty)                    // unsichtbare Hilfsfenster ohne Titel raus
-                && (!currentSpaceOnly || w.onScreen)
+        var minimizedFrames: [pid_t: [CGRect]] = [:]
+        let candidates = infos.filter { i in
+            i.pid != own && (pid == nil || i.pid == pid)
+                && i.frame.width >= 160 && i.frame.height >= 120              // Werkzeugleisten, Popups raus
+                && WindowList.isRegularApp(i.pid)
+                && (!currentSpaceOnly || i.onScreen)
         }
-        list.sort { (order[$0.id] ?? .max) < (order[$1.id] ?? .max) }
-        let result = Array(list.prefix(maxWindows))
+        let list: [CatalogWindow] = candidates.compactMap { i in
+            // Echt = sichtbar, auf einem Schreibtisch oder minimiert. Scheinfenster liegen auf keinem.
+            if !i.onScreen && SpaceReader.spaceIDs(ofWindow: i.id).isEmpty {
+                if minimizedFrames[i.pid] == nil {
+                    minimizedFrames[i.pid] = AXAccess.allWindows(of: i.pid).filter(\.isMinimized).compactMap(\.frame)
+                }
+                guard minimizedFrames[i.pid]?.contains(where: { Geometry.close($0, i.frame) }) == true else { return nil }
+            }
+            return CatalogWindow(id: i.id, pid: i.pid, title: titles[i.id] ?? "", frame: i.frame, onScreen: i.onScreen)
+        }
+        let stack = Dictionary(uniqueKeysWithValues: infos.enumerated().map { ($1.id, $0) })
+        let result = Array(order(list, stack: stack, appOrder: appOrder).prefix(maxWindows))
         let scope = pid.map { NSRunningApplication(processIdentifier: $0)?.bundleIdentifier ?? "pid \($0)" } ?? "alle Apps"
         log.notice("Fenster gelistet: \(result.count, privacy: .public) (\(scope, privacy: .public)), Freigabe Bildschirmaufnahme: \(canCapture, privacy: .public)")
         return result
     }
 
-    /// Fensternummer → Platz im Stapel (0 = vorn), nur normale Fenster (Ebene 0), alle Spaces.
-    private static func stackOrder() -> [CGWindowID: Int] {
-        guard let raw = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
-                as? [[String: Any]] else { return [:] }
-        var out: [CGWindowID: Int] = [:]
-        for info in raw where (info[kCGWindowLayer as String] as? Int) == 0 {
-            if let n = info[kCGWindowNumber as String] as? Int { out[CGWindowID(n)] = out.count }
+    /// Reihenfolge (getestet): sichtbare Fenster zählen vor unsichtbaren derselben App; Apps nach
+    /// `appOrder`, unbekannte Apps danach in Stapelfolge.
+    nonisolated static func order(_ list: [CatalogWindow], stack: [CGWindowID: Int], appOrder: [pid_t]) -> [CatalogWindow] {
+        let rank = Dictionary(appOrder.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+        // Apps, die Seam noch nicht aktiv gesehen hat (z. B. direkt nach dem Start): nach ihrem vordersten
+        // SICHTBAREN Fenster. Unsichtbare Fenster stehen in der Stapelfolge an beliebiger Stelle (gemessen
+        // 18.11.: ein verdecktes Notizen-Fenster vor dem vordersten sichtbaren). Ohne sichtbares Fenster ans Ende.
+        var firstSeen: [pid_t: Int] = [:]
+        for w in list where w.onScreen { firstSeen[w.pid] = min(firstSeen[w.pid] ?? .max, stack[w.id] ?? .max) }
+        func key(_ w: CatalogWindow) -> [Int] {
+            [rank[w.pid] ?? appOrder.count, firstSeen[w.pid] ?? .max, w.onScreen ? 0 : 1, stack[w.id] ?? .max]
         }
-        return out
+        return list.sorted { key($0).lexicographicallyPrecedes(key($1)) }
     }
 
-    /// Ohne Freigabe: nur Nummer, Prozess, Lage (wie E13), Titel leer → die Kachel zeigt den App-Namen.
-    private static func fallbackWindows() -> [CatalogWindow] {
+    private struct SystemWindow {
+        let id: CGWindowID
+        let pid: pid_t
+        let frame: CGRect
+        let onScreen: Bool
+    }
+
+    /// Fensterliste des Systems, Stapelfolge, nur Ebene 0, alle Spaces. Nur Nummer, Prozess, Lage, sichtbar (E13).
+    private static func systemWindows() -> [SystemWindow] {
         guard let raw = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
                 as? [[String: Any]] else { return [] }
         return raw.compactMap { info in
@@ -167,9 +184,9 @@ enum WindowCatalog {
                   let n = info[kCGWindowNumber as String] as? Int,
                   let pid = info[kCGWindowOwnerPID as String] as? pid_t,
                   let b = info[kCGWindowBounds as String] as? NSDictionary,
-                  let bounds = CGRect(dictionaryRepresentation: b),
-                  (info[kCGWindowIsOnscreen as String] as? Bool) == true else { return nil }
-            return CatalogWindow(id: CGWindowID(n), pid: pid, title: "", frame: bounds, onScreen: true)
+                  let bounds = CGRect(dictionaryRepresentation: b) else { return nil }
+            return SystemWindow(id: CGWindowID(n), pid: pid, frame: bounds,
+                                onScreen: (info[kCGWindowIsOnscreen as String] as? Bool) == true)
         }
     }
 
@@ -239,6 +256,19 @@ enum WindowCatalog {
         if app.isHidden { app.unhide() }     // ausgeblendete App (⌘H): sonst bliebe das Fenster unsichtbar
         app.activate()
         target?.perform(.raise)
-        log.notice("Nach vorn: \(app.bundleIdentifier ?? "pid \(w.pid)", privacy: .public), Fenster gefunden: \(target != nil, privacy: .public)")
+        let id = app.bundleIdentifier ?? "pid \(w.pid)"
+        // Messpunkt: Kommt die App wirklich nach vorn? (Seam ist selbst nicht aktiv, macOS kann
+        // das Aktivieren dann ablehnen.) Bei Fehlschlag über die Bedienungshilfen nachhelfen.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
+            var front = NSWorkspace.shared.frontmostApplication?.processIdentifier == w.pid
+            if !front {
+                AXAccess.setFrontmost(w.pid)
+                target?.perform(.raise)
+                try? await Task.sleep(for: .milliseconds(150))
+                front = NSWorkspace.shared.frontmostApplication?.processIdentifier == w.pid
+            }
+            log.notice("Nach vorn: \(id, privacy: .public), Fenster gefunden: \(target != nil, privacy: .public), App vorn: \(front, privacy: .public)")
+        }
     }
 }

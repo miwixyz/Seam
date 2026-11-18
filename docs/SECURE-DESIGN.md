@@ -927,6 +927,9 @@ laufendem System-Umschalter ankommt, ist ohne echten Tastendruck nicht messbar �
   minimierter Fenster dient das vorhandene `setMinimized(false)`. Fenster schließen (W) **verworfen
   für 0.12** (bräuchte eine neue AX-Aktion). Q beendet die App des markierten Eintrags über
   `NSRunningApplication.terminate()` — die App fragt selbst nach ungesicherten Dokumenten.
+  **Nachtrag 18.11. (nach Michaels Test):** `activate()` wird abgelehnt, wenn Seam selbst nicht aktiv
+  ist. Dann setzt Seam `AXFrontmost` am App-Element (`AXAccess.setFrontmost`, einziges neues
+  Schreib-Attribut, nur auf die Geste) und misst danach, ob die App vorn ist.
 - **E21g – Fremde Einstellung `mru-spaces`.** Einziger Schreibzugriff auf eine fremde Domain:
   `com.apple.dock` / `mru-spaces` = false über `CFPreferences`, danach Dock neu starten
   (`terminate`, macOS startet es selbst neu). Den vorherigen Wert (Bool oder „nicht gesetzt“) merkt

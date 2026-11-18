@@ -68,3 +68,32 @@ final class SwitcherTests: XCTestCase {
         d.removePersistentDomain(forName: suite)
     }
 }
+
+/// Reihenfolge nach Nutzung (Fix 18.11.: schnelles ⌘Tab sprang wegen der Systemstapelfolge zu Notizen).
+final class SwitcherOrderTests: XCTestCase {
+
+    private func w(_ id: CGWindowID, _ pid: pid_t, on: Bool = true) -> CatalogWindow {
+        CatalogWindow(id: id, pid: pid, title: "", frame: .zero, onScreen: on)
+    }
+
+    func testAppsFollowUsageNotStack() {
+        // Stapel: Notizen (unsichtbar) vor Helium (vorn) vor WhatsApp.
+        let notes = w(1, 30, on: false), helium = w(2, 10), whatsapp = w(3, 20)
+        let stack: [CGWindowID: Int] = [1: 0, 2: 1, 3: 2]
+        let out = WindowCatalog.order([notes, helium, whatsapp], stack: stack, appOrder: [10, 20])
+        XCTAssertEqual(out.map(\.id), [2, 3, 1])       // Helium, dann zuletzt genutzte App, unbekannte zuletzt
+    }
+
+    /// Kaltstart: Seam kennt nur die vordere App. Ein verdecktes Fenster vorn im Stapel darf nicht Platz 2 sein.
+    func testColdStartPrefersVisibleApps() {
+        let notes = w(1, 30, on: false), front = w(2, 10), edge = w(3, 20)
+        let out = WindowCatalog.order([notes, front, edge], stack: [1: 0, 2: 1, 3: 2], appOrder: [10])
+        XCTAssertEqual(out.map(\.id), [2, 3, 1])
+    }
+
+    func testVisibleWindowOfAppFirst() {
+        let hidden = w(1, 10, on: false), shown = w(2, 10)
+        let out = WindowCatalog.order([hidden, shown], stack: [1: 0, 2: 1], appOrder: [10])
+        XCTAssertEqual(out.map(\.id), [2, 1])
+    }
+}
