@@ -33,6 +33,17 @@ final class Preferences {
         static let wallpaperOffsets = "wallpaperOffsets"
         static let wallpaperLayout = "wallpaperLayout"
         static let wallpaperOffScreens = "wallpaperOffScreens"
+        static let switcherEnabled = "switcherEnabled"
+        static let switcherCurrentSpaceOnly = "switcherCurrentSpaceOnly"
+        static let dockPreviewEnabled = "dockPreviewEnabled"
+        static let dockPreviewCurrentSpaceOnly = "dockPreviewCurrentSpaceOnly"
+        static let dockPreviewDelay = "dockPreviewDelay"
+        static let previewSize = "previewSize"
+        static let spaceOrderPrevious = "spaceOrderPrevious"
+        static let systemSwitcherOff = "systemSwitcherOff"
+        static let hyperKeyEnabled = "hyperKeyEnabled"
+        static let hyperKeyModifiers = "hyperKeyModifiers"
+        static let hyperKeyTap = "hyperKeyTap"
     }
 
     private let defaults: UserDefaults
@@ -90,6 +101,33 @@ final class Preferences {
     static let maxWallpaperOffset = 300
     /// Bildschirme (UUID), auf denen Seam den Hintergrund nicht setzt.
     private(set) var wallpaperOffScreens: [String] { didSet { defaults.set(wallpaperOffScreens, forKey: Key.wallpaperOffScreens) } }
+
+    /// Fensterumschalter mit ⌘Tab / ⌘< (E21). Ab Werk aus: Einschalten fragt die Bildschirmaufnahme an.
+    var switcherEnabled: Bool { didSet { defaults.set(switcherEnabled, forKey: Key.switcherEnabled) } }
+    var switcherCurrentSpaceOnly: Bool {
+        didSet { defaults.set(switcherCurrentSpaceOnly, forKey: Key.switcherCurrentSpaceOnly) }
+    }
+    /// Fenster einer App beim Zeigen auf ihr Dock-Symbol (E21). Ab Werk aus.
+    var dockPreviewEnabled: Bool { didSet { defaults.set(dockPreviewEnabled, forKey: Key.dockPreviewEnabled) } }
+    var dockPreviewCurrentSpaceOnly: Bool {
+        didSet { defaults.set(dockPreviewCurrentSpaceOnly, forKey: Key.dockPreviewCurrentSpaceOnly) }
+    }
+    /// Wartezeit in ms, bis die Dock-Vorschau erscheint.
+    var dockPreviewDelay: Int { didSet { defaults.set(dockPreviewDelay, forKey: Key.dockPreviewDelay) } }
+    /// Größe der Vorschaubilder für Dock und Umschalter.
+    var previewSize: PreviewSize { didSet { defaults.set(previewSize.rawValue, forKey: Key.previewSize) } }
+    /// Gemerkter macOS-Wert (`"true"`, `"false"`, `"unset"`), nil = Seam hält die Reihenfolge nicht fest.
+    private var spaceOrderPrevious: String? { didSet { defaults.set(spaceOrderPrevious, forKey: Key.spaceOrderPrevious) } }
+    /// E21i: Seam hat macOS' ⌘Tab abgeschaltet (gesetzt VOR dem Abschalten). Überlebt einen Absturz,
+    /// damit der nächste Start es wieder einschalten kann.
+    var systemSwitcherOff: Bool { didSet { defaults.set(systemSwitcherOff, forKey: Key.systemSwitcherOff) } }
+    /// Supertaste (E22): Feststelltaste gehalten = gewählte Sondertasten. Läuft im Helfer SeamKeys,
+    /// der diese Werte direkt aus der Domain liest. Ab Werk aus.
+    var hyperKeyEnabled = false { didSet { defaults.set(hyperKeyEnabled, forKey: Key.hyperKeyEnabled) } }
+    /// Bitmaske 1 = ⇧, 2 = ⌃, 4 = ⌥, 8 = ⌘ (1…15).
+    var hyperKeyModifiers = 15 { didSet { defaults.set(hyperKeyModifiers, forKey: Key.hyperKeyModifiers) } }
+    /// Kurzer Druck ohne andere Taste: `none` oder `escape`.
+    var hyperKeyTap = "none" { didSet { defaults.set(hyperKeyTap, forKey: Key.hyperKeyTap) } }
 
     static let gapChoices = [0, 5, 10, 20]
     static let dimChoices = [20, 35, 50]
@@ -229,6 +267,8 @@ final class Preferences {
         return count
     }
 
+    // Nur Zuweisungen mit Prüfung je Wert, keine Logik; eine Zeile über der Grenze durch die Supertaste (E22).
+    // swiftlint:disable:next function_body_length
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         linkEdges = defaults.object(forKey: Key.linkEdges) as? Bool ?? true
@@ -283,6 +323,57 @@ final class Preferences {
         }
         wallpaperOffScreens = Self.uniqueCapped(defaults.stringArray(forKey: Key.wallpaperOffScreens) ?? [],
                                                 max: Self.maxDimScreens, valid: Self.validKey)
+        (switcherEnabled, switcherCurrentSpaceOnly, dockPreviewEnabled, dockPreviewCurrentSpaceOnly,
+         dockPreviewDelay, previewSize, spaceOrderPrevious, systemSwitcherOff) = Self.loadPreview(defaults)
+        loadHyperKey()
+    }
+
+    // MARK: - Umschalter, Dock-Vorschau, Space-Reihenfolge (E21)
+
+    // swiftlint:disable:next large_tuple
+    private static func loadPreview(_ d: UserDefaults) -> (Bool, Bool, Bool, Bool, Int, PreviewSize, String?, Bool) {
+        let delay = d.object(forKey: Key.dockPreviewDelay) as? Int ?? 200
+        let mru = d.string(forKey: Key.spaceOrderPrevious)
+        return (d.object(forKey: Key.switcherEnabled) as? Bool ?? false,
+                d.object(forKey: Key.switcherCurrentSpaceOnly) as? Bool ?? false,
+                d.object(forKey: Key.dockPreviewEnabled) as? Bool ?? false,
+                d.object(forKey: Key.dockPreviewCurrentSpaceOnly) as? Bool ?? false,
+                dockDelayChoices.contains(delay) ? delay : 200,
+                d.string(forKey: Key.previewSize).flatMap(PreviewSize.init(rawValue:)) ?? .normal,
+                ["true", "false", "unset"].contains(mru ?? "") ? mru : nil,
+                d.object(forKey: Key.systemSwitcherOff) as? Bool ?? false)
+    }
+
+    static let dockDelayChoices = [0, 100, 200, 300, 500, 800]
+
+    /// Vorheriger macOS-Wert von `mru-spaces` vor dem Einschalten (E21g); nil = Seam hat nichts verändert.
+    var spaceOrderPreviousValue: Bool?? {
+        switch spaceOrderPrevious {
+        case "true": return .some(true)
+        case "false": return .some(false)
+        case "unset": return .some(nil)
+        default: return nil
+        }
+    }
+
+    func rememberSpaceOrderPrevious(_ value: Bool?) {
+        spaceOrderPrevious = value.map { $0 ? "true" : "false" } ?? "unset"
+    }
+
+    func forgetSpaceOrderPrevious() { spaceOrderPrevious = nil }
+
+    /// Supertaste: nur gültige Werte (STRIDE T), wie sie auch SeamKeys annimmt.
+    private func loadHyperKey() {
+        hyperKeyEnabled = defaults.object(forKey: Key.hyperKeyEnabled) as? Bool ?? false
+        let m = defaults.object(forKey: Key.hyperKeyModifiers) as? Int ?? 15
+        hyperKeyModifiers = (1...15).contains(m) ? m : 15
+        hyperKeyTap = defaults.string(forKey: Key.hyperKeyTap) == "escape" ? "escape" : "none"
+    }
+
+    /// Sondertaste der Supertaste umschalten; mindestens eine bleibt an.
+    func toggleHyperModifier(_ bit: Int) {
+        let next = hyperKeyModifiers ^ bit
+        if (1...15).contains(next) { hyperKeyModifiers = next }
     }
 
     // MARK: - Hintergrund (E18)

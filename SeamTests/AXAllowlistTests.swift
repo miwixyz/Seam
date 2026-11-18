@@ -12,6 +12,8 @@ final class AXAllowlistTests: XCTestCase {
             "AXRole", "AXSubrole", "AXPosition", "AXSize", "AXMinimized", "AXFullScreen",
             "AXWindows", "AXFocusedApplication", "AXFocusedWindow",
             "AXWindow",   // E17a: Elternfenster am Griffpunkt (19.10.)
+            // E21e: nur am Dock-Prozess über AXAccess.dock… (18.11.); Lint `dock_attribute_nur_in_axaccess`.
+            "AXChildren", "AXSelectedChildren", "AXURL",
         ])
     }
 
@@ -21,7 +23,8 @@ final class AXAllowlistTests: XCTestCase {
     }
 
     func testNoContentOrTitleAttributes() {
-        let forbidden = ["AXTitle", "AXValue", "AXDescription", "AXSelectedText", "AXDocument", "AXURL"]
+        // AXURL ist seit E21e erlaubt, aber nur am Dock (Lint-Regel), daher nicht mehr in dieser Liste.
+        let forbidden = ["AXTitle", "AXValue", "AXDescription", "AXSelectedText", "AXDocument"]
         for f in forbidden {
             XCTAssertFalse(AXAttribute.allCases.contains { $0.rawValue == f }, "\(f) verletzt E3")
         }

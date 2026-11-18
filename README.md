@@ -59,6 +59,15 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   merkt sich die Website. Tracking-Anhänge (`utm_*`, `fbclid` …) werden abgeschnitten. Idee aus
   [Velja](https://sindresorhus.com/velja), eigener Code. Der Link-Teil hat keinen Zugriff auf die
   Bedienungshilfen (eigener Ordner `Seam/Links`, per Lint-Regel erzwungen).
+- **Fensterumschalter** (ab Werk aus): ⌘Tab alle Fenster mit Vorschaubild (auch minimierte und
+  auf anderen Schreibtischen), ⌘< die Fenster der vorderen App, ⇧ zurück, Esc, Q beendet die App.
+  Schaltet dafür den Umschalter von macOS ab, solange er an ist, und beim Beenden wieder ein.
+- **Dock-Vorschau** (ab Werk aus): Fenster einer App beim Zeigen auf ihr Dock-Symbol, Klick holt
+  das Fenster nach vorn. Vorschaugröße und Verzögerung einstellbar.
+- **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
+  Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
+  per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
+- **Spaces in fester Reihenfolge halten:** setzt `mru-spaces` des Docks, merkt sich den alten Wert.
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
 ## Installieren
@@ -84,8 +93,11 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 
 ## Datenschutz und Berechtigung
 
-Seam braucht nur die Freigabe **Gerätesteuerung und Datenzugriff**, keine Eingabeüberwachung und keine
-Bildschirmaufnahme. Von fremden Fenstern liest es Lage, Größe und Art, nie Titel oder Inhalte.
+Seam braucht die Freigabe **Gerätesteuerung und Datenzugriff**, keine Eingabeüberwachung. Die
+Supertaste läuft im getrennten Helfer `SeamKeys` mit eigener Freigabe (E22).
+**Bildschirmaufnahme** nur, wenn du Fensterumschalter oder Dock-Vorschau einschaltest: Dann erfasst
+Seam Bilder und Titel der Fenster nur auf ⌘Tab bzw. beim Zeigen aufs Dock, nur im Arbeitsspeicher,
+nie im Protokoll (E21). Sonst liest es von fremden Fenstern Lage, Größe und Art, nie Titel oder Inhalte.
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
 ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie abgedunkelt werden,
 vergleicht es die App-Kennung (Bundle-ID) der Fenster mit dieser Liste. Gespeichert werden nur deine

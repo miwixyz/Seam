@@ -2,6 +2,34 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.12.0] — 2026-11-18
+
+### Neu
+
+- **Fensterumschalter** (ab Werk aus): ⌘Tab zeigt alle Fenster mit Vorschaubild, auch minimierte
+  und Fenster auf anderen Schreibtischen; ⌘< zeigt nur die Fenster der vorderen App. Tab
+  wiederholen geht weiter, ⇧ zurück, Pfeile bewegen, Esc bricht ab, Q beendet die App des
+  markierten Fensters. Kurz ⌘Tab springt ohne Aufblitzen zum letzten Fenster. Solange der
+  Umschalter an ist, schaltet Seam den Umschalter von macOS ab und beim Ausschalten oder Beenden
+  wieder ein.
+- **Dock-Vorschau** (ab Werk aus): Ruht der Zeiger auf einem App-Symbol im Dock, zeigt Seam deren
+  Fenster; ein Klick holt das Fenster nach vorn. Verzögerung und „Nur den aktuellen Schreibtisch“
+  einstellbar, Vorschaugröße Klein bis Sehr groß.
+- **Supertaste** (ab Werk aus): Die Feststelltaste gehalten wirkt wie ⇧⌃⌥⌘ (wählbar). Kurz gedrückt
+  macht sie nichts oder Escape. Läuft im eigenen kleinen Helfer „SeamKeys“ mit eigener Freigabe;
+  Seam selbst liest weiter keine Tastatur mit.
+- **Spaces in fester Reihenfolge halten:** verhindert, dass macOS die Spaces nach der letzten
+  Nutzung umsortiert. Beim Ausschalten kehrt die vorherige Einstellung zurück; das Dock startet
+  dafür einmal neu.
+
+### Berechtigung
+
+- Umschalter und Dock-Vorschau brauchen für die Bilder die Freigabe **Bildschirmaufnahme**. Seam
+  fragt erst, wenn du eine der beiden einschaltest. Ohne Freigabe zeigen sie App-Symbole. Bilder
+  und Fenstertitel bleiben im Arbeitsspeicher und stehen nie im Protokoll.
+- Die Supertaste braucht für „SeamKeys“ die Freigabe Bedienungshilfen. SeamKeys enthält nur
+  Tastatur-Code, speichert und protokolliert keine Tasten und läuft nur, solange Seam läuft.
+
 ## [0.11.1] — 2026-11-15
 
 ### Behoben

@@ -191,6 +191,50 @@ Loslassen dockt es an. Linker oder rechter Rand in der Mitte: Hälfte. Ecken: Vi
 Rand: maximieren. Unterer Rand: Drittel und zwei Drittel. Ziehst du ein angedocktes Fenster
 wieder heraus, bekommt es seine ursprüngliche Größe zurück.
 
+## Fensterumschalter
+
+Einschalten: Einstellungen (Zahnrad) → „Seam-Umschalter verwenden“. Halte ⌘ und drück Tab: Seam
+zeigt alle Fenster als Vorschau, auch minimierte und solche auf anderen Schreibtischen (kleines
+Stapel-Zeichen). Weiter mit Tab, zurück mit ⇧Tab oder den Pfeilen, ⌘ loslassen holt das markierte
+Fenster nach vorn. ⌘< zeigt nur die Fenster der App, die gerade vorn ist. Esc bricht ab, Return
+wählt, Q beendet die App des markierten Fensters (sie fragt selbst nach ungesicherten Dokumenten).
+Ein Klick auf eine Vorschau wählt sie ebenfalls.
+
+Damit ⌘Tab bei Seam ankommt, schaltet Seam den Umschalter von macOS ab, solange seiner an ist.
+Beim Ausschalten und beim Beenden schaltet Seam ihn wieder ein. Stürzt Seam einmal ab, bleibt ⌘Tab
+bis zum nächsten Start von Seam ohne Funktion; Seam schaltet ihn dann zuerst wieder ein.
+
+## Dock-Vorschau
+
+Einschalten: Einstellungen → „Fenster im Dock vorab anzeigen“. Ruht der Zeiger kurz auf einem
+App-Symbol im Dock, erscheinen die Fenster dieser App. Ein Klick holt das Fenster nach vorn. Die
+Wartezeit stellst du unter „Öffnungsverzögerung“ ein, die Größe der Bilder unter „Vorschaugröße“.
+
+Für die Bilder braucht Seam die Freigabe **Bildschirmaufnahme** (Systemeinstellungen → Datenschutz
+& Sicherheit → Aufnahme von Bildschirm & Systemaudio). Nach dem Erteilen Seam einmal beenden und
+neu starten. Ohne Freigabe zeigen Umschalter und Dock-Vorschau nur App-Symbole und App-Namen.
+
+## Supertaste
+
+Einstellungen → „Feststelltaste als Supertaste“. Hältst du die Feststelltaste, wirkt jede andere
+Taste, als hieltest du ⇧⌃⌥⌘ dazu. Welche Sondertasten, wählst du unter „Gehalten wirkt wie“. Ein
+kurzer Druck allein macht nichts oder Escape („Kurz gedrückt“). Großbuchstaben schaltet die
+Feststelltaste dann nicht mehr ein.
+
+Die Supertaste läuft in einem eigenen kleinen Helfer namens **SeamKeys**, der in Seam steckt. Beim
+ersten Einschalten fragt macOS nach einer Freigabe für SeamKeys (Datenschutz & Sicherheit →
+Gerätesteuerung und Datenzugriff). Seam selbst bekommt dadurch keinen Zugriff auf deine Tastatur.
+SeamKeys läuft nur, solange Seam läuft; beim Beenden bekommt die Feststelltaste ihre normale
+Funktion zurück. Lass unter Systemeinstellungen → Tastatur → Sondertasten für die Feststelltaste
+die Standardaktion eingestellt. Hast du mit `hidutil` eigene Tastenbelegungen gesetzt, ersetzt
+SeamKeys sie.
+
+## Spaces in fester Reihenfolge
+
+Einstellungen → Spaces → „Spaces in fester Reihenfolge halten“. macOS ordnet die Spaces dann nicht
+mehr nach der letzten Nutzung um. Das Dock startet beim Umschalten einmal neu. Schaltest du es aus,
+kehrt deine vorherige Einstellung zurück.
+
 ## Alle Tastenkürzel
 
 Im Seam-Fenster steht jede Anordnung als Kachel. Ein Klick wirkt wie das Kürzel auf das vordere
@@ -209,9 +253,14 @@ Was sich in jeder Version geändert hat, steht hier im Reiter „Änderungen“.
 
 ## Datenschutz
 
-Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters, nie Titel oder Inhalte.
+Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters.
+Ausnahme, wenn du Umschalter oder Dock-Vorschau einschaltest: Dann erfasst Seam Bilder und Titel
+der Fenster, nur in dem Moment, in dem du ⌘Tab drückst oder auf das Dock zeigst, und nur im
+Arbeitsspeicher, nie auf der Platte, im Netz oder im Protokoll.
 Es beobachtet keine Tastatureingaben: Die Kürzel sind beim System angemeldet, Seam erfährt nur,
-dass eines gedrückt wurde. Die Maus beobachtet es nur, um Ziehen und Loslassen zu erkennen.
+dass eines gedrückt wurde. Einzige Ausnahme ist die Supertaste, und die läuft im getrennten Helfer
+SeamKeys: Er sieht die Tasten, um bei gehaltener Feststelltaste Sondertasten hinzuzufügen, speichert
+und protokolliert aber keine und hat keinen Zugriff auf Fenster, Bildschirm oder Netz. Die Maus beobachtet es nur, um Ziehen und Loslassen zu erkennen.
 Einzige Ausnahme beim Steuern: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt
 ⌃← / ⌃→ — nur dafür, nur diese Tasten, mit Abbruch, sobald du eingreifst.
 Links, die Seam als Standardbrowser bekommt, reicht es nur an einen Browser weiter; Adressen

@@ -21,6 +21,10 @@ enum AXAttribute: String, CaseIterable {
     case focusedWindow = "AXFocusedWindow"
     /// E17a: Fenster, zu dem ein Element unter dem Griffpunkt gehört (nur dort gelesen).
     case window = "AXWindow"
+    /// E21e: nur am Dock-Prozess gelesen (`AXAccess.dock…`), nie an fremden Apps.
+    case children = "AXChildren"
+    case selectedChildren = "AXSelectedChildren"
+    case url = "AXURL"
 }
 
 /// **Positivliste der Aktionen (docs/SECURE-DESIGN.md E12):** die einzige Aktion, die Seam
@@ -180,6 +184,40 @@ enum AXAccess {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
         return element(app, .focusedWindow).map(AXWindow.init)
+    }
+
+    // MARK: Dock (E21e) — nur lesend, nur am Dock-Prozess
+
+    /// Das Dock: Bundle-ID `com.apple.dock` UND Programm unter `/System/` (STRIDE S).
+    static func dockProcess() -> pid_t? {
+        NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock")
+            .first { $0.executableURL?.path.hasPrefix("/System/") == true }?.processIdentifier
+    }
+
+    /// Die Symbolliste des Docks (Rolle `AXList`).
+    static func dockList(_ dockPID: pid_t) -> AXUIElement? {
+        let app = AXUIElementCreateApplication(dockPID)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        return elements(app, .children).first { string($0, .role) == "AXList" }
+    }
+
+    /// Symbol unter dem Zeiger: Programm-URL (nur `.app`-Pakete) und Lage in AX-Koordinaten.
+    /// nil = nichts ausgewählt oder kein App-Symbol (Ordner, Papierkorb, Trenner).
+    static func dockHoveredApp(in list: AXUIElement) -> (url: URL, frame: CGRect)? {
+        guard let item = elements(list, .selectedChildren).first,
+              string(item, .subrole) == "AXApplicationDockItem",
+              let raw = copy(item, .url), CFGetTypeID(raw) == CFURLGetTypeID() else { return nil }
+        let url = (raw as! URL)                                           // swiftlint:disable:this force_cast
+        guard url.isFileURL, url.pathExtension == "app",
+              let p = point(item, .position), let s = size(item, .size) else { return nil }
+        return (url, CGRect(origin: p, size: s))
+    }
+
+    /// Alle Fenster einer App (auch minimierte), um ein gewähltes Fenster wiederzufinden (E21f).
+    static func allWindows(of pid: pid_t) -> [AXWindow] {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        return elements(app, .windows).map(AXWindow.init)
     }
 
     /// Das verwaltbare Fenster einer App, das an `bounds` liegt (aus der Fensterliste des Systems).

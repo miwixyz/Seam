@@ -155,6 +155,13 @@ final class Engine {
     /// Hintergrund (E18). Selbst beobachtbar (Status fürs Fenster), läuft ohne Bedienungshilfen.
     @ObservationIgnored private(set) lazy var wallpaper = Wallpaper(prefs: prefs)
     @ObservationIgnored private let hotkeys = Hotkeys()
+    /// Umschalter und Dock-Vorschau (E21).
+    @ObservationIgnored private lazy var switcher = Switcher(prefs: prefs)
+    @ObservationIgnored private lazy var dockPreview = DockPreview(prefs: prefs)
+    @ObservationIgnored private var terminateToken: NSObjectProtocol?
+    @ObservationIgnored private var termSource: DispatchSourceSignal?
+    /// Bildschirmaufnahme erteilt? Für den Hinweis in den Einstellungen (E21a).
+    private(set) var canCapture = WindowCatalog.canCapture
     @ObservationIgnored private var trustTimer: Timer?
     /// Prüft auch nach dem Start weiter, ob die Freigabe noch da ist (Code-Audit 09.10., C8/R9:
     /// entzogen im laufenden Betrieb zeigte Seam weiter „freigegeben“ und tat still nichts).
@@ -224,6 +231,30 @@ final class Engine {
     }
 
     private func boot() {
+        // E21i: Hat eine frühere Seam macOS' ⌘Tab abgeschaltet (Absturz?), erst wieder einschalten.
+        // Ist der Umschalter an, schaltet applyShortcutSetting es nach dem Anmelden wieder ab.
+        setSystemSwitcherOff(false)
+        terminateToken = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.setSystemSwitcherOff(false)
+                KeyHelper.stop()
+            }
+        }
+        // `pkill`/Sofort beenden schickt SIGTERM, das löst willTerminate NICHT aus → selbst abfangen.
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler { [weak self] in
+            MainActor.assumeIsolated {
+                self?.setSystemSwitcherOff(false)
+                KeyHelper.stop()
+                exit(0)
+            }
+        }
+        source.resume()
+        termSource = source
+        // E22: Supertaste läuft im Helfer mit eigener Freigabe, unabhängig von Seams Bedienungshilfen.
+        KeyHelper.apply(enabled: prefs.hyperKeyEnabled)
         // E18: braucht keine Freigabe, startet also vor der Prüfung.
         wallpaper.apply()
         if AXAccess.isTrusted {
@@ -270,7 +301,9 @@ final class Engine {
         running = true
         isTrusted = true
         hotkeys.onPress = { [weak self] key in
-            guard let self, self.prefs.shortcuts else { return }
+            guard let self else { return }
+            if self.switcher.handle(key) { return }
+            guard self.prefs.shortcuts else { return }
             if key == Self.tidyKey { self.tidyUp(automatic: false); return }
             self.actions.perform(key)
         }
@@ -281,6 +314,7 @@ final class Engine {
         dimmer.partnerOf = { [weak self] w in self?.pairs.partner(of: w) }
         pairs.onRaised = { [weak self] in self?.dimmer.refresh() }
         dimmer.apply()
+        dockPreview.apply()
         watchTrust()
         // E17b: nach Anmeldung und nach jeder Bildschirmänderung, sobald die Bildschirme ruhig sind.
         screenToken = NotificationCenter.default.addObserver(
@@ -359,12 +393,63 @@ final class Engine {
     /// Kürzel an/aus: abmelden statt nur ignorieren, damit andere Apps sie nutzen können.
     func applyShortcutSetting() {
         guard running else { return }
-        if prefs.shortcuts {
-            hotkeys.register(Layout.allKeys.union([Self.tidyKey]))
-            failedShortcuts = hotkeys.failed
-        } else {
+        var keys: Set<KeyCombo> = prefs.shortcuts ? Layout.allKeys.union([Self.tidyKey]) : []
+        if prefs.switcherEnabled { keys.formUnion(Switcher.keys) }
+        if keys.isEmpty {
             hotkeys.unregister()
             failedShortcuts = []
+        } else {
+            hotkeys.register(keys)
+            failedShortcuts = hotkeys.failed
+        }
+        // E21i: macOS' ⌘Tab nur aus, wenn Seams eigenes ⌘Tab angemeldet ist — sonst gäbe es gar keins.
+        setSystemSwitcherOff(prefs.switcherEnabled && !failedShortcuts.contains(Switcher.next))
+    }
+
+    /// E21i: Merker VOR dem Abschalten setzen (überlebt einen Absturz), nach dem Einschalten löschen.
+    private func setSystemSwitcherOff(_ off: Bool) {
+        if off {
+            prefs.systemSwitcherOff = true
+            SystemSwitcher.setOff(true)
+        } else if prefs.systemSwitcherOff {
+            if SystemSwitcher.setOff(false) { prefs.systemSwitcherOff = false }
+        }
+    }
+
+    // MARK: Umschalter, Dock-Vorschau, Space-Reihenfolge (E21)
+
+    /// Schalter Umschalter/Dock-Vorschau: Freigabe erst jetzt anfragen (E21a), Kürzel neu anmelden.
+    func applyPreviewSettings() {
+        if prefs.switcherEnabled || prefs.dockPreviewEnabled {
+            WindowCatalog.requestCapture()
+        } else {
+            WindowCatalog.clearCache()
+        }
+        refreshCaptureState()
+        applyShortcutSetting()
+        guard running else { return }
+        dockPreview.apply()
+    }
+
+    func refreshCaptureState() { canCapture = WindowCatalog.canCapture }
+
+    /// E21g: nur auf Klick. Ein: alten Wert merken, `mru-spaces` = false. Aus: alten Wert zurück.
+    /// Der Schalter zeigt, was macOS gespeichert hat, nicht was Seam sich merkt (Regel 6).
+    private(set) var spacesFixed = SpaceOrder.isFixed
+
+    func refreshSpacesFixed() { spacesFixed = SpaceOrder.isFixed }
+
+    func setSpacesFixedOrder(_ on: Bool) {
+        defer { refreshSpacesFixed() }
+        if on {
+            guard !SpaceOrder.isFixed else { return }
+            prefs.rememberSpaceOrderPrevious(SpaceOrder.fix())
+        } else {
+            // Gemerkter Wert zurück. Fehlt er (von außen gesetzt, z. B. Vorsaint) oder war er schon
+            // „fest“, gilt der macOS-Standard (Eintrag entfernen) — sonst bliebe der Schalter an.
+            let previous = prefs.spaceOrderPreviousValue ?? nil
+            prefs.forgetSpaceOrderPrevious()
+            SpaceOrder.restore(previous == false ? nil : previous)
         }
     }
 

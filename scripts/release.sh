@@ -193,7 +193,15 @@ echo "${SIGN_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" \
 # disable-library-validation würde Code-Einschleusung erlauben, samt Bedienungshilfen-Freigabe.
 ENTS="$(codesign -d --entitlements - --xml "${APP_PATH}" 2>/dev/null | grep -o '<key>[^<]*</key>' || true)"
 [ -z "${ENTS}" ] || fail "Unerwartete Berechtigungen in der App: ${ENTS} (SECURE-DESIGN E8)"
-echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen"
+# E22: Der Helfer SeamKeys hat eine eigene Freigabe → gleiche Anforderungen wie die App.
+KEYS="${APP_PATH}/Contents/Helpers/SeamKeys.app"
+[ -d "${KEYS}" ] || fail "SeamKeys fehlt im Paket (Supertaste)"
+KEYS_INFO="$(codesign -dv --verbose=4 "${KEYS}" 2>&1)"
+echo "${KEYS_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" || fail "SeamKeys nicht mit Team LTKJ6Z2VYB signiert"
+echo "${KEYS_INFO}" | grep -q "flags=.*runtime" || fail "SeamKeys ohne Hardened Runtime"
+KEYS_ENTS="$(codesign -d --entitlements - --xml "${KEYS}" 2>/dev/null | grep -o '<key>[^<]*</key>' || true)"
+[ -z "${KEYS_ENTS}" ] || fail "Unerwartete Berechtigungen in SeamKeys: ${KEYS_ENTS} (SECURE-DESIGN E22)"
+echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App und SeamKeys)"
 
 # ---------------------------------------------------------------------------
 # 4. Notarisieren

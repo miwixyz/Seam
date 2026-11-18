@@ -875,6 +875,136 @@ nicht, macOS-Netzwerkdiagnosen des Nutzers könnten sie aber zeigen. Ein manipul
 Datei liefern → trifft die System-Decoder wie E18. Der Schlüssel ist für jeden Prozess desselben
 Nutzers lesbar, der im Schlüsselbund-Dialog zugelassen wird.
 
+### E21 – Umschalter, Dock-Vorschau, feste Space-Reihenfolge (0.12, Durchgang 2026-11-18, VOR dem Code)
+
+Michael, 18.11.: Vorsaints „Dock Preview“ und „Fensterumschalter“ in Seam, „damit ich auf Vorsaint
+verzichten kann“. Auf die Frage „Darf Seam die Freigabe Bildschirmaufnahme bekommen?“: **„Ja, mit
+Vorschaubildern“.** Damit fallen zwei frühere Absagen für **diese** Funktionen: E13 „Verworfen:
+Inhalte erkennen (Bildschirmaufnahme)“ und „keine Titel“ aus E3/E11/E13.
+Gemessen 18.11.: `RegisterEventHotKey` nimmt ⌘Tab, ⌥Tab und ⌘< an (Status 0). Ob der Druck bei
+laufendem System-Umschalter ankommt, ist ohne echten Tastendruck nicht messbar → Michaels Test.
+
+**Datenfluss neu:**
+```
+[Nutzer: ⌘Tab / ⌘< (registrierte Kürzel), Zeiger über dem Dock]
+   │                                 │ (15) AX-Beobachter am Dock: ausgewähltes Symbol, dessen URL, Lage
+   ▼                                 ▼
+[Seam: Switcher / DockPreview] ──(16) ScreenCaptureKit: Fensterliste mit Titel + Bild ──▶ [alle Fenster]
+   │  ──(17) Bild im Arbeitsspeicher (nie Platte, nie Netz) ──▶ eigenes Schwebefenster
+   │  ──(18) Fenster nach vorn: App aktivieren, AXRaise, ggf. AXMinimized=false
+   └──(19) Schalter: com.apple.dock `mru-spaces` schreiben, Dock neu starten
+```
+
+- **E21a – Freigabe Bildschirmaufnahme nur bei Bedarf.** Seam fragt sie erst an, wenn der Nutzer
+  Umschalter oder Dock-Vorschau einschaltet, nie beim Start. Fehlt sie, arbeiten beide mit
+  App-Symbol und App-Name weiter (kein Abbruch, Hinweis in den Einstellungen mit Knopf zu den
+  Systemeinstellungen). Erfasst wird **nur** auf eine Geste (Kürzel gedrückt, Zeiger ruht auf einem
+  Dock-Symbol): kein Dauer-Stream, nichts im Hintergrund, nie ein Bild des ganzen Bildschirms.
+- **E21b – Bilder und Titel bleiben im Arbeitsspeicher.** Vorschaubilder höchstens 640 px lange
+  Kante, Zwischenspeicher je Fensternummer im RAM (höchstens 120 Bilder, älteste fallen raus),
+  geleert beim Ausschalten. Nie auf die Platte, nie ins Netz, nie in UserDefaults. Titel kommen aus
+  ScreenCaptureKit (`SCWindow.title`), nicht aus `kCGWindowName` (Lint-Regel `keine_fenstertitel`
+  bleibt) und nicht über eine neue AX-Leseberechtigung. Protokoll (E11): nur Anzahl und Bundle-ID,
+  **nie Titel**.
+- **E21c – Titel sind nicht vertrauenswürdig.** Eine App kann jeden Text in ihren Titel schreiben.
+  Anzeige nur als reiner Text (`Text(verbatim:)`), Steuerzeichen entfernt, auf 200 Zeichen gekürzt.
+  Kein Titel steuert eine Entscheidung; Fenster werden über Nummer, Prozess und Lage zugeordnet.
+- **E21d – Tasten nur im eigenen Fenster.** E1 bleibt: kein Event-Tap, keine Eingabeüberwachung,
+  keine globale Tastatur-Beobachtung. Öffnen über `RegisterEventHotKey` (⌘Tab, ⇧⌘Tab, ⌘<, ⇧⌘<).
+  Das Loslassen der Sondertaste liest Seam aus `NSEvent.modifierFlags` (nur Zustand der
+  Sondertasten, keine Zeichen, ohne Freigabe), solange der Umschalter offen ist (alle 16 ms,
+  höchstens 30 s). Pfeile, Esc, Return und Q kommen nur an, weil das eigene Umschalter-Fenster
+  Tastaturfokus hat (`keyDown(with:)` im eigenen Panel), wie bei jeder App in ihrem eigenen Fenster.
+  **Verworfen (vorerst):** macOS' ⌘Tab per nicht dokumentierter Funktion abschalten — erst, wenn
+  Michaels Test zeigt, dass das registrierte Kürzel nicht ankommt (dann eigener Durchgang).
+- **E21e – Dock lesen, nicht steuern.** Neue AX-Attribute `AXChildren`, `AXSelectedChildren`,
+  `AXURL`, gelesen nur über `AXAccess.dock…` und nur am Dock-Prozess (`com.apple.dock`, Programm
+  unter `/System/`). Die URL wird nur als Dateiadresse eines `.app`-Pakets akzeptiert und auf eine
+  laufende App (Bundle-URL) abgebildet, sonst keine Vorschau. Der Beobachter nutzt `AXObserverCreate`
+  (ohne Info-Dictionary, Lint-Regel bleibt).
+- **E21f – Handlungen nur auf die Geste.** Nach vorn kommt nur das gewählte Fenster (loslassen,
+  klicken, Return). Die Aktionen-Positivliste (E12) bleibt bei `AXRaise`; zum Wiederherstellen
+  minimierter Fenster dient das vorhandene `setMinimized(false)`. Fenster schließen (W) **verworfen
+  für 0.12** (bräuchte eine neue AX-Aktion). Q beendet die App des markierten Eintrags über
+  `NSRunningApplication.terminate()` — die App fragt selbst nach ungesicherten Dokumenten.
+- **E21g – Fremde Einstellung `mru-spaces`.** Einziger Schreibzugriff auf eine fremde Domain:
+  `com.apple.dock` / `mru-spaces` = false über `CFPreferences`, danach Dock neu starten
+  (`terminate`, macOS startet es selbst neu). Den vorherigen Wert (Bool oder „nicht gesetzt“) merkt
+  sich Seam und stellt ihn beim Ausschalten wieder her. Nur auf Klick, nie beim Start.
+- **E21h – Eigene Fenster.** Umschalter und Dock-Vorschau sind randlose `NSPanel`
+  (`.nonactivatingPanel`), aktivieren Seam nicht und zählen nicht als Fenster für Andocken, Paare,
+  Abdunkeln und Umschalter (Seams eigene PID ist dort ausgeschlossen).
+
+- **E21i – macOS-⌘Tab abschalten (Durchgang 2026-11-18, nach Michaels Test).** Michael: „Nein,
+  macOS-Umschalter kommt“ — das registrierte ⌘Tab erreicht Seam nicht, solange macOS' eigener
+  Umschalter aktiv ist. **Entschieden:** Seam schaltet die System-Kürzel 1 (⌘Tab), 2 (⇧⌘Tab) und
+  6 (nächstes Fenster der App) über `CGSSetSymbolicHotKeyEnabled` ab, solange der Seam-Umschalter an
+  ist UND Seams eigenes ⌘Tab angemeldet werden konnte. Gemessen 18.11. (macOS 27.2): Aufruf liefert 0,
+  `CGSIsSymbolicHotKeyEnabled` bestätigt, **die Abschaltung überlebt das Programmende** (ein neuer
+  Prozess liest `false`). Daraus folgt: Seam merkt sich in den Einstellungen, DASS es abgeschaltet hat
+  (`systemSwitcherOff`, vorher gesetzt), und schaltet wieder ein beim Ausschalten des Umschalters,
+  beim Beenden (`willTerminate`) und beim nächsten Start, bevor es neu entscheidet. Nur Kürzel aus der
+  festen Liste {1, 2, 6}, nur ein/aus, nie umbelegt. Deklaration nur in `SystemSwitcher.swift`
+  (Lint-Regel `private_schnittstelle_nur_spacereader` um diese Datei erweitert).
+  **Restrisiko (akzeptiert):** Stürzt Seam ab und wird nicht wieder gestartet (oder gelöscht), bleibt
+  macOS' ⌘Tab aus, bis Seam einmal startet. Hilfe nennt das. Ob Abmelden/Neustart es zurücksetzt,
+  ist ungemessen.
+
+**STRIDE für die neuen Grenzen:** **S** – eine App gibt sich als Dock aus: Dock nur über Bundle-ID
+`com.apple.dock` und Programmpfad unter `/System/`. **T** – eine App setzt einen täuschenden Titel:
+Bild und App-Symbol stehen daneben, Titel nur als Text (E21c). **R** – nicht relevant (lokal, eine
+Person). **I** – Vorschaubilder zeigen Inhalte aller Fenster: nur RAM, nur im eigenen Panel, nur auf
+Geste (E21a/b). **D** – viele Fenster: höchstens 60 Einträge, Erfassung je Fenster mit Zeitlimit,
+höchstens 4 gleichzeitig; eine hängende App blockiert den Umschalter nicht (Bild fehlt dann).
+**E** – Seam erhält eine zweite mächtige Freigabe; Gegenmaßnahme bleibt E8 (Hardened Runtime ohne
+Ausnahmen, keine neue Fremdbibliothek). **Restrisiko (akzeptiert, Michael 18.11.):** Wer Seam
+übernimmt, kann jetzt auch den Bildschirm lesen.
+
+### E22 – Supertaste im eigenen Helfer `SeamKeys` (0.12, Durchgang 2026-11-18, VOR dem Code)
+
+Michael, 18.11.: Vorsaints „Supertaste“ (Feststelltaste gehalten = gewählte Sondertasten, kurzer
+Druck wählbar). Auf die Frage, wo sie leben soll: **„Eigene Helfer-App“.** Eine Supertaste muss
+**jeden** Tastendruck sehen und verändern, bevor die App ihn bekommt — das geht nur mit einem
+aktiven Event-Tap. Das bricht E1, deshalb nicht in Seam.
+Gemessen 18.11.: Vorsaint hatte die Feststelltaste per `hidutil` auf F18 gelegt
+(`0x700000039 → 0x70000006D`), die Belegung blieb nach seinem Ende bestehen.
+
+**Datenfluss:**
+```
+[Tastatur] ─ Feststelltaste ─▶ macOS-Tastenbelegung (hidutil, gesetzt von SeamKeys) ─▶ F18
+   ─▶ [SeamKeys: aktiver Event-Tap] ─ F18 verschluckt, andere Tasten + gewählte Sondertasten ─▶ [Apps]
+[Seam] ─ startet/beendet SeamKeys ─▶ [SeamKeys] ─ liest 2 Einstellungen aus der Domain dev.mwlr.seam
+```
+
+- **E22a – Trennung.** `SeamKeys.app` (Kennung `dev.mwlr.seam.keys`) liegt in
+  `Seam.app/Contents/Helpers/`, eigener Prozess, eigene Freigabe. Er enthält **keinen** Code für
+  Fenster, Bildschirmaufnahme, Netz oder Dateien; Seam enthält keinen Event-Tap. Beides per
+  Lint-Regel erzwungen (`seamkeys_nur_tastatur`, `keine_synthetischen_ereignisse` bleibt für Seam).
+  Wer Seam übernimmt, hat keinen Tastatur-Abgriff; wer SeamKeys übernimmt, sieht keinen Bildschirm.
+- **E22b – Was der Tap tut.** Nur F18 (Tastencode 79) wird verschluckt. Solange F18 gehalten ist,
+  bekommen Tasten-Ereignisse die gewählten Sondertasten dazu (⇧⌃⌥⌘, wählbar, mindestens eine). Der
+  Tap liest Tastencode und Sondertasten-Flags, **nie** den Zeichenwert, speichert nichts und
+  protokolliert keine Tasten (nur: Tap an/aus, Belegung gesetzt/entfernt). Kurzer Druck ohne andere
+  Taste: nichts oder Escape (ein künstliches Escape, sonst keine erzeugten Tasten).
+- **E22c – Fremde Belegung, fester Befehl.** `/usr/bin/hidutil property --set` mit festem Text
+  (Feststelltaste → F18), kein Nutzer-Text, keine Shell. Beim Beenden (normal, SIGTERM, Seam weg)
+  wird die Belegung geleert. **Restrisiko:** Andere eigene `hidutil`-Belegungen des Nutzers werden
+  dabei überschrieben (gemessen: außer Vorsaints gleicher Belegung keine vorhanden).
+- **E22d – Nur solange Seam läuft.** SeamKeys beendet sich (mit Aufräumen), wenn keine Seam
+  (`dev.mwlr.seam`) läuft — beim Start geprüft und über die Beende-Meldung von macOS. Einstellungen
+  liest er nur aus Seams Domain; keine Startargumente, keine Schnittstelle für andere Prozesse.
+- **E22e – Freigabe.** Gemessen 18.11. (macOS 27.2): Der aktive Tap scheitert ohne Freigabe
+  (Bedienungshilfen und Eingabeüberwachung beide `false`); nach Erteilen von **Bedienungshilfen**
+  („Gerätesteuerung und Datenzugriff“) allein ist er aktiv, Eingabeüberwachung ist nicht nötig.
+  macOS führt sie als „SeamKeys“, getrennt von Seam.
+
+**STRIDE:** **S** – ein fremdes Programm mit gleicher Kennung: TCC bindet die Freigabe an die
+Signatur (Developer ID, Team LTKJ6Z2VYB). **T** – manipulierte Einstellungen in der Domain: nur
+Zahl 1…15 und `none`/`escape` angenommen. **I** – der Tap sieht alle Tasten: nichts gespeichert,
+nichts protokolliert, kein Netz (E22b). **D** – Tap hängt: macOS schaltet ihn bei Zeitüberschreitung
+ab, SeamKeys schaltet ihn wieder an. **E** – SeamKeys erhält eine Freigabe für Eingaben; Gegenmaßnahme
+E22a (kein anderer Code) und E8 (Hardened Runtime, keine Berechtigungen).
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |

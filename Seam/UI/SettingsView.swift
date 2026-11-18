@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var loginError: String?
     @State private var router = LinkRouter.shared
     @State private var linkError: String?
+    @State private var hyperRunning = KeyHelper.isRunning
 
     var body: some View {
         @Bindable var prefs = prefs
@@ -68,6 +69,12 @@ struct SettingsView: View {
                     toggleRow("Symbol ausblenden, wenn ein Space-Name steht", isOn: $prefs.hideIconWithSpaceName)
                         .disabled(!prefs.showSpaceName)
                     divider
+                    // E21g: Schalter zeigt, was macOS gespeichert hat. Ändern startet das Dock neu.
+                    toggleRow("Spaces in fester Reihenfolge halten", isOn: Binding(
+                        get: { engine.spacesFixed },
+                        set: { engine.setSpacesFixedOrder($0) }))
+                    note("Das Dock startet dafür einmal neu", symbol: "info.circle", color: FamilyTheme.textSecondary)
+                    divider
                     Button("Spaces benennen …") {
                         engine.spaces.refresh()
                         openWindow(id: "spaces")
@@ -121,6 +128,8 @@ struct SettingsView: View {
             }
         }
         .frame(width: 428)
+        previewColumn
+            .frame(width: 428)
         }
         .padding(FamilyTheme.Space.l)
         .font(FamilyTheme.font(.body))
@@ -131,6 +140,116 @@ struct SettingsView: View {
         .onAppear {
             login = LoginItem.state
             router.refresh()
+            engine.refreshCaptureState()
+            engine.refreshSpacesFixed()
+        }
+    }
+
+    // MARK: - Supertaste (E22)
+
+    private var hyperKeyCard: some View {
+        @Bindable var prefs = prefs
+        let mods: [(bit: Int, label: String)] = [(1, "⇧"), (2, "⌃"), (4, "⌥"), (8, "⌘")]
+        return card("Supertaste") {
+            toggleRow("Feststelltaste als Supertaste", isOn: $prefs.hyperKeyEnabled)
+                .onChange(of: prefs.hyperKeyEnabled) { applyHyperKey() }
+            row("Gehalten wirkt wie") {
+                HStack(spacing: FamilyTheme.Space.xs) {
+                    ForEach(mods, id: \.bit) { m in
+                        KeyChip(label: m.label, on: prefs.hyperKeyModifiers & m.bit != 0) {
+                            prefs.toggleHyperModifier(m.bit)
+                            applyHyperKey()
+                        }
+                    }
+                }
+            }
+            .disabled(!prefs.hyperKeyEnabled)
+            divider
+            row("Kurz gedrückt") {
+                Picker("Kurz gedrückt", selection: $prefs.hyperKeyTap) {
+                    Text("Nichts").tag("none")
+                    Text("Escape").tag("escape")
+                }
+                .labelsHidden()
+                .fixedSize()
+                .onChange(of: prefs.hyperKeyTap) { applyHyperKey() }
+            }
+            .disabled(!prefs.hyperKeyEnabled)
+            if prefs.hyperKeyEnabled {
+                divider
+                note(hyperRunning ? "SeamKeys läuft" : "SeamKeys läuft nicht",
+                     symbol: hyperRunning ? "checkmark.circle" : "exclamationmark.triangle",
+                     color: hyperRunning ? FamilyTheme.textSecondary : FamilyTheme.warning)
+                note("Beim ersten Einschalten fragt macOS nach einer Freigabe für „SeamKeys“",
+                     symbol: "info.circle", color: FamilyTheme.textSecondary)
+                Button("Freigabe für SeamKeys …") { KeyHelper.openAccessibilitySettings() }
+                    .buttonStyle(CardButtonStyle())
+                    .padding(.vertical, FamilyTheme.Space.s)
+            }
+        }
+        .task(id: prefs.hyperKeyEnabled) {
+            // Läuft der Helfer? Von macOS gelesen, nicht gespiegelt (Regel 6).
+            while !Task.isCancelled {
+                hyperRunning = KeyHelper.isRunning
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    private func applyHyperKey() { KeyHelper.apply(enabled: prefs.hyperKeyEnabled) }
+
+    // MARK: - Umschalter und Dock-Vorschau (E21)
+
+    private var previewColumn: some View {
+        @Bindable var prefs = prefs
+        return VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
+            card("Fensterumschalter") {
+                toggleRow("Seam-Umschalter verwenden", isOn: $prefs.switcherEnabled)
+                    .onChange(of: prefs.switcherEnabled) { engine.applyPreviewSettings() }
+                note("⌘Tab alle Fenster, ⌘< Fenster der vorderen App. ⇧ geht zurück, Esc bricht ab, Q beendet die App",
+                     symbol: "command", color: FamilyTheme.textSecondary)
+                if prefs.switcherEnabled, engine.failedShortcuts.contains(where: Switcher.keys.contains) {
+                    note("⌘Tab oder ⌘< ist belegt, läuft Vorsaint noch?",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                }
+                divider
+                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.switcherCurrentSpaceOnly)
+                    .disabled(!prefs.switcherEnabled)
+            }
+            card("Dock-Vorschau") {
+                toggleRow("Fenster im Dock vorab anzeigen", isOn: $prefs.dockPreviewEnabled)
+                    .onChange(of: prefs.dockPreviewEnabled) { engine.applyPreviewSettings() }
+                divider
+                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.dockPreviewCurrentSpaceOnly)
+                    .disabled(!prefs.dockPreviewEnabled)
+                divider
+                row("Öffnungsverzögerung") {
+                    Picker("Öffnungsverzögerung", selection: $prefs.dockPreviewDelay) {
+                        ForEach(Preferences.dockDelayChoices, id: \.self) { Text("\($0) ms").tag($0) }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                .disabled(!prefs.dockPreviewEnabled)
+            }
+            hyperKeyCard
+            card("Vorschaubilder") {
+                row("Vorschaugröße") {
+                    Picker("Vorschaugröße", selection: $prefs.previewSize) {
+                        ForEach(PreviewSize.allCases, id: \.self) { Text($0.label).tag($0) }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                if (prefs.switcherEnabled || prefs.dockPreviewEnabled) && !engine.canCapture {
+                    divider
+                    note("Ohne Freigabe „Bildschirmaufnahme“ zeigt Seam nur App-Symbole",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                    Button("Freigeben …") { WindowCatalog.openCaptureSettings() }
+                        .buttonStyle(CardButtonStyle())
+                        .padding(.vertical, FamilyTheme.Space.s)
+                }
+            }
         }
     }
 

@@ -27,7 +27,8 @@ ditto build-dev/Build/Products/Release/Seam.app "$STAGE/Seam.app"
 # Von innen nach außen, ohne --deep (Sparkle rät davon ab; Rafter-Fund F3): Sparkles
 # Hilfsprogramme behalten ihre eigenen Berechtigungen, nur die App bekommt Seams.
 SPK="$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework/Versions/B"
-for part in "$SPK"/XPCServices/*.xpc "$SPK/Autoupdate" "$SPK/Updater.app" "$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework"; do
+for part in "$SPK"/XPCServices/*.xpc "$SPK/Autoupdate" "$SPK/Updater.app" "$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework" \
+    "$STAGE/Seam.app/Contents/Helpers/SeamKeys.app"; do
     codesign --force --options runtime --timestamp --preserve-metadata=entitlements \
         --sign "$IDENTITY" "$part"
 done

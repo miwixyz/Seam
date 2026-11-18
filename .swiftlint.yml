@@ -4,6 +4,7 @@
 
 included:
   - Seam
+  - SeamKeys
   - SeamTests
 
 excluded:
@@ -70,6 +71,18 @@ custom_rules:
     message: "Aktionen und Schreibzugriffe auf fremde Fenster nur über AXAccess (SECURE-DESIGN E12)."
     severity: error
 
+  # Seam, docs/SECURE-DESIGN.md E21e: AXURL/AXChildren/AXSelectedChildren nur am Dock, gelesen
+  # ausschließlich in AXAccess.dock…. Außerhalb von AXAccess.swift darf niemand sie anfordern.
+  dock_attribute_nur_in_axaccess:
+    name: "Dock-Attribute nur in AXAccess"
+    regex: 'AXAccess\.\w+\([^)]*\.(url|children|selectedChildren)\s*\)|AXAttribute\.(url|children|selectedChildren)'
+    excluded: 'Seam/Core/AXAccess\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "AXURL/AXChildren/AXSelectedChildren nur über AXAccess.dock… (SECURE-DESIGN E21e)."
+    severity: error
+
   # Seam, docs/SECURE-DESIGN.md E13: aus der Fensterliste nie Titel oder App-Namen lesen.
   keine_fenstertitel:
     name: "Keine Fenstertitel aus der Fensterliste"
@@ -84,11 +97,12 @@ custom_rules:
   private_schnittstelle_nur_spacereader:
     name: "Private Schnittstelle nur in SpaceReader"
     regex: '@_silgen_name'
-    excluded: 'Seam/Core/SpaceReader\.swift'
+    # E21i (18.11.): zweite und letzte Ausnahme SystemSwitcher.swift (macOS-⌘Tab ein/aus).
+    excluded: 'Seam/Core/(SpaceReader|SystemSwitcher)\.swift'
     excluded_match_kinds:
       - comment
       - doccomment
-    message: "Nicht dokumentierte Funktionen nur in SpaceReader.swift deklarieren (SECURE-DESIGN E14)."
+    message: "Nicht dokumentierte Funktionen nur in SpaceReader.swift/SystemSwitcher.swift deklarieren (SECURE-DESIGN E14/E21i)."
     severity: error
 
   # Seam, docs/SECURE-DESIGN.md E1/E2 maschinell (Code-Audit 09.10., S4): keine künstlichen
@@ -97,8 +111,9 @@ custom_rules:
   keine_synthetischen_ereignisse:
     name: "Keine künstlichen Eingaben / Tastatur-Beobachtung"
     regex: 'AXUIElementPostKeyboardEvent|CGEventPost|CGEventTapCreate|CGEvent\.tapCreate|\.post\(tap:|\.keyDown|\.keyUp|\.flagsChanged'
-    # E17a (19.10., Michaels Zustimmung): einzige Ausnahme, Positivliste + Test dort.
-    excluded: 'Seam/Core/InputSynth\.swift'
+    # E17a (19.10., Michaels Zustimmung): Ausnahme InputSynth, Positivliste + Test dort.
+    # E22 (18.11.): Ausnahme der Helfer SeamKeys (eigener Prozess, eigene Freigabe).
+    excluded: 'Seam/Core/InputSynth\.swift|SeamKeys/.*\.swift|SeamTests/HyperKeyTests\.swift'
     excluded_match_kinds:
       - comment
       - doccomment
@@ -127,6 +142,19 @@ custom_rules:
       - comment
       - doccomment
     message: "Link-Dateien dürfen keine Bedienungshilfen und keine Fenster-Bausteine benutzen (SECURE-DESIGN E16a)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E22a: Der Helfer SeamKeys hat einen Tastatur-Abgriff. Er darf deshalb
+  # nichts anderes können: keine Fenster, keine Bedienungshilfen-Lesezugriffe, keine Bildschirmaufnahme,
+  # kein Netz, keine Dateien schreiben.
+  seamkeys_nur_tastatur:
+    name: "SeamKeys nur Tastatur"
+    regex: '\b(AXUIElement\w*|AXObserver\w*|AXAccess|ScreenCaptureKit|SCShareableContent|SCScreenshotManager|CGWindowList\w*|URLSession|URLRequest|NSURLConnection|FileManager|write\(to:|dlopen|dlsym|NSClassFromString)\b'
+    included: 'SeamKeys/.*\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "SeamKeys enthält nur Tastatur-Code (SECURE-DESIGN E22a)."
     severity: error
 
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
