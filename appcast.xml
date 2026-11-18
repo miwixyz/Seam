@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.12.0</title>
+            <pubDate>Wed, 18 Nov 2026 01:31:09 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>91</sparkle:version>
+            <sparkle:shortVersionString>0.12.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Fensterumschalter</b> (ab Werk aus): ⌘Tab zeigt alle Fenster mit Vorschaubild, auch minimierte und Fenster auf anderen Schreibtischen; ⌘&lt; zeigt nur die Fenster der vorderen App. Tab wiederholen geht weiter, ⇧ zurück, Pfeile bewegen, Esc bricht ab, Q beendet die App des markierten Fensters. Kurz ⌘Tab springt ohne Aufblitzen zur App, die du davor benutzt hast. Die Reihenfolge folgt deiner Nutzung, nicht der Fensterliste von macOS. Solange der Umschalter an ist, schaltet Seam den Umschalter von macOS ab und beim Ausschalten oder Beenden wieder ein.</li><li><b>Dock-Vorschau</b> (ab Werk aus): Ruht der Zeiger auf einem App-Symbol im Dock, zeigt Seam deren Fenster; ein Klick holt das Fenster nach vorn. Verzögerung und „Nur den aktuellen Schreibtisch“ einstellbar, Vorschaugröße Klein bis Sehr groß.</li><li><b>Supertaste</b> (ab Werk aus): Die Feststelltaste gehalten wirkt wie ⇧⌃⌥⌘ (wählbar). Kurz gedrückt macht sie nichts oder Escape. Läuft im eigenen kleinen Helfer „SeamKeys“ mit eigener Freigabe; Seam selbst liest weiter keine Tastatur mit.</li><li><b>Spaces in fester Reihenfolge halten:</b> verhindert, dass macOS die Spaces nach der letzten Nutzung umsortiert. Beim Ausschalten kehrt die vorherige Einstellung zurück; das Dock startet dafür einmal neu.</li></ul><h3>Berechtigung</h3><ul><li>Umschalter und Dock-Vorschau brauchen für die Bilder die Freigabe <b>Bildschirmaufnahme</b>. Seam fragt erst, wenn du eine der beiden einschaltest. Ohne Freigabe zeigen sie App-Symbole. Bilder und Fenstertitel bleiben im Arbeitsspeicher und stehen nie im Protokoll.</li><li>Die Supertaste braucht für „SeamKeys“ die Freigabe Bedienungshilfen. SeamKeys enthält nur Tastatur-Code, speichert und protokolliert keine Tasten und läuft nur, solange Seam läuft.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.12.0/Seam-0.12.0.zip" length="3987416" type="application/octet-stream" sparkle:edSignature="PZ5UcLcq4ooI2nLzzT3OGpUIo9l0l1ZOs1CQ1SfkUpQ+lsKiitMFVewNDCBazoKCtX+i2RzgRQA8sPrqhX0XBg=="/>
+        </item>
+        <item>
             <title>0.11.1</title>
             <pubDate>Sun, 15 Nov 2026 10:30:52 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>„Alles öffnen“.</b> Neben „Aufräumen“ im Seam-Fenster: öffnet die Apps aus dem Layout, die noch nicht offen sind, und räumt danach auf. „Aufräumen“ und ⌃⌥⌘L sortieren weiter nur Fenster, die schon offen sind. Apps öffnet Seam nur auf diesen Knopf, nie von selbst.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.11.0/Seam-0.11.0.zip" length="3894493" type="application/octet-stream" sparkle:edSignature="S7gwB+IAf5dlQBaMIrnX0PogMw6L+lJVrQjSn2qxojYJ/pe24ZSVWCClJEHZH5azRzyXf/qrrVI/NAKb8Z0ECw=="/>
         </item>
-        <item>
-            <title>0.10.0</title>
-            <pubDate>Tue, 10 Nov 2026 18:12:09 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>78</sparkle:version>
-            <sparkle:shortVersionString>0.10.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hintergründe online aussuchen.</b> „Online aussuchen …“ im Fenster „Hintergrund“ zeigt kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons. Suchen, anklicken, „Für hell“ oder „Für dunkel“: Seam lädt die Datei und setzt sie. Pixabay und Pexels brauchen einen kostenlosen Schlüssel, den Seam in deinem Schlüsselbund ablegt.</li><li><b>Eigener Hintergrund für hell und dunkel.</b> Schaltet macOS um, wechselt Seam die Datei mit.</li><li><b>Ausgleich je Monitor.</b> Mit ↑ und ↓ setzt du einen Monitor in 2-mm-Schritten höher oder tiefer, bis das Gesamtbild über die Kante gerade weiterläuft — auch wenn ein Monitor tiefer steht.</li><li><b>Die runden Knöpfe im Seam-Fenster sagen, was sie tun.</b> Fährst du darüber, steht es darunter. Die Hinweise von macOS erscheinen in diesem Fenster nicht.</li></ul><h3>Behoben</h3><ul><li><b>Gesamtbild auf unterschiedlich großen Monitoren versetzt.</b> Seam richtete nebeneinander stehende Monitore an ihrer Mitte aus; ein kleinerer, hochkant gestellter Monitor rutschte dadurch um mehrere Zentimeter nach unten. Jetzt zählt die Oberkante.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.10.0/Seam-0.10.0.zip" length="3879882" type="application/octet-stream" sparkle:edSignature="kvmnyIJnNjlc2nMGafKmfG9krtRj5TH1f4TUkDz69q1+SQqDSv0GQ99S6H4c/WwlS9df/a0eQ4ayZKbNZ8t8CQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: fWFczGAgOl98+JlZdhJbeIQDwItweCvrSeB85vHGQznOg4c87L743LY5DWK5DuzbPv0y2wTh4rwXF+w5QMLhBg==
-length: 4915
+edSignature: URWLMDIP/2yT6Xt0/HjcaIJNokq2JRuA9+KnUW82AlbAdSoTkgz9mjr0lkGVvuFA/8fNT2uPCTMipOJSzOjSAQ==
+length: 5587
 -->
