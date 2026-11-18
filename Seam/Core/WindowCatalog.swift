@@ -84,6 +84,42 @@ private final class ResumeOnce: @unchecked Sendable {
     }
 }
 
+/// Wert mit echtem Zeitlimit (getestet): Kommt `work` nicht rechtzeitig, gilt `fallback`.
+/// Ungebundene Tasks wie bei `SCWindowBox.capture`: Eine Task-Gruppe würde auf das hängende Kind warten.
+enum Deadline {
+    static func value<T>(within limit: Duration, otherwise fallback: T,
+                         _ work: @escaping @Sendable () async -> T) async -> T {
+        let gate = Gate<T>()
+        let fallbackBox = Box(value: fallback)
+        return await withCheckedContinuation { (cont: CheckedContinuation<Box<T>, Never>) in
+            Task {
+                let v = await work()
+                gate.resume(cont, with: Box(value: v))
+            }
+            Task {
+                try? await Task.sleep(for: limit)
+                gate.resume(cont, with: fallbackBox)
+            }
+        }.value
+    }
+
+    /// Trägt einen Wert über die Task-Grenze (wird nur gelesen, nie verändert).
+    private struct Box<T>: @unchecked Sendable { let value: T }
+
+    /// Genau einmal fortsetzen: Arbeit oder Zeitlimit, wer zuerst kommt.
+    private final class Gate<T>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        func resume(_ cont: CheckedContinuation<Box<T>, Never>, with value: Box<T>) {
+            lock.lock()
+            let first = !done
+            done = true
+            lock.unlock()
+            if first { cont.resume(returning: value) }
+        }
+    }
+}
+
 /// Fenster auflisten, Vorschaubilder erfassen, ein Fenster nach vorn holen (E21a/b/f).
 @MainActor
 enum WindowCatalog {
@@ -123,8 +159,24 @@ enum WindowCatalog {
     /// Bedienungshilfen, damit das Fenster beim Wechseln wiedergefunden wird). `pid` = nur diese App.
     static func windows(pid: pid_t? = nil, currentSpaceOnly: Bool, appOrder: [pid_t] = []) async -> [CatalogWindow] {
         let infos = systemWindows()
+        dropImages(keeping: Set(infos.map(\.id)))
         var titles: [CGWindowID: String] = [:]
-        if canCapture, let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false) {
+        // Mit Zeitlimit (Audit 18.11.): Hängt ScreenCaptureKit, kommt die Liste ohne Titel, statt ⌘Tab zu blockieren.
+        // Hängt noch die vorige Abfrage, keine weitere obendrauf (Code-Audit 18.11.: sonst stapeln sie sich),
+        // und keine Bilder mit veralteten Fensterdaten.
+        var content: SCShareableContent?
+        if canCapture, !scQueryPending {
+            scQueryPending = true
+            content = await Deadline.value(within: .milliseconds(500), otherwise: nil, {
+                let c = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: false)
+                await MainActor.run { WindowCatalog.scQueryPending = false }
+                return c
+            })
+            if content == nil { scWindows = [:] }
+        } else if scQueryPending {
+            scWindows = [:]
+        }
+        if let content {
             scWindows = Dictionary(content.windows.map { ($0.windowID, $0) }, uniquingKeysWith: { a, _ in a })
             for w in content.windows { titles[w.windowID] = sanitize(w.title) }
         }
@@ -193,17 +245,25 @@ enum WindowCatalog {
     // MARK: Bilder (E21b: nur Arbeitsspeicher)
 
     private static var scWindows: [CGWindowID: SCWindow] = [:]
+    /// Eine ScreenCaptureKit-Abfrage läuft noch (auch über ihr Zeitlimit hinaus).
+    private static var scQueryPending = false
     private static var cache: [CGWindowID: NSImage] = [:]
     private static var cacheOrder: [CGWindowID] = []
-    static let maxCached = 120
-    static let maxEdge: CGFloat = 640
+    static let maxCached = maxWindows
 
     static func cachedImage(_ id: CGWindowID) -> NSImage? { cache[id] }
+
+    /// Pixelgröße der Erfassung (getestet): längste Kante höchstens Kachelbreite in pt, doppelte Dichte.
+    nonisolated static func captureSize(_ size: CGSize, tileWidth: CGFloat) -> (width: Int, height: Int) {
+        let scale = min(1, tileWidth / max(size.width, size.height, 1))
+        return (max(1, Int(size.width * scale * 2)), max(1, Int(size.height * scale * 2)))
+    }
 
     /// Bilder für die Liste erfassen, höchstens 4 gleichzeitig, je Fenster höchstens 1 s.
     /// `update` bekommt jedes fertige Bild sofort (die Kacheln füllen sich nach und nach).
     /// Minimierte Fenster liefern kein frisches Bild → das zuletzt erfasste bleibt stehen.
-    static func captureImages(for list: [CatalogWindow], update: @escaping @MainActor (CGWindowID, NSImage) -> Void) async {
+    static func captureImages(for list: [CatalogWindow], tileWidth: CGFloat,
+                              update: @escaping @MainActor (CGWindowID, NSImage) -> Void) async {
         guard canCapture else { return }
         let targets = list.compactMap { w in scWindows[w.id].map { (w, $0) } }
         var index = 0
@@ -212,9 +272,7 @@ enum WindowCatalog {
             index += batch.count
             await withTaskGroup(of: (CGWindowID, CGImage?).self) { group in
                 for (w, sc) in batch where w.onScreen || cache[w.id] == nil {
-                    let scale = min(1, maxEdge / max(w.frame.width, w.frame.height, 1))
-                    let width = max(1, Int(w.frame.width * scale * 2))
-                    let height = max(1, Int(w.frame.height * scale * 2))
+                    let (width, height) = captureSize(w.frame.size, tileWidth: tileWidth)
                     let box = SCWindowBox(window: sc)
                     let id = w.id
                     group.addTask { (id, await box.capture(width: width, height: height, timeout: .seconds(1))) }
@@ -235,6 +293,15 @@ enum WindowCatalog {
         while cacheOrder.count > maxCached { cache[cacheOrder.removeFirst()] = nil }
     }
 
+    /// Bilder geschlossener Fenster freigeben (Fenster fehlt in der Fensterliste des Systems).
+    private static func dropImages(keeping alive: Set<CGWindowID>) {
+        cacheOrder.removeAll { id in
+            guard !alive.contains(id) else { return false }
+            cache[id] = nil
+            return true
+        }
+    }
+
     /// Beim Ausschalten (E21b).
     static func clearCache() {
         cache = [:]
@@ -244,14 +311,39 @@ enum WindowCatalog {
 
     // MARK: Nach vorn holen (E21f)
 
+    /// Welches AX-Fenster ist `w`? (getestet) Über Lage, bei Zwillingen über minimiert/sichtbar.
+    /// Bleibt es mehrdeutig: nil — dann kommt nur die App nach vorn, kein falsches Fenster (wie E17,
+    /// ohne Titel: E3/E21c).
+    nonisolated static func pick(_ candidates: [(frame: CGRect?, minimized: Bool)],
+                                 frame: CGRect, minimized: Bool, elsewhere: Bool = false) -> Int? {
+        // Auf einem anderen Space: Die Bedienungshilfen sehen dort nichts, ein gleich großer Zwilling hier
+        // wäre der falsche. macOS wechselt beim Aktivieren selbst dorthin.
+        guard !elsewhere else { return nil }
+        let byFrame = candidates.indices.filter { candidates[$0].frame.map { Geometry.close($0, frame) } ?? false }
+        if byFrame.count == 1 { return byFrame[0] }
+        if byFrame.count > 1 {
+            let same = byFrame.filter { candidates[$0].minimized == minimized }
+            return same.count == 1 ? same[0] : nil
+        }
+        return candidates.count == 1 ? 0 : nil
+    }
+
+    /// Minimiert = nicht sichtbar und auf keinem Space (wie beim Listen, `windows`).
+    private static func isMinimized(_ w: CatalogWindow) -> Bool {
+        !w.onScreen && SpaceReader.spaceIDs(ofWindow: w.id).isEmpty
+    }
+
     /// App aktivieren, das passende Fenster wiederherstellen und anheben. Zuordnung über Lage
     /// (Fensterliste und Bedienungshilfen teilen keine Nummer). Liegt das Fenster auf einem anderen
     /// Space, wechselt macOS beim Aktivieren dorthin.
     static func activate(_ w: CatalogWindow) {
         guard let app = w.app else { return }
         let candidates = AXAccess.allWindows(of: w.pid)
-        let target = candidates.first { $0.frame.map { Geometry.close($0, w.frame) } ?? false }
-            ?? (candidates.count == 1 ? candidates.first : nil)
+        let minimized = isMinimized(w)
+        // Nicht sichtbar, nicht minimiert und die App nicht ausgeblendet = auf einem anderen Space.
+        let elsewhere = !w.onScreen && !minimized && !app.isHidden
+        let target = pick(candidates.map { ($0.frame, $0.isMinimized) }, frame: w.frame, minimized: minimized,
+                          elsewhere: elsewhere).map { candidates[$0] }
         if let target, target.isMinimized { target.setMinimized(false) }
         if app.isHidden { app.unhide() }     // ausgeblendete App (⌘H): sonst bliebe das Fenster unsichtbar
         app.activate()

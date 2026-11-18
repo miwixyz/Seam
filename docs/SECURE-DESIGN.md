@@ -383,7 +383,8 @@ Bedienungshilfen-Freigabe nie erreicht.
 - **E16k – Standardbrowser setzen/zurückgeben:** Nur auf Klick des Nutzers
   (`NSWorkspace.setDefaultApplication(at:toOpenURLsWithScheme:)`, macOS fragt selbst nach).
   Schaltet Michael die Funktion aus, gibt Seam die Rolle an den gewählten Standard-Browser
-  zurück. Läuft Seam nicht, startet macOS es beim nächsten Link — dabei startet nur der
+  zurück; `.html`-Dateien bekommt dabei der Öffner von vor der Übernahme (Bundle-ID in den eigenen
+  Einstellungen, nur gültige Kennungen, sonst der Standard-Browser; Audit 18.11.). Läuft Seam nicht, startet macOS es beim nächsten Link — dabei startet nur der
   Link-Weg sofort, Fenster-Funktionen wie bisher.
 
 **STRIDE (Grenze 7–10):**
@@ -784,13 +785,22 @@ Braucht **keine** Bedienungshilfen und kein Netz; läuft auch ohne Freigabe.
 - **E18b – Inhalte parst nur das System.** AVFoundation (Video, ohne Ton) und ImageIO (Bild).
   Kein eigener Dateiparser. Bilder werden vor dem Zerschneiden auf höchstens 8192 px Kante
   begrenzt (Speicher).
-- **E18c – Schreiben nur im eigenen Ordner.** Bildstücke heißen `seam-<Bildschirm>-<Zeit>.png`
-  in `Application Support/Seam/Hintergrund/`; gelöscht werden nur Dateien mit Präfix `seam-` in
-  genau diesem Ordner (alte Stücke), nie die Datei des Nutzers.
+- **E18c – Schreiben nur im eigenen Ordner.** Bildstücke heißen `seam-<Bildschirm>-<Prüfsumme>.png`
+  (bis 0.12.1 `<Zeit>`; seit dem Audit 18.11. eine Prüfsumme über Datei, Dateistand, Verteilung und
+  Bildschirme, damit fertige Stücke wiederverwendet werden) in `Application Support/Seam/Hintergrund/`;
+  geschrieben über eine Zwischendatei `.tmp-…` und Umbenennen; gelöscht werden nur Dateien mit Präfix
+  `seam-<Ziel-Bildschirm>-` in genau diesem Ordner, die zu keiner gewählten Datei mehr gehören, nie die
+  Datei des Nutzers. Laden und Zuschneiden laufen außerhalb des Hauptthreads.
 - **E18d – Protokoll ohne Pfad** (E11): nur Art (Video/Bild), Zahl der Bildschirme, Fehlercode.
 - **E18e – Fenster nehmen keine Eingaben.** Video-Fenster: randlos, `ignoresMouseEvents`,
   Ebene `desktopWindow` (gemessen 10.11.: über dem macOS-Hintergrund −2147483624, unter den
   Finder-Symbolen −2147483603), auf allen Spaces. Pausiert, wenn die Bildschirme schlafen.
+- **E18f – Alle Spaces / je Schreibtisch (Michael, 18.11.: „funktioniert nur auf einem Space“).**
+  `setDesktopImageURL` wirkt nur auf den aktiven Space. Seam setzt das Stück deshalb bei jedem
+  Space-Wechsel (`activeSpaceDidChangeNotification`) erneut, nur wenn macOS dort ein anderes zeigt.
+  Wählbar „Je Schreibtisch ein eigenes Bild“: Schlüssel ist der Platz (Bildschirm + Position, E17d),
+  Wert ein Pfad aus dem Öffnen-Dialog (nur Bilder), geprüft wie E18a, höchstens 100 Einträge.
+  Platz lesen über `SpaceReader` (nur lesend, E14). Keine neue Berechtigung.
 
 **Restrisiken (akzeptiert):** Ein manipuliertes Video/Bild trifft die System-Decoder (wie in
 Vorschau oder QuickTime). Der Pfad in UserDefaults verrät, welche Datei als Hintergrund dient.
@@ -900,9 +910,10 @@ laufendem System-Umschalter ankommt, ist ohne echten Tastendruck nicht messbar �
   App-Symbol und App-Name weiter (kein Abbruch, Hinweis in den Einstellungen mit Knopf zu den
   Systemeinstellungen). Erfasst wird **nur** auf eine Geste (Kürzel gedrückt, Zeiger ruht auf einem
   Dock-Symbol): kein Dauer-Stream, nichts im Hintergrund, nie ein Bild des ganzen Bildschirms.
-- **E21b – Bilder und Titel bleiben im Arbeitsspeicher.** Vorschaubilder höchstens 640 px lange
-  Kante, Zwischenspeicher je Fensternummer im RAM (höchstens 120 Bilder, älteste fallen raus),
-  geleert beim Ausschalten. Nie auf die Platte, nie ins Netz, nie in UserDefaults. Titel kommen aus
+- **E21b – Bilder und Titel bleiben im Arbeitsspeicher.** Vorschaubilder höchstens so groß wie
+  die Kachel (doppelte Dichte, bei „Normal“ 420 px lange Kante; bis 0.12.1 gemessen 1280 px, Audit 18.11.),
+  Zwischenspeicher je Fensternummer im RAM (höchstens 60 Bilder, älteste fallen raus, Bilder geschlossener
+  Fenster beim nächsten Listen), geleert beim Ausschalten. Nie auf die Platte, nie ins Netz, nie in UserDefaults. Titel kommen aus
   ScreenCaptureKit (`SCWindow.title`), nicht aus `kCGWindowName` (Lint-Regel `keine_fenstertitel`
   bleibt) und nicht über eine neue AX-Leseberechtigung. Protokoll (E11): nur Anzahl und Bundle-ID,
   **nie Titel**.
@@ -997,7 +1008,8 @@ Gemessen 18.11.: Vorsaint hatte die Feststelltaste per `hidutil` auf F18 gelegt
   wenn ausschließlich Feststelltaste → F18 gesetzt ist (verwaiste Belegung). **Restrisiko:** Andere eigene `hidutil`-Belegungen des Nutzers werden
   dabei überschrieben (gemessen: außer Vorsaints gleicher Belegung keine vorhanden).
 - **E22d – Nur solange Seam läuft.** SeamKeys beendet sich (mit Aufräumen), wenn keine Seam
-  (`dev.mwlr.seam`) läuft — beim Start geprüft und über die Beende-Meldung von macOS. Einstellungen
+  (`dev.mwlr.seam`) läuft oder dort `hyperKeyEnabled` nicht gesetzt ist — beim Start geprüft (Schalter
+  seit Audit 18.11.) und über die Beende-Meldung von macOS. Einstellungen
   liest er nur aus Seams Domain; keine Startargumente, keine Schnittstelle für andere Prozesse.
 - **E22e – Freigabe.** Gemessen 18.11. (macOS 27.2): Der aktive Tap scheitert ohne Freigabe
   (Bedienungshilfen und Eingabeüberwachung beide `false`); nach Erteilen von **Bedienungshilfen**

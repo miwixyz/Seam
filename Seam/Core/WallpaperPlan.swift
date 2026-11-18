@@ -1,8 +1,9 @@
 import CoreGraphics
+import Foundation
 
 /// Ein Bildschirm für die Hintergrund-Rechnung (E18): Kennung, Lage in AppKit-Punkten (y nach oben,
 /// Ursprung unten links am Hauptbildschirm) und echte Größe in Millimetern (0 = unbekannt).
-struct WallpaperScreen: Equatable {
+struct WallpaperScreen: Equatable, Sendable {
     let id: String
     let frame: CGRect
     let millimeters: CGSize
@@ -12,7 +13,7 @@ struct WallpaperScreen: Equatable {
 }
 
 /// Wie das Bild auf die Bildschirme kommt.
-enum WallpaperLayout: String, CaseIterable {
+enum WallpaperLayout: String, CaseIterable, Sendable {
     /// Ein Gesamtbild über alle gewählten Bildschirme, verteilt nach echter Größe.
     case span
     /// Auf jedem Bildschirm das ganze Bild.
@@ -106,6 +107,50 @@ enum WallpaperPlan {
         let k = max(r.width / media.width, r.height / media.height)
         let w = media.width * k, h = media.height * k
         return CGRect(x: r.midX - w / 2, y: r.midY - h / 2, width: w, height: h)
+    }
+
+    /// Größte Bildkante beim Laden (E18b), siehe `Wallpaper.maxImageEdge`.
+    static let maxImageEdge = 8192
+
+    // MARK: - Spaces und Bildstücke (Michael 18.11.: „funktioniert nur auf einem Space“)
+
+    /// Quelldatei mit Stand: Ändert sich die Datei, entsteht ein neues Bildstück.
+    struct SourceStamp: Equatable, Sendable {
+        let path: String
+        let modified: Double
+        let bytes: Int
+    }
+
+    /// Dateiname des Bildstücks für einen Bildschirm (getestet). Gleiche Eingaben → gleicher Name, damit ein
+    /// Space-Wechsel oder Neustart das fertige Stück wiederverwendet, statt neu zu rechnen (Audit 18.11.).
+    static func pieceName(screen: String, source: SourceStamp, layout: WallpaperLayout,
+                          screens: [WallpaperScreen], scale: CGFloat) -> String {
+        // Alles, was den Zuschnitt verändert. Beim Gesamtbild hängt jedes Stück an allen Bildschirmen.
+        var parts = [source.path, String(source.modified), String(source.bytes), layout.rawValue,
+                     String(Double(scale)), String(maxImageEdge), screen]
+        for s in screens {
+            parts += [s.id, "\(s.frame.minX),\(s.frame.minY),\(s.frame.width),\(s.frame.height)",
+                      "\(s.millimeters.width),\(s.millimeters.height)", "\(s.offsetY)"]
+        }
+        // FNV-1a 64 Bit: stabil über Programmstarts (Swifts `hashValue` ist es nicht).
+        var h: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in parts.joined(separator: "\u{1F}").utf8 {
+            h ^= UInt64(byte)
+            h = h &* 0x0000_0100_0000_01B3
+        }
+        return "seam-\(safe(screen))-\(String(h, radix: 16)).png"
+    }
+
+    /// Welches Bild gehört auf den Schreibtisch mit diesem Platz (getestet)? Ohne „je Schreibtisch“ oder
+    /// ohne eigenen Eintrag: das Hauptbild.
+    static func spacePath(slot: String?, perSpace: Bool, spacePaths: [String: String], main: String?) -> String? {
+        guard perSpace, let slot, let own = spacePaths[slot] else { return main }
+        return own
+    }
+
+    /// Bildschirm-Kennung für Dateinamen: nur Buchstaben, Ziffern, Bindestrich.
+    static func safe(_ id: String) -> String {
+        String(id.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == "-" }.prefix(64))
     }
 
     private static func near(_ a: CGFloat, _ b: CGFloat) -> Bool { abs(a - b) < 1.5 }

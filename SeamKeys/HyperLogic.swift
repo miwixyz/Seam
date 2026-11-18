@@ -30,6 +30,14 @@ struct TapState {
 
 /// Einstellungen aus Seams Domain (E22d), nur gültige Werte (STRIDE T).
 enum HyperSettings {
+    /// In SeamKeys' EIGENER Domain: Prozessnummer, solange der Tap aktiv ist (Status für Seam, 0 = nicht aktiv).
+    static let tapPIDKey = "tapActivePID"
+
+    /// Supertaste in Seam eingeschaltet? Sonst beendet sich der Helfer (E22d).
+    static func isEnabled(suite: String) -> Bool {
+        UserDefaults(suiteName: suite)?.object(forKey: "hyperKeyEnabled") as? Bool == true
+    }
+
     static func load(suite: String) -> (flags: CGEventFlags, escapeOnTap: Bool) {
         let d = UserDefaults(suiteName: suite)
         let raw = d?.object(forKey: "hyperKeyModifiers") as? Int ?? 15

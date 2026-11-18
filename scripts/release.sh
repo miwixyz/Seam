@@ -38,7 +38,13 @@ NOTARY_PROFILE="${NOTARY_PROFILE:-}"
 # NOTARY_PROFILE). Gitignoriert, rein lokal (Rafter-Fund F4).
 [ -f release.env ] && . ./release.env
 
-fail() { echo "✗ $*" >&2; exit 1; }
+# RESUME_HINT: was nach einem Abbruch zu tun ist, je nachdem, wie weit der Lauf kam (Code-Audit 18.11.).
+RESUME_HINT=""
+fail() {
+    echo "✗ $*" >&2
+    [ -z "${RESUME_HINT}" ] || echo "→ ${RESUME_HINT}" >&2
+    exit 1
+}
 step() { echo ""; echo "▶ $*"; }
 
 # Nur 0 oder 1. `[ "$PUBLISH" -eq 0 ]` war bei "no", "false" oder "0 " ein
@@ -191,7 +197,9 @@ echo "${SIGN_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" \
     || fail "Falsches Team in der Signatur (erwartet LTKJ6Z2VYB)"
 # E8 maschinell (Code-Audit 09.10., S3): Seam trägt KEINE Berechtigungen. Jede Ausnahme wie
 # disable-library-validation würde Code-Einschleusung erlauben, samt Bedienungshilfen-Freigabe.
-ENTS="$(codesign -d --entitlements - --xml "${APP_PATH}" 2>/dev/null | grep -o '<key>[^<]*</key>' || true)"
+# Exit-Code von codesign getrennt prüfen (Audit 18.11.): Ein scheiterndes codesign lieferte leer = „keine Berechtigungen“.
+ENTS_XML="$(codesign -d --entitlements - --xml "${APP_PATH}" 2>/dev/null)" || fail "Berechtigungen der App nicht lesbar (codesign)"
+ENTS="$(printf '%s' "${ENTS_XML}" | grep -o '<key>[^<]*</key>' || true)"
 [ -z "${ENTS}" ] || fail "Unerwartete Berechtigungen in der App: ${ENTS} (SECURE-DESIGN E8)"
 # E22: Der Helfer SeamKeys hat eine eigene Freigabe → gleiche Anforderungen wie die App.
 KEYS="${APP_PATH}/Contents/Helpers/SeamKeys.app"
@@ -199,7 +207,8 @@ KEYS="${APP_PATH}/Contents/Helpers/SeamKeys.app"
 KEYS_INFO="$(codesign -dv --verbose=4 "${KEYS}" 2>&1)"
 echo "${KEYS_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" || fail "SeamKeys nicht mit Team LTKJ6Z2VYB signiert"
 echo "${KEYS_INFO}" | grep -q "flags=.*runtime" || fail "SeamKeys ohne Hardened Runtime"
-KEYS_ENTS="$(codesign -d --entitlements - --xml "${KEYS}" 2>/dev/null | grep -o '<key>[^<]*</key>' || true)"
+KEYS_XML="$(codesign -d --entitlements - --xml "${KEYS}" 2>/dev/null)" || fail "Berechtigungen von SeamKeys nicht lesbar (codesign)"
+KEYS_ENTS="$(printf '%s' "${KEYS_XML}" | grep -o '<key>[^<]*</key>' || true)"
 [ -z "${KEYS_ENTS}" ] || fail "Unerwartete Berechtigungen in SeamKeys: ${KEYS_ENTS} (SECURE-DESIGN E22)"
 echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App und SeamKeys)"
 
@@ -285,36 +294,9 @@ if [ "${PUBLISH}" = "0" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 7. GitHub-Release
-# ---------------------------------------------------------------------------
-step "[8/10] GitHub-Release ${TAG}"
-# Release-Notizen aus dem CHANGELOG-Abschnitt dieser Version — eine Quelle,
-# nicht zwei, die auseinanderlaufen.
-awk -v v="[${VERSION}]" '
-    $0 ~ "^## \\" v { found = 1; next }
-    found && /^## \[/ { exit }
-    found { print }
-' CHANGELOG.md > "${DIST}/notes.md"
-[ -s "${DIST}/notes.md" ] || fail "Keine Release-Notizen für ${VERSION} aus dem CHANGELOG gelesen"
-
-git tag -a "${TAG}" -m "${APP} ${VERSION}"
-git push origin "${TAG}"
-gh release create "${TAG}" "${ZIP}" \
-    --title "${APP} ${VERSION}" \
-    --notes-file "${DIST}/notes.md"
-
-# ---------------------------------------------------------------------------
-# 8. Am Remote gegenprüfen, nicht lokal
-# ---------------------------------------------------------------------------
-# Ein lokal erfolgreicher Ablauf sagt nichts darüber, was tatsächlich
-# veröffentlicht ist. Gefragt wird deshalb GitHub.
-step "[9/10] Veröffentlichung am Remote prüfen"
-ASSET="$(gh release view "${TAG}" --json assets --jq '.assets[].name' 2>/dev/null || true)"
-[ -n "${ASSET}" ] || fail "Release ${TAG} hat auf GitHub kein Asset"
-echo "  ✓ ${TAG} veröffentlicht, Asset: ${ASSET}"
-
-# ---------------------------------------------------------------------------
-# 10. Appcast erzeugen, signieren, GEGENLESEN, veröffentlichen
+# 7. Appcast erzeugen, signieren, GEGENLESEN — VOR Tag und Release (Audit 18.11.: vorher
+#    danach; scheiterte er, stand das Release ohne Appcast online und jeder Neuanlauf brach
+#    bei „Tag existiert schon“ ab). Veröffentlicht wird er erst nach dem Release (Schritt 10).
 # ---------------------------------------------------------------------------
 # Die Werkzeuge kommen aus der FESTGELEGTEN Sparkle-Version, die auch in der App
 # steckt — nicht aus einem handplatzierten Ordner unbekannter Herkunft.
@@ -322,7 +304,7 @@ echo "  ✓ ${TAG} veröffentlicht, Asset: ${ASSET}"
 # Und es gibt hier kein `2>/dev/null`: Ein Appcast, der still nicht signiert
 # wurde, heißt entweder "niemand kann updaten" oder — schlimmer — "etwas geht
 # ungeprüft durch". Beides muss laut scheitern.
-step "[10/10] Appcast erzeugen und signieren"
+step "[8/10] Appcast erzeugen und signieren"
 
 SPARKLE_BIN="build/SourcePackages/artifacts/sparkle/Sparkle/bin"
 [ -x "${SPARKLE_BIN}/generate_appcast" ] \
@@ -342,6 +324,7 @@ done
     --link "https://github.com/miwixyz/Seam" \
     -o appcast.xml \
     || fail "generate_appcast fehlgeschlagen"
+RESUME_HINT="ZU TUN vor dem Neuanlauf: git checkout -- appcast.xml (noch nichts veröffentlicht)"
 
 # Nachlesen statt glauben. Geparst wird mit Python, nicht mit grep: Auf diesem
 # Mac ist `grep` auf ugrep gemappt, dessen Regex-Verhalten abweicht — eine
@@ -375,6 +358,38 @@ echo "  ✓ Appcast-Signatur gegen das ausgelieferte Archiv verifiziert"
     || fail "Der Appcast trägt keine gültige Feed-Signatur, Seam würde ihn ablehnen"
 echo "  ✓ Feed-Signatur des Appcasts verifiziert"
 
+# ---------------------------------------------------------------------------
+# 8. GitHub-Release
+# ---------------------------------------------------------------------------
+step "[9/10] GitHub-Release ${TAG}"
+# Release-Notizen aus dem CHANGELOG-Abschnitt dieser Version — eine Quelle,
+# nicht zwei, die auseinanderlaufen.
+awk -v v="[${VERSION}]" '
+    $0 ~ "^## \\" v { found = 1; next }
+    found && /^## \[/ { exit }
+    found { print }
+' CHANGELOG.md > "${DIST}/notes.md"
+[ -s "${DIST}/notes.md" ] || fail "Keine Release-Notizen für ${VERSION} aus dem CHANGELOG gelesen"
+
+git tag -a "${TAG}" -m "${APP} ${VERSION}"
+RESUME_HINT="Tag ${TAG} lokal angelegt. ZU TUN vor dem Neuanlauf: git tag -d ${TAG}; git checkout -- appcast.xml"
+git push origin "${TAG}" || fail "Tag ${TAG} nicht gepusht"
+RESUME_HINT="Tag ${TAG} gepusht, GitHub-Release fehlt. ZU TUN: gh release create ${TAG} ${ZIP} --title \"${APP} ${VERSION}\" --notes-file ${DIST}/notes.md, danach git add appcast.xml && git commit -m \"Appcast für ${TAG}\" && git push origin main"
+gh release create "${TAG}" "${ZIP}" \
+    --title "${APP} ${VERSION}" \
+    --notes-file "${DIST}/notes.md" || fail "GitHub-Release ${TAG} nicht angelegt"
+RESUME_HINT="Release ${TAG} ist online, Appcast noch nicht. ZU TUN: git add appcast.xml && git commit -m \"Appcast für ${TAG}\" && git push origin main"
+
+# ---------------------------------------------------------------------------
+# 9. Am Remote gegenprüfen, nicht lokal
+# ---------------------------------------------------------------------------
+# Ein lokal erfolgreicher Ablauf sagt nichts darüber, was tatsächlich
+# veröffentlicht ist. Gefragt wird deshalb GitHub.
+step "[10/10] Veröffentlichung am Remote prüfen, Appcast veröffentlichen"
+ASSET="$(gh release view "${TAG}" --json assets --jq '.assets[].name' 2>/dev/null || true)"
+[ -n "${ASSET}" ] || fail "Release ${TAG} hat auf GitHub kein Asset"
+echo "  ✓ ${TAG} veröffentlicht, Asset: ${ASSET}"
+
 # Der Appcast liegt IM REPO, nicht in einem Gist: Jede Änderung daran ist damit
 # ein öffentlicher, datierter Commit. Billigste Manipulationserkennung, die zu
 # haben ist.
@@ -383,8 +398,10 @@ if git diff --cached --quiet -- appcast.xml; then
     echo "  ℹ️  Appcast unverändert — kein Commit nötig"
 else
     git commit -q -m "Appcast für ${TAG}"
-    git push -q origin main
+    git push -q origin main \
+        || fail "Appcast committet, Push fehlgeschlagen. Release ist online → ZU TUN: git push origin main"
     echo "  ✓ appcast.xml committet und gepusht"
+    RESUME_HINT=""
 fi
 
 # Zum Schluss: Sieht der Feed unter der URL so aus, wie die App ihn erwartet?

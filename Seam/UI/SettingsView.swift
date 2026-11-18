@@ -13,7 +13,7 @@ struct SettingsView: View {
     @State private var loginError: String?
     @State private var router = LinkRouter.shared
     @State private var linkError: String?
-    @State private var hyperRunning = KeyHelper.isRunning
+    @State private var hyperStatus = KeyHelper.status
 
     var body: some View {
         @Bindable var prefs = prefs
@@ -177,9 +177,15 @@ struct SettingsView: View {
             .disabled(!prefs.hyperKeyEnabled)
             if prefs.hyperKeyEnabled {
                 divider
-                note(hyperRunning ? "SeamKeys läuft" : "SeamKeys läuft nicht",
-                     symbol: hyperRunning ? "checkmark.circle" : "exclamationmark.triangle",
-                     color: hyperRunning ? FamilyTheme.textSecondary : FamilyTheme.warning)
+                switch hyperStatus {
+                case .active:
+                    note("SeamKeys läuft", symbol: "checkmark.circle", color: FamilyTheme.textSecondary)
+                case .waitingForAccess:
+                    note("SeamKeys wartet auf die Freigabe – die Feststelltaste arbeitet bis dahin normal",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                case .off:
+                    note("SeamKeys läuft nicht", symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                }
                 note("Beim ersten Einschalten fragt macOS nach einer Freigabe für „SeamKeys“",
                      symbol: "info.circle", color: FamilyTheme.textSecondary)
                 Button("Freigabe für SeamKeys …") { KeyHelper.openAccessibilitySettings() }
@@ -188,9 +194,9 @@ struct SettingsView: View {
             }
         }
         .task(id: prefs.hyperKeyEnabled) {
-            // Läuft der Helfer? Von macOS gelesen, nicht gespiegelt (Regel 6).
+            // Läuft der Helfer, und ist sein Tap aktiv? Prozess von macOS gelesen, Tap vom Helfer gemeldet.
             while !Task.isCancelled {
-                hyperRunning = KeyHelper.isRunning
+                hyperStatus = KeyHelper.status
                 try? await Task.sleep(for: .seconds(1))
             }
         }
@@ -225,7 +231,9 @@ struct SettingsView: View {
                 divider
                 row("Öffnungsverzögerung") {
                     Picker("Öffnungsverzögerung", selection: $prefs.dockPreviewDelay) {
-                        ForEach(Preferences.dockDelayChoices, id: \.self) { Text("\($0) ms").tag($0) }
+                        ForEach(Preferences.dockDelayChoices, id: \.self) { ms in
+                            Text(ms < 1000 ? "\(ms) ms" : (Double(ms) / 1000).formatted(.number.locale(Locale(identifier: "de_DE"))) + " s").tag(ms)
+                        }
                     }
                     .labelsHidden()
                     .fixedSize()

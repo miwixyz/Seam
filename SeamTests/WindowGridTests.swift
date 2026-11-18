@@ -52,3 +52,17 @@ final class WindowGridTests: XCTestCase {
         XCTAssertTrue(WindowGridView.rows([], columns: 3).isEmpty)
     }
 }
+
+/// Audit 18.11.: Vorschaubilder wurden mit 1280 px langer Kante erfasst (rund 5 MB je Bild), die
+/// Kachel braucht bei „Normal“ nur 420 px (210 pt doppelt).
+final class CaptureSizeTests: XCTestCase {
+    func testCaptureFitsTileAtDoubleDensity() {
+        let r = WindowCatalog.captureSize(CGSize(width: 1600, height: 1000), tileWidth: 210)
+        XCTAssertEqual(r.width, 420)
+        XCTAssertEqual(r.height, 262)
+        let tall = WindowCatalog.captureSize(CGSize(width: 600, height: 1200), tileWidth: 370)
+        XCTAssertEqual(tall.height, 740)
+        let small = WindowCatalog.captureSize(CGSize(width: 100, height: 80), tileWidth: 370)
+        XCTAssertEqual(small.width, 200)          // nie größer als das Fenster selbst
+    }
+}

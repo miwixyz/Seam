@@ -42,4 +42,17 @@ final class HyperKeyTests: XCTestCase {
         XCTAssertEqual(HyperSettings.flags(0), HyperSettings.flags(15))
         XCTAssertEqual(HyperSettings.flags(99), HyperSettings.flags(15))
     }
+
+    /// Audit 18.11.: Der Helfer startete auch bei ausgeschalteter Supertaste (z. B. von Hand geöffnet).
+    func testHelperRunsOnlyWhenEnabledInSeam() {
+        let suite = "dev.mwlr.seam.tests.hyperenabled"
+        let d = UserDefaults(suiteName: suite)!
+        d.removePersistentDomain(forName: suite)
+        XCTAssertFalse(HyperSettings.isEnabled(suite: suite))
+        d.set(true, forKey: "hyperKeyEnabled")
+        XCTAssertTrue(HyperSettings.isEnabled(suite: suite))
+        d.set(false, forKey: "hyperKeyEnabled")
+        XCTAssertFalse(HyperSettings.isEnabled(suite: suite))
+        d.removePersistentDomain(forName: suite)
+    }
 }

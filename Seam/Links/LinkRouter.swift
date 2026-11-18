@@ -18,6 +18,8 @@ final class LinkRouter {
         static let fallback = "linkFallback"
         static let stripTracking = "linkStripTracking"
         static let pickerKeys = "linkPickerKeys"
+        /// Öffner für .html vor der Übernahme (Bundle-ID), für das Zurückgeben (Audit 18.11.).
+        static let htmlPrevious = "linkHTMLPrevious"
     }
 
     private let defaults: UserDefaults
@@ -189,6 +191,10 @@ final class LinkRouter {
             fallback = browsers.contains { $0.id == current } ? current
                 : browsers.first { $0.id == "com.apple.Safari" }?.id ?? browsers.first?.id
         }
+        if defaults.string(forKey: Key.htmlPrevious) == nil, let html = Browsers.currentHTMLOpenerID,
+           html != Bundle.main.bundleIdentifier {
+            defaults.set(html, forKey: Key.htmlPrevious)
+        }
         try await Browsers.makeDefault(Bundle.main.bundleURL)
         refresh()
     }
@@ -198,7 +204,18 @@ final class LinkRouter {
         refresh()
         guard let b = browsers.first(where: { $0.id == fallback }) ?? browsers.first(where: { $0.id == "com.apple.Safari" })
         else { return }
+        let htmlID = LinkRules.htmlReturn(previous: defaults.string(forKey: Key.htmlPrevious),
+                                          own: Bundle.main.bundleIdentifier ?? "", fallback: b.id)
         try await Browsers.makeDefault(b.url)
+        // .html getrennt: Nimmt der frühere Öffner die Rolle nicht an, bleibt sie beim Browser (Code-Audit 18.11.).
+        if htmlID != b.id, let html = NSWorkspace.shared.urlForApplication(withBundleIdentifier: htmlID) {
+            do {
+                try await Browsers.setHTMLOpener(html)
+            } catch {
+                Self.log.error(".html an den früheren Öffner zurückgeben fehlgeschlagen: \((error as NSError).code)")
+            }
+        }
+        defaults.removeObject(forKey: Key.htmlPrevious)
         refresh()
     }
 }

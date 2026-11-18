@@ -2,6 +2,50 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.0.0] — 2026-11-18
+
+### Neu
+
+- **Hintergrund auf allen Schreibtischen.** Ein Bild stand bisher nur auf dem Schreibtisch, der
+  beim Setzen offen war. Jetzt setzt Seam es beim Wechsel auf jeden weiteren Schreibtisch nach.
+- **Je Schreibtisch ein eigenes Bild** (Fenster „Hintergrund“ → „Schreibtische“): Für einzelne
+  Schreibtische wählst du ein anderes Bild, die übrigen zeigen das Hauptbild.
+- **Dock-Vorschau mit längerer Wartezeit:** „Öffnungsverzögerung“ jetzt bis 2 s, ab Werk 0,5 s
+  statt 0,2 s. Fährst du nur über das Dock, bleibt die Vorschau weg.
+
+### Behoben
+
+- **Kurz ⌘Tab springt zur zuletzt benutzten App,** nicht mehr zum zweiten Fenster der App vorn.
+- **Zweimal schnell ⌘Tab springt nicht mehr zum dritten Fenster.** Lässt du ⌘ los, bevor die Liste
+  da ist, ist die Geste zu Ende.
+- **⌘Tab hängt nicht mehr,** wenn die Bildschirmaufnahme von macOS nicht antwortet: Die Liste kommt
+  nach höchstens einer halben Sekunde, notfalls ohne Titel.
+- **Gleich große Fenster:** Umschalter und Dock-Vorschau holen kein falsches Fenster mehr nach vorn,
+  wenn zwei Fenster genau übereinander liegen. ⌃⌥S findet ein gleich großes Fenster als Partner.
+- **Mindestgröße:** Bleibt ein Fenster nach einem Kürzel größer als verlangt (z. B. Outlook auf
+  dem MacBook), schiebt Seam es zurück in den Bildschirm, rückt den Nachbarn nach und zeigt den
+  Hinweis wie beim Teilen.
+- **Paar:** Minimierst du ein Fenster eines geteilten Paars, das nicht mehr neben seinem Partner
+  steht, löst sich das Paar, statt den Partner mitzunehmen.
+- **Ursprüngliche Größe beim Herausziehen** nur noch, solange das Fenster so angedockt ist, wie Seam
+  es gesetzt hat. Hast du es zwischendurch selbst größer gezogen, bleibt deine Größe.
+- **Dock-Vorschau nach der Anmeldung:** Startet Seam vor dem Dock, versucht es die Verbindung nach
+  2, 5 und 15 s erneut.
+- **Supertaste:** Die Feststelltaste wird erst umgelegt, wenn SeamKeys die Freigabe hat; bis dahin
+  bleibt sie eine normale Feststelltaste. Die Einstellungen zeigen „wartet auf die Freigabe“.
+  SeamKeys startet nur, wenn die Supertaste eingeschaltet ist.
+- **Links:** Gibst du die Browser-Rolle zurück, öffnen .html-Dateien wieder mit dem Programm von
+  vorher, statt dauerhaft im Browser.
+- **Hintergrund ohne Stocken:** Laden und Zuschneiden laufen im Hintergrund; ⌘Tab und Kürzel
+  reagieren währenddessen. Fertige Bildstücke verwendet Seam wieder.
+- **Weniger Speicher für Vorschaubilder:** so groß wie die Kachel statt 1280 px, höchstens 60.
+
+### Intern
+
+- `release.sh`: Appcast wird vor Tag und Release erzeugt und geprüft; die Prüfung der
+  Berechtigungen bricht ab, wenn `codesign` scheitert.
+- Neue Tests für alle Fixes (311 Tests). README nennt die Messwerkzeuge in `tools/`.
+
 ## [0.12.1] — 2026-11-18
 
 ### Behoben

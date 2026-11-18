@@ -31,7 +31,7 @@ final class Wallpaper {
     /// Größte Bildkante beim Laden (E18b, Speicher). rafter-code-review 10.11.: 16384 erlaubte
     /// ~1 GB je Bild (16384² × 4 Byte); 8192 (8K) deckt Michaels Bildschirme (zusammen ≤ 4520 pt
     /// breit) und begrenzt auf ~256 MB.
-    static let maxImageEdge = 8192
+    nonisolated static let maxImageEdge = WallpaperPlan.maxImageEdge
 
     private(set) var status: WallpaperStatus = .off
 
@@ -42,6 +42,9 @@ final class Wallpaper {
     @ObservationIgnored private var tokens: [NSObjectProtocol] = []
     @ObservationIgnored private var job: Task<Void, Never>?
     @ObservationIgnored private var screenChange: Task<Void, Never>?
+    /// Art der aktuellen Datei, solange der Hintergrund läuft (für Space-Wechsel).
+    @ObservationIgnored private var currentKind: Kind?
+    @ObservationIgnored private var spaceJob: Task<Void, Never>?
     /// Zählt jeden Neuaufbau; ein älterer Ladevorgang, der spät fertig wird, verwirft sein Ergebnis.
     @ObservationIgnored private var generation = 0
     /// Hell/Dunkel (Michael, 10.11.): macOS-Darstellung beim letzten Aufbau, und ihr Beobachter.
@@ -71,6 +74,8 @@ final class Wallpaper {
         generation += 1
         let gen = generation
         job?.cancel()
+        spaceJob?.cancel()
+        currentKind = nil
         tearDownVideo()
         guard prefs.wallpaperEnabled else {
             removeObservers()
@@ -98,10 +103,11 @@ final class Wallpaper {
             return
         }
         status = .loading
+        currentKind = kind
         job = Task { [weak self] in
             switch kind {
             case .video: await self?.startVideo(url, screens: screens, gen: gen)
-            case .image: self?.startImage(url, screens: screens, gen: gen)
+            case .image: await self?.showStills(kind: .image, gen: gen)
             }
         }
     }
@@ -172,13 +178,8 @@ final class Wallpaper {
         status = .video(screens: windows.count)
         Self.log.notice("Hintergrund: Video auf \(self.windows.count) Bildschirmen")
 
-        // Erstes Bild auch als macOS-Hintergrund. Scheitert das, läuft das Video trotzdem.
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: Self.maxImageEdge, height: Self.maxImageEdge)
-        if let (frame, _) = try? await generator.image(at: .zero), gen == generation {
-            _ = setDesktopImages(frame, screens: screens, rects: rects)
-        }
+        // Erstes Bild auch als macOS-Hintergrund (Mission Control, Sperrbildschirm), auf jedem Space.
+        await showStills(kind: .video, gen: gen)
     }
 
     private static func makeWindow(on screen: NSScreen, media: CGRect, player: AVPlayer) -> NSWindow {
@@ -218,67 +219,87 @@ final class Wallpaper {
         windows = []
     }
 
-    // MARK: - Standbild
+    // MARK: - Standbild, auf jedem Space (Michael 18.11.)
 
-    private func startImage(_ url: URL, screens: [(NSScreen, WallpaperScreen)], gen: Int) {
-        let opts: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: Self.maxImageEdge
-        ]
-        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
-              let image = CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary) else {
-            fail("Bild lässt sich nicht lesen.", gen: gen)
-            return
-        }
-        guard gen == generation else { return }
-        let media = CGSize(width: image.width, height: image.height)
-        let rects = WallpaperPlan.mediaRects(media: media, screens: screens.map(\.1), layout: prefs.wallpaperLayout)
-        guard rects.count == screens.count else { fail("Bild hat keine Größe.", gen: gen); return }
-        if let problem = setDesktopImages(image, screens: screens, rects: rects) {
-            fail(problem, gen: gen)
-            return
-        }
-        status = .image(screens: screens.count)
-        Self.log.notice("Hintergrund: Bild auf \(screens.count) Bildschirmen")
-    }
-
-    /// Schneidet das Bild je Bildschirm zu, schreibt es in den eigenen Ordner (E18c) und setzt es als
-    /// macOS-Hintergrund. Rückgabe: Fehlermeldung oder nil.
-    private func setDesktopImages(_ image: CGImage, screens: [(NSScreen, WallpaperScreen)], rects: [CGRect]) -> String? {
-        guard let dir = Self.folder() else { return "Ordner für die Bildstücke fehlt." }
-        let stamp = Int(Date().timeIntervalSince1970 * 1000)
-        for ((screen, ws), rect) in zip(screens, rects) {
-            let scale = screen.backingScaleFactor
-            let pw = Int((ws.frame.width * scale).rounded()), ph = Int((ws.frame.height * scale).rounded())
-            let space = (image.colorSpace?.model == .rgb ? image.colorSpace : nil) ?? CGColorSpace(name: CGColorSpace.sRGB)!
-            guard let ctx = CGContext(data: nil, width: pw, height: ph, bitsPerComponent: 8, bytesPerRow: 0, space: space,
-                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
-                return "Bildstück für einen Bildschirm ließ sich nicht anlegen."
+    /// macOS-Hintergrund für den GERADE aktiven Space jedes Bildschirms setzen. `setDesktopImageURL` wirkt
+    /// nur auf den aktiven Space (gemessen: das Bild stand nur auf einem Space); darum ruft Seam das bei
+    /// jedem Space-Wechsel erneut auf. Das Rechnen (Laden bis 8192 px, Zuschneiden, PNG) läuft außerhalb
+    /// des Hauptthreads, fertige Stücke werden wiederverwendet (Audit 18.11.: vorher 1–5 s Stillstand).
+    private func showStills(kind: Kind, gen: Int) async {
+        // Beim Video ist das Standbild Beiwerk: Scheitert es, läuft das Video trotzdem (Code-Audit 18.11.).
+        func problem(_ message: String, _ error: Error? = nil) {
+            if kind == .video {
+                Self.log.error("Hintergrund: Standbild zum Video nicht gesetzt: \(message, privacy: .public) \((error as NSError?)?.code ?? 0)")
+            } else {
+                fail(message, gen: gen, error: error)
             }
-            ctx.interpolationQuality = .high
-            ctx.draw(image, in: CGRect(x: rect.minX * scale, y: rect.minY * scale,
-                                       width: rect.width * scale, height: rect.height * scale))
-            guard let piece = ctx.makeImage() else { return "Bildstück ließ sich nicht zeichnen." }
-            let prefix = "seam-\(Self.safe(ws.id))-"
-            let file = dir.appendingPathComponent("\(prefix)\(stamp).png")
-            guard let dest = CGImageDestinationCreateWithURL(file as CFURL, UTType.png.identifier as CFString, 1, nil) else {
-                return "Bildstück ließ sich nicht speichern."
+        }
+        let screens = targetScreens()
+        guard !screens.isEmpty else { problem("Kein Bildschirm ausgewählt."); return }
+        guard let dir = Self.folder() else { problem("Ordner für die Bildstücke fehlt."); return }
+        let main = Preferences.wallpaperPath(light: prefs.wallpaperPath, dark: prefs.wallpaperPathDark, isDark: Self.isDark)
+        let wanted = wantedPaths(screens.map(\.1), main: main)
+        let all = screens.map(\.1), scales = screens.map { $0.0.backingScaleFactor }, layout = prefs.wallpaperLayout
+        var files: [String: URL] = [:]
+        for (path, indices) in Dictionary(grouping: screens.indices, by: { wanted[$0] }) {
+            guard let path else { continue }
+            let job = PieceJob(path: path, isVideo: kind == .video && path == main, screens: all, scales: scales,
+                               needed: indices, layout: layout, dir: dir)
+            switch await Task.detached(priority: .utility, operation: { await PieceMaker.make(job) }).value {
+            case .success(let made): files.merge(made) { _, new in new }
+            case .failure(let e): problem(e.message); return
             }
-            CGImageDestinationAddImage(dest, piece, nil)
-            guard CGImageDestinationFinalize(dest) else { return "Bildstück ließ sich nicht speichern." }
+        }
+        guard gen == generation, !Task.isCancelled else { return }
+        for (screen, ws) in screens {
+            guard let file = files[ws.id], NSWorkspace.shared.desktopImageURL(for: screen) != file else { continue }
             do {
                 try NSWorkspace.shared.setDesktopImageURL(file, for: screen, options: [
                     .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue,
                     .allowClipping: true
                 ])
             } catch {
-                Self.log.error("Hintergrund setzen fehlgeschlagen: \((error as NSError).code)")
-                return "macOS hat den Hintergrund nicht übernommen."
+                problem("macOS hat den Hintergrund nicht übernommen.", error)
+                return
             }
-            Self.removeOld(in: dir, prefix: prefix, keep: file)
         }
-        return nil
+        if kind == .image { status = .image(screens: files.count) }
+        Self.log.notice("Hintergrund: Bild auf \(files.count) Bildschirmen (aktiver Space)")
+        // Aufräumen: nur Stücke der Ziel-Bildschirme, die zu keiner gewählten Datei mehr passen (E18c).
+        let used = Set([prefs.wallpaperPath, prefs.wallpaperPathDark].compactMap { $0 }
+                       + (prefs.wallpaperPerSpace ? Array(prefs.wallpaperSpacePaths.values) : []))
+        let keep = await Task.detached(priority: .utility) {
+            PieceMaker.names(paths: used, screens: all, scales: scales, layout: layout)
+        }.value.union(files.values.map(\.lastPathComponent))
+        // Zwischen Setzen und hier lag ein `await`: Ist inzwischen ein neuerer Aufbau dran, nichts löschen.
+        guard gen == generation, !Task.isCancelled else { return }
+        Self.removeOld(in: dir, screens: all.map(\.id), keep: keep)
+    }
+
+    /// Welche Datei je Bildschirm? „Je Schreibtisch“: die des aktiven Space, nur Bilder (ein Video läuft
+    /// ohnehin auf allen Spaces), sonst das Hauptbild.
+    private func wantedPaths(_ screens: [WallpaperScreen], main: String?) -> [String?] {
+        guard prefs.wallpaperPerSpace else { return screens.map { _ in main } }
+        let spaces = SpaceReader.read() ?? []
+        return screens.map { ws in
+            let slot = SpaceNames.current(spaces, display: ws.id)?.slot
+            let p = WallpaperPlan.spacePath(slot: slot, perSpace: true, spacePaths: prefs.wallpaperSpacePaths, main: main)
+            guard let p, p != main else { return main }
+            return Self.kind(of: URL(fileURLWithPath: p)) == .success(.image) ? p : main
+        }
+    }
+
+    private func spaceChanged() {
+        guard prefs.wallpaperEnabled, let kind = currentKind else { return }
+        let gen = generation
+        // Nacheinander, nie zwei Aufbauten gleichzeitig (Code-Audit 18.11.): erst den laufenden abwarten.
+        spaceJob?.cancel()                      // ein noch wartender Wechsel ist überholt
+        let before = [job, spaceJob].compactMap { $0 }
+        spaceJob = Task { [weak self] in
+            for t in before { await t.value }
+            guard !Task.isCancelled else { return }
+            await self?.showStills(kind: kind, gen: gen)
+        }
     }
 
     /// `~/Library/Application Support/Seam/Hintergrund/`, angelegt bei Bedarf.
@@ -289,18 +310,14 @@ final class Wallpaper {
         return FileManager.default.fileExists(atPath: dir.path) ? dir : nil
     }
 
-    /// E18c: nur alte Stücke DIESES Bildschirms mit Seam-Präfix im eigenen Ordner. Stücke anderer
-    /// Bildschirme bleiben — macOS zeigt sie womöglich noch an.
-    private static func removeOld(in dir: URL, prefix: String, keep: URL) {
+    /// E18c: nur Stücke der Ziel-Bildschirme mit Seam-Präfix im eigenen Ordner, die zu keiner gewählten
+    /// Datei gehören. Stücke anderer Bildschirme bleiben — macOS zeigt sie womöglich noch an.
+    private static func removeOld(in dir: URL, screens: [String], keep: Set<String>) {
+        let prefixes = screens.map { "seam-\(WallpaperPlan.safe($0))-" }
         let names = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        for n in names where n.hasPrefix(prefix) && n.hasSuffix(".png") && n != keep.lastPathComponent {
+        for n in names where n.hasSuffix(".png") && !keep.contains(n) && prefixes.contains(where: { n.hasPrefix($0) }) {
             try? FileManager.default.removeItem(at: dir.appendingPathComponent(n))
         }
-    }
-
-    /// Bildschirm-Kennung für Dateinamen: nur Buchstaben, Ziffern, Bindestrich.
-    static func safe(_ id: String) -> String {
-        String(id.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == "-" }.prefix(64))
     }
 
     // MARK: - Beobachter
@@ -319,6 +336,10 @@ final class Wallpaper {
                 MainActor.assumeIsolated { self?.player?.play() }
             })
         }
+        // Space-Wechsel: macOS-Hintergrund für den neuen Space setzen (setDesktopImageURL wirkt je Space).
+        tokens.append(ws.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.spaceChanged() }
+        })
         // Bildschirme ändern sich oft mehrfach hintereinander: erst neu aufbauen, wenn es ruhig ist.
         tokens.append(NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
                                                              object: nil, queue: .main) { [weak self] _ in
@@ -336,6 +357,7 @@ final class Wallpaper {
         appearanceWatch?.invalidate()
         appearanceWatch = nil
         screenChange?.cancel()
+        spaceJob?.cancel()
     }
 
     private func scheduleRebuild() {
@@ -352,5 +374,115 @@ final class Wallpaper {
         tearDownVideo()
         status = .problem(message)
         Self.log.error("Hintergrund: \(message, privacy: .public) \((error as NSError?)?.code ?? 0)")
+    }
+}
+
+// MARK: - Bildstücke rechnen (außerhalb des Hauptthreads, Audit 18.11.)
+
+/// Auftrag: eine Quelldatei für bestimmte Bildschirme zuschneiden. Beim Gesamtbild hängt jedes Stück an allen
+/// Ziel-Bildschirmen (`screens`), gebraucht werden nur die in `needed`.
+struct PieceJob: Sendable {
+    let path: String
+    let isVideo: Bool
+    let screens: [WallpaperScreen]
+    let scales: [CGFloat]
+    let needed: [Int]
+    let layout: WallpaperLayout
+    let dir: URL
+}
+
+struct PieceError: Error { let message: String }
+
+enum PieceMaker {
+
+    static func stamp(_ path: String) -> WallpaperPlan.SourceStamp? {
+        guard let a = try? FileManager.default.attributesOfItem(atPath: path),
+              let date = a[.modificationDate] as? Date, let size = a[.size] as? NSNumber else { return nil }
+        return WallpaperPlan.SourceStamp(path: path, modified: date.timeIntervalSince1970, bytes: size.intValue)
+    }
+
+    static func name(_ stamp: WallpaperPlan.SourceStamp, screen i: Int, screens: [WallpaperScreen],
+                     scales: [CGFloat], layout: WallpaperLayout) -> String {
+        WallpaperPlan.pieceName(screen: screens[i].id, source: stamp, layout: layout, screens: screens,
+                                scale: scales[i])
+    }
+
+    /// Dateinamen aller Stücke, die zu diesen Dateien gehören (fürs Aufräumen).
+    static func names(paths: Set<String>, screens: [WallpaperScreen], scales: [CGFloat], layout: WallpaperLayout) -> Set<String> {
+        var out = Set<String>()
+        for p in paths {
+            guard let st = stamp(p) else { continue }
+            for i in screens.indices { out.insert(name(st, screen: i, screens: screens, scales: scales, layout: layout)) }
+        }
+        return out
+    }
+
+    /// Bildschirm-Kennung → fertiges Stück. Liegt ein Stück schon da, wird es nicht neu gerechnet.
+    static func make(_ job: PieceJob) async -> Result<[String: URL], PieceError> {
+        let fileName = (job.path as NSString).lastPathComponent
+        guard let st = stamp(job.path) else { return .failure(PieceError(message: "„\(fileName)“ ist nicht mehr da. Bitte neu wählen.")) }
+        let targets = job.needed.map { i in (i, job.dir.appendingPathComponent(name(st, screen: i, screens: job.screens,
+                                                                                         scales: job.scales, layout: job.layout))) }
+        var out: [String: URL] = [:]
+        let missing = targets.filter { !FileManager.default.fileExists(atPath: $0.1.path) }
+        for (i, url) in targets where !missing.contains(where: { $0.0 == i }) { out[job.screens[i].id] = url }
+        guard !missing.isEmpty else { return .success(out) }
+        guard let image = await load(job) else {
+            return .failure(PieceError(message: job.isVideo ? "Video lässt sich nicht lesen." : "Bild lässt sich nicht lesen."))
+        }
+        let rects = WallpaperPlan.mediaRects(media: CGSize(width: image.width, height: image.height),
+                                             screens: job.screens, layout: job.layout)
+        guard rects.count == job.screens.count else { return .failure(PieceError(message: "Bild hat keine Größe.")) }
+        for (i, url) in missing {
+            if let problem = draw(image, rect: rects[i], screen: job.screens[i], scale: job.scales[i], to: url) {
+                return .failure(PieceError(message: problem))
+            }
+            out[job.screens[i].id] = url
+        }
+        return .success(out)
+    }
+
+    private static func load(_ job: PieceJob) async -> CGImage? {
+        let url = URL(fileURLWithPath: job.path)
+        if job.isVideo {
+            let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+            generator.appliesPreferredTrackTransform = true
+            generator.maximumSize = CGSize(width: Wallpaper.maxImageEdge, height: Wallpaper.maxImageEdge)
+            return try? await generator.image(at: .zero).image
+        }
+        let opts: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: Wallpaper.maxImageEdge
+        ]
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        return CGImageSourceCreateThumbnailAtIndex(src, 0, opts as CFDictionary)
+    }
+
+    /// Stück zeichnen und schreiben (erst unter Zwischennamen, dann umbenennen: nie ein halbes PNG unter dem Namen).
+    private static func draw(_ image: CGImage, rect: CGRect, screen ws: WallpaperScreen, scale: CGFloat, to url: URL) -> String? {
+        let pw = Int((ws.frame.width * scale).rounded()), ph = Int((ws.frame.height * scale).rounded())
+        let space = (image.colorSpace?.model == .rgb ? image.colorSpace : nil) ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let ctx = CGContext(data: nil, width: pw, height: ph, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                                  bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
+            return "Bildstück für einen Bildschirm ließ sich nicht anlegen."
+        }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale))
+        guard let piece = ctx.makeImage() else { return "Bildstück ließ sich nicht zeichnen." }
+        // Eindeutiger Zwischenname: Ein abgebrochener Aufbau rechnet weiter und darf dem neuen nicht dazwischenschreiben.
+        let tmp = url.deletingLastPathComponent().appendingPathComponent(".tmp-\(UUID().uuidString)-" + url.lastPathComponent)
+        guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, UTType.png.identifier as CFString, 1, nil) else {
+            return "Bildstück ließ sich nicht speichern."
+        }
+        CGImageDestinationAddImage(dest, piece, nil)
+        guard CGImageDestinationFinalize(dest) else { return "Bildstück ließ sich nicht speichern." }
+        do {
+            _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
+        } catch {
+            try? FileManager.default.removeItem(at: tmp)
+            return "Bildstück ließ sich nicht speichern."
+        }
+        return nil
     }
 }

@@ -82,7 +82,17 @@ enum Browsers {
     static func makeDefault(_ appURL: URL) async throws {
         try await NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "http")
         try await NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "https")
+        try await setHTMLOpener(appURL)
+    }
+
+    /// Öffner für .html-Dateien.
+    static func setHTMLOpener(_ appURL: URL) async throws {
         try await NSWorkspace.shared.setDefaultApplication(at: appURL, toOpen: .html)
+    }
+
+    /// Bundle-ID des aktuellen Öffners für .html-Dateien.
+    static var currentHTMLOpenerID: String? {
+        NSWorkspace.shared.urlForApplication(toOpen: .html).flatMap { Bundle(url: $0)?.bundleIdentifier }
     }
 
     private static func displayName(_ b: Bundle, url: URL) -> String {

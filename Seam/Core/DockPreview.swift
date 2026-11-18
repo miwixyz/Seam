@@ -23,6 +23,7 @@ final class DockPreview {
     private var leaveTimer: Timer?
     private var misses = 0
     private var launchToken: NSObjectProtocol?
+    private var retryTask: Task<Void, Never>?
 
     init(prefs: Preferences) {
         self.prefs = prefs
@@ -47,8 +48,10 @@ final class DockPreview {
 
     private func start() {
         guard observer == nil else { return }
-        attach()
+        attachWithRetry()
         // Startet das Dock neu (z. B. „Spaces in fester Reihenfolge“), stirbt der Beobachter mit.
+        // Nur einmal anmelden (Audit 18.11.: jeder weitere apply() legte einen zusätzlichen Beobachter an).
+        guard launchToken == nil else { return }
         launchToken = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main) { [weak self] note in
             let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
@@ -57,23 +60,49 @@ final class DockPreview {
                 Task { @MainActor [weak self] in
                     try? await Task.sleep(for: .seconds(1.5))   // Symbolliste baut sich erst auf
                     self?.detach()
-                    if self?.prefs.dockPreviewEnabled == true { self?.attach() }
+                    if self?.prefs.dockPreviewEnabled == true { self?.attachWithRetry() }
                 }
             }
         }
     }
 
     private func stop() {
+        retryTask?.cancel()
+        retryTask = nil
         detach()
         if let launchToken { NSWorkspace.shared.notificationCenter.removeObserver(launchToken) }
         launchToken = nil
         hide()
     }
 
-    private func attach() {
+    /// Startet Seam bei der Anmeldung vor dem Dock, fehlt die Symbolliste noch: nach 2, 5 und 15 s erneut
+    /// versuchen (Audit 18.11.: vorher blieb die Vorschau bis zum nächsten Dock-Neustart aus).
+    private func attachWithRetry() {
+        retryTask?.cancel()
+        guard !attach() else { return }
+        retryTask = Task { @MainActor [weak self] in
+            var attempt = 0
+            while let delay = Self.retryDelay(after: attempt) {
+                try? await Task.sleep(for: delay)
+                guard let self, !Task.isCancelled, self.prefs.dockPreviewEnabled, self.observer == nil else { return }
+                if self.attach() { return }
+                attempt += 1
+            }
+            Self.log.error("Dock-Symbolliste auch nach mehreren Versuchen nicht gefunden")
+        }
+    }
+
+    /// Wartezeit vor dem nächsten Versuch (getestet), nil = aufgeben.
+    nonisolated static func retryDelay(after attempt: Int) -> Duration? {
+        let delays: [Duration] = [.seconds(2), .seconds(5), .seconds(15)]
+        return delays.indices.contains(attempt) ? delays[attempt] : nil
+    }
+
+    @discardableResult
+    private func attach() -> Bool {
         guard let pid = AXAccess.dockProcess(), let list = AXAccess.dockList(pid) else {
             Self.log.error("Dock-Symbolliste nicht gefunden")
-            return
+            return false
         }
         let me = Unmanaged.passUnretained(self).toOpaque()
         let callback: AXObserverCallback = { _, _, _, refcon in
@@ -83,13 +112,14 @@ final class DockPreview {
             }
         }
         var obs: AXObserver?
-        guard AXObserverCreate(pid, callback, &obs) == .success, let obs else { return }
+        guard AXObserverCreate(pid, callback, &obs) == .success, let obs else { return false }
         let status = AXObserverAddNotification(obs, list, kAXSelectedChildrenChangedNotification as CFString, me)
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .commonModes)
         observer = obs
         self.list = list
         dockPID = pid
         Self.log.notice("Dock beobachtet (Anmeldung: \(status.rawValue, privacy: .public))")
+        return true
     }
 
     private func detach() {
@@ -150,8 +180,9 @@ final class DockPreview {
         panel.setFrame(Geometry.toAppKit(rect, primaryHeight: Screens.primaryHeight), display: true)
         panel.orderFrontRegardless()
         startLeaveCheck()
+        let tile = prefs.previewSize.tileWidth
         imageTask = Task { [weak self] in
-            await WindowCatalog.captureImages(for: windows) { id, image in self?.model.images[id] = image }
+            await WindowCatalog.captureImages(for: windows, tileWidth: tile) { id, image in self?.model.images[id] = image }
         }
     }
 

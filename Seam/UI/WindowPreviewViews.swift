@@ -14,6 +14,10 @@ final class PreviewModel {
     var showsSelection = true
     @ObservationIgnored var onHover: ((Int) -> Void)?
     @ObservationIgnored var onClick: ((Int) -> Void)?
+    /// Zeigerlage beim Öffnen. Öffnet sich die Vorschau unter dem ruhenden Zeiger, meldet macOS ein
+    /// Hover, ohne dass jemand die Maus bewegt hat — die Kachel darunter würde die Auswahl übernehmen.
+    @ObservationIgnored private var pointerAtOpen: CGPoint?
+    @ObservationIgnored private var lastHovered: Int?
 
     func reset(_ list: [CatalogWindow], size: PreviewSize, columns: Int, selection: Int) {
         windows = list
@@ -21,6 +25,23 @@ final class PreviewModel {
         self.columns = max(1, columns)
         self.selection = selection
         images = list.reduce(into: [:]) { r, w in r[w.id] = WindowCatalog.cachedImage(w.id) }
+        pointerAtOpen = NSEvent.mouseLocation
+        lastHovered = nil
+    }
+
+    /// Zeiger über Kachel `i`. Zählt erst, wenn sich der Zeiger seit dem Öffnen bewegt hat.
+    func hover(_ i: Int, pointer: CGPoint) {
+        guard Self.pointerMoved(from: pointerAtOpen, to: pointer) else { return }
+        pointerAtOpen = nil
+        guard lastHovered != i else { return }
+        lastHovered = i
+        onHover?(i)
+    }
+
+    /// Getestet: mehr als 3 pt seit dem Öffnen (nil = schon bewegt).
+    nonisolated static func pointerMoved(from start: CGPoint?, to now: CGPoint) -> Bool {
+        guard let start else { return true }
+        return hypot(now.x - start.x, now.y - start.y) > 3
     }
 }
 
@@ -113,7 +134,9 @@ struct WindowGridView: View {
                         WindowTile(window: w, image: model.images[w.id], width: model.size.tileWidth,
                                    selected: model.showsSelection && tile.index == model.selection)
                             .contentShape(Rectangle())
-                            .onHover { inside in if inside { model.onHover?(tile.index) } }
+                            .onContinuousHover { phase in
+                                if case .active = phase { model.hover(tile.index, pointer: NSEvent.mouseLocation) }
+                            }
                             .onTapGesture { model.onClick?(tile.index) }
                     }
                 }

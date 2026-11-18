@@ -112,3 +112,54 @@ final class WallpaperAppearanceTests: XCTestCase {
         XCTAssertNil(Preferences.wallpaperPath(light: nil, dark: nil, isDark: false))
     }
 }
+
+/// Michael 18.11.: Hintergrund nur auf einem Space; soll auf allen gelten oder je Space ein eigenes Bild.
+final class WallpaperSpaceTests: XCTestCase {
+    private let a = WallpaperScreen(id: "PA34", frame: CGRect(x: 0, y: 0, width: 3440, height: 1440),
+                                    millimeters: CGSize(width: 800, height: 335))
+    private let b = WallpaperScreen(id: "MB169", frame: CGRect(x: 3440, y: 0, width: 1080, height: 1920),
+                                    millimeters: CGSize(width: 190, height: 338))
+    private let src = WallpaperPlan.SourceStamp(path: "/Bilder/berg.jpg", modified: 1000, bytes: 4_000_000)
+
+    private func name(_ s: WallpaperPlan.SourceStamp? = nil, layout: WallpaperLayout = .span,
+                      screens: [WallpaperScreen]? = nil, scale: CGFloat = 2) -> String {
+        WallpaperPlan.pieceName(screen: "PA34", source: s ?? src, layout: layout, screens: screens ?? [a, b],
+                                scale: scale)
+    }
+
+    func testPieceNameIsStableAndFollowsEveryInput() {
+        XCTAssertEqual(name(), name())
+        XCTAssertTrue(name().hasPrefix("seam-PA34-"))
+        XCTAssertTrue(name().hasSuffix(".png"))
+        XCTAssertNotEqual(name(), name(WallpaperPlan.SourceStamp(path: src.path, modified: 1001, bytes: src.bytes)))
+        XCTAssertNotEqual(name(), name(WallpaperPlan.SourceStamp(path: "/Bilder/see.jpg", modified: 1000, bytes: src.bytes)))
+        XCTAssertNotEqual(name(), name(layout: .each))
+        XCTAssertNotEqual(name(), name(scale: 1))
+        var lifted = b
+        lifted.offsetY = 4
+        XCTAssertNotEqual(name(), name(screens: [a, lifted]))       // Gesamtbild: Nachbar verändert den Zuschnitt
+    }
+
+    func testSpacePathPrefersOwnEntryOnlyWhenPerSpace() {
+        let per = ["PA34#2": "/Bilder/see.jpg"]
+        XCTAssertEqual(WallpaperPlan.spacePath(slot: "PA34#2", perSpace: true, spacePaths: per, main: "/m.jpg"), "/Bilder/see.jpg")
+        XCTAssertEqual(WallpaperPlan.spacePath(slot: "PA34#2", perSpace: false, spacePaths: per, main: "/m.jpg"), "/m.jpg")
+        XCTAssertEqual(WallpaperPlan.spacePath(slot: "PA34#1", perSpace: true, spacePaths: per, main: "/m.jpg"), "/m.jpg")
+        XCTAssertEqual(WallpaperPlan.spacePath(slot: nil, perSpace: true, spacePaths: per, main: "/m.jpg"), "/m.jpg")
+    }
+
+    /// Von außen veränderte Werte fallen weg (STRIDE T), wie bei den übrigen Hintergrund-Werten.
+    @MainActor
+    func testSpacePathsValidatedOnLoad() {
+        let suite = "dev.mwlr.seam.tests.spacepaths"
+        let d = UserDefaults(suiteName: suite)!
+        d.removePersistentDomain(forName: suite)
+        d.set(["PA34#2": "/Bilder/see.jpg", "PA34#3": "relativ.jpg", "": "/x.jpg"], forKey: "wallpaperSpacePaths")
+        let p = Preferences(defaults: d)
+        XCTAssertEqual(p.wallpaperSpacePaths, ["PA34#2": "/Bilder/see.jpg"])
+        XCTAssertFalse(p.wallpaperPerSpace)
+        p.setWallpaperSpacePath(nil, slot: "PA34#2")
+        XCTAssertEqual(Preferences(defaults: d).wallpaperSpacePaths, [:])
+        d.removePersistentDomain(forName: suite)
+    }
+}

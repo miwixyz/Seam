@@ -33,6 +33,8 @@ final class Preferences {
         static let wallpaperOffsets = "wallpaperOffsets"
         static let wallpaperLayout = "wallpaperLayout"
         static let wallpaperOffScreens = "wallpaperOffScreens"
+        static let wallpaperPerSpace = "wallpaperPerSpace"
+        static let wallpaperSpacePaths = "wallpaperSpacePaths"
         static let switcherEnabled = "switcherEnabled"
         static let switcherCurrentSpaceOnly = "switcherCurrentSpaceOnly"
         static let dockPreviewEnabled = "dockPreviewEnabled"
@@ -101,6 +103,11 @@ final class Preferences {
     static let maxWallpaperOffset = 300
     /// Bildschirme (UUID), auf denen Seam den Hintergrund nicht setzt.
     private(set) var wallpaperOffScreens: [String] { didSet { defaults.set(wallpaperOffScreens, forKey: Key.wallpaperOffScreens) } }
+    /// Je Schreibtisch ein eigenes Bild (Michael, 18.11.). Aus = dasselbe Bild auf allen Spaces.
+    var wallpaperPerSpace: Bool { didSet { defaults.set(wallpaperPerSpace, forKey: Key.wallpaperPerSpace) } }
+    /// Platz des Schreibtischs (`SpaceInfo.slot`, E17d) → Bilddatei, nur über `setWallpaperSpacePath`.
+    private(set) var wallpaperSpacePaths: [String: String] { didSet { defaults.set(wallpaperSpacePaths, forKey: Key.wallpaperSpacePaths) } }
+    static let maxSpacePaths = 100
 
     /// Fensterumschalter mit ⌘Tab / ⌘< (E21). Ab Werk aus: Einschalten fragt die Bildschirmaufnahme an.
     var switcherEnabled: Bool { didSet { defaults.set(switcherEnabled, forKey: Key.switcherEnabled) } }
@@ -323,6 +330,11 @@ final class Preferences {
         }
         wallpaperOffScreens = Self.uniqueCapped(defaults.stringArray(forKey: Key.wallpaperOffScreens) ?? [],
                                                 max: Self.maxDimScreens, valid: Self.validKey)
+        wallpaperPerSpace = defaults.object(forKey: Key.wallpaperPerSpace) as? Bool ?? false
+        let rawSpacePaths = defaults.dictionary(forKey: Key.wallpaperSpacePaths) as? [String: String] ?? [:]
+        wallpaperSpacePaths = rawSpacePaths.sorted { $0.key < $1.key }.prefix(Self.maxSpacePaths).reduce(into: [:]) { r, e in
+            if Self.validKey(e.key), Self.validPath(e.value) { r[e.key] = e.value }
+        }
         (switcherEnabled, switcherCurrentSpaceOnly, dockPreviewEnabled, dockPreviewCurrentSpaceOnly,
          dockPreviewDelay, previewSize, spaceOrderPrevious, systemSwitcherOff) = Self.loadPreview(defaults)
         loadHyperKey()
@@ -332,19 +344,21 @@ final class Preferences {
 
     // swiftlint:disable:next large_tuple
     private static func loadPreview(_ d: UserDefaults) -> (Bool, Bool, Bool, Bool, Int, PreviewSize, String?, Bool) {
-        let delay = d.object(forKey: Key.dockPreviewDelay) as? Int ?? 200
+        let delay = d.object(forKey: Key.dockPreviewDelay) as? Int ?? defaultDockDelay
         let mru = d.string(forKey: Key.spaceOrderPrevious)
         return (d.object(forKey: Key.switcherEnabled) as? Bool ?? false,
                 d.object(forKey: Key.switcherCurrentSpaceOnly) as? Bool ?? false,
                 d.object(forKey: Key.dockPreviewEnabled) as? Bool ?? false,
                 d.object(forKey: Key.dockPreviewCurrentSpaceOnly) as? Bool ?? false,
-                dockDelayChoices.contains(delay) ? delay : 200,
+                dockDelayChoices.contains(delay) ? delay : defaultDockDelay,
                 d.string(forKey: Key.previewSize).flatMap(PreviewSize.init(rawValue:)) ?? .normal,
                 ["true", "false", "unset"].contains(mru ?? "") ? mru : nil,
                 d.object(forKey: Key.systemSwitcherOff) as? Bool ?? false)
     }
 
-    static let dockDelayChoices = [0, 100, 200, 300, 500, 800]
+    static let dockDelayChoices = [0, 100, 200, 300, 500, 800, 1000, 1500, 2000]
+    /// Michael 18.11.: 200 ms löste beim versehentlichen Darüberfahren aus.
+    static let defaultDockDelay = 500
 
     /// Vorheriger macOS-Wert von `mru-spaces` vor dem Einschalten (E21g); nil = Seam hat nichts verändert.
     var spaceOrderPreviousValue: Bool?? {
@@ -406,6 +420,14 @@ final class Preferences {
     /// Welche Datei gilt gerade? Dunkel ohne eigene Datei → die helle (getestet).
     nonisolated static func wallpaperPath(light: String?, dark: String?, isDark: Bool) -> String? {
         isDark ? (dark ?? light) : (light ?? dark)
+    }
+
+    /// Bild für einen Schreibtisch setzen (nil = wieder das Hauptbild).
+    func setWallpaperSpacePath(_ path: String?, slot: String) {
+        guard Self.validKey(slot) else { return }
+        guard let path else { wallpaperSpacePaths[slot] = nil; return }
+        guard Self.validPath(path), wallpaperSpacePaths[slot] != nil || wallpaperSpacePaths.count < Self.maxSpacePaths else { return }
+        wallpaperSpacePaths[slot] = path
     }
 
     func setWallpaperScreen(_ on: Bool, id: String) {

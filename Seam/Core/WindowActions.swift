@@ -5,7 +5,7 @@ import OSLog
 @MainActor
 final class WindowActions {
 
-    private static let log = Logger(subsystem: "dev.mwlr.seam", category: "aktion")
+    nonisolated private static let log = Logger(subsystem: "dev.mwlr.seam", category: "aktion")
     private let prefs: Preferences
     /// Gemeinsame Schreib-Warteschlange der App (R4), auch von DragController genutzt.
     let writer = NeighborWriter()
@@ -15,6 +15,9 @@ final class WindowActions {
     /// Rahmen vor dem ersten Andocken. Nur im Speicher, an die AX-Referenz
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
     private var original: [AXWindow: CGRect] = [:]
+    /// Größe, in die Seam das Fenster gesetzt hat (Ist, sobald gelesen). Weicht die aktuelle Größe ab,
+    /// hat der Nutzer es selbst verändert → beim Herausziehen nichts zurückgeben (Audit 18.11.).
+    private var snappedSize: [AXWindow: CGSize] = [:]
 
     /// ⌃⌥S hat ein Paar gebildet (E12). Gesetzt von der Engine (`PairKeeper.pair`). Aufgerufen
     /// erst, NACHDEM beide Rahmen gesetzt sind (Code-Audit 09.10., C6: vorher sofort, ein
@@ -75,16 +78,19 @@ final class WindowActions {
     /// (hochkant: oben) steht, kommt links hin. Michael, 08.10.: Zuerst kam immer das aktive
     /// Fenster nach links, „Outlook springt von links nach rechts“.
     private func split(_ w: AXWindow, _ f: CGRect, _ screen: Screens.Info) {
-        guard let (partner, pf) = WindowFinder.nextWindow(after: w, frame: f, on: screen.frame) else {
+        guard let (partner, pf) = WindowFinder.nextWindow(after: w, on: screen.frame) else {
             Self.log.notice("Teilen: kein zweites Fenster auf diesem Bildschirm")
             return
         }
         if original[w] == nil { original[w] = f }
         if original[partner] == nil { original[partner] = pf }
+        dropEndedApps()
         let wFirst = Geometry.comesFirst(f, before: pf, screen.orientation)
         let (first, second) = wFirst ? (w, partner) : (partner, w)
         lastPair = (first, second)
         let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
+        snappedSize[first] = a.size
+        snappedSize[second] = b.size
         setPair((first, a), (second, b), name: "Teilen") { [weak self] in self?.onSplit?(first, second) }
     }
 
@@ -140,22 +146,27 @@ final class WindowActions {
         writer.run { [weak self] in
             let a1 = NeighborWriter.setVerified(first.0, first.1)
             let a2 = NeighborWriter.setVerified(second.0, second.1)
+            var final1 = a1, final2 = a2
             if let a2, let fix = Geometry.resolveMinimum(leading: first.1, wanted: second.1, actual: a2) {
                 let nIst = NeighborWriter.setVerified(second.0, fix.neighbor)
                 let lIst = NeighborWriter.setVerified(first.0, fix.leading)
+                (final1, final2) = (lIst, nIst)
                 log.notice("\(name, privacy: .public): Mindestgröße rechts/unten, Naht gehalten")
                 self?.announce(MinimumHit(wanted: second.1, actual: a2, fix: fix, neighborIst: nIst, leadingIst: lIst),
                                neighbor: second.0, other: first.0)
             } else if let a1, let fix = Geometry.resolveMinimum(leading: second.1, wanted: first.1, actual: a1) {
                 let nIst = NeighborWriter.setVerified(first.0, fix.neighbor)
                 let lIst = NeighborWriter.setVerified(second.0, fix.leading)
+                (final1, final2) = (nIst, lIst)
                 log.notice("\(name, privacy: .public): Mindestgröße links/oben, Naht gehalten")
                 self?.announce(MinimumHit(wanted: first.1, actual: a1, fix: fix, neighborIst: nIst, leadingIst: lIst),
                                neighbor: first.0, other: second.0)
             }
             log.notice("\(name, privacy: .public): \(first.0.logName, privacy: .public) + \(second.0.logName, privacy: .public) | Soll \(NSStringFromRect(first.1), privacy: .public) + \(NSStringFromRect(second.1), privacy: .public), Ist \(a1.map(NSStringFromRect) ?? "–", privacy: .public) + \(a2.map(NSStringFromRect) ?? "–", privacy: .public)")
+            let sizes = [(first.0, final1?.size), (second.0, final2?.size)]
             Task { @MainActor in
                 self?.unplan(jobs)
+                self?.noteSnappedSizes(sizes)
                 done?()
             }
         }
@@ -191,6 +202,7 @@ final class WindowActions {
         switch cmd {
         case .restore:
             target = original.removeValue(forKey: w).map { Geometry.clamp($0, to: screen.visible) }
+            snappedSize[w] = nil
             if target == nil { Self.log.notice("restore: keine ursprüngliche Größe gemerkt für \(w.logName, privacy: .public)") }
         case .center:
             target = Geometry.centered(f, in: screen.visible)
@@ -208,6 +220,7 @@ final class WindowActions {
                 return
             }
             if original[w] == nil { original[w] = before }
+            dropEndedApps()
             target = Geometry.rect(for: cells, in: screen.visible, screen.orientation, gap: gap)
         }
         // Nachbarn mitsetzen: nur bei festen Flächen (Hälften, Viertel, Drittel), nicht
@@ -221,23 +234,113 @@ final class WindowActions {
         }
         guard let target else { return }
         let goal = Geometry.clamp(target, to: screen.visible)
-        let log = Self.log, name = cmd.rawValue
+        if original[w] != nil { snappedSize[w] = goal.size }
+        let name = cmd.rawValue
         let jobs = [(w, goal)] + partners
         plan(jobs)
         // Mit Nachprüfung auf der Warteschlange: Edge landete beim ersten ⌃⌥→ auf
         // x 2449 / Breite 991 statt x 1723 / 1712 (gemessen 08.10.).
+        let visible = screen.visible
         writer.run { [weak self] in
-            let result = NeighborWriter.setVerified(w, goal)
-            // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
-            log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(goal), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
-            for (pw, pr) in partners {
-                let ist = NeighborWriter.setVerified(pw, pr)
-                log.notice("\(name, privacy: .public): Nachbar \(pw.logName, privacy: .public) mitgesetzt, Soll \(NSStringFromRect(pr), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
+            let finalSize = self?.write(w, goal, partners: partners, visible: visible, name: name)
+            Task { @MainActor in
+                self?.unplan(jobs)
+                self?.noteSnappedSizes([(w, finalSize ?? nil)])
             }
-            Task { @MainActor in self?.unplan(jobs) }
         }
     }
 
-    func wasSnapped(_ w: AXWindow) -> CGRect? { original[w] }
-    func forget(_ w: AXWindow) { original[w] = nil }
+    /// Auf der Warteschlange: setzen, nachprüfen, bei Mindestgröße nachsteuern. Rückgabe: Ist-Größe.
+    nonisolated private func write(_ w: AXWindow, _ goal: CGRect, partners: [(AXWindow, CGRect)],
+                                   visible: CGRect, name: String) -> CGSize? {
+        let log = Self.log
+        let result = NeighborWriter.setVerified(w, goal)
+        // Messpunkt: Soll und Ist. Weicht die App ab (Mindestgröße), steht es hier.
+        log.notice("\(name, privacy: .public): Soll \(NSStringFromRect(goal), privacy: .public) Ist \(result.map(NSStringFromRect) ?? "–", privacy: .public)")
+        var partnerIst: [CGRect?] = []
+        for (pw, pr) in partners {
+            let ist = NeighborWriter.setVerified(pw, pr)
+            partnerIst.append(ist)
+            log.notice("\(name, privacy: .public): Nachbar \(pw.logName, privacy: .public) mitgesetzt, Soll \(NSStringFromRect(pr), privacy: .public) Ist \(ist.map(NSStringFromRect) ?? "–", privacy: .public)")
+        }
+        // Mindestgröße (Audit 18.11.): nachsteuern. Mit genau einem Nachbarn wie bei ⌃⌥S samt Hinweis,
+        // sonst nur zurück in den Bildschirm (bei zwei Nachbarn wäre die Naht nicht eindeutig).
+        let one = partners.count == 1 ? partnerIst[0].map { (partners[0].1, $0) } : nil
+        guard let result, let c = Self.correction(goal: goal, ist: result, partner: one, visible: visible) else {
+            return result?.size
+        }
+        let lIst = NeighborWriter.setVerified(w, c.lead)
+        if let pr = c.partner, let (pw, pWanted) = partners.first {
+            let nIst = NeighborWriter.setVerified(pw, pr)
+            if c.leadHitMinimum {
+                announce(MinimumHit(wanted: goal, actual: result, fix: (leading: pr, neighbor: c.lead), neighborIst: lIst, leadingIst: nIst),
+                         neighbor: w, other: pw)
+            } else {
+                announce(MinimumHit(wanted: pWanted, actual: one?.1 ?? pr, fix: (leading: c.lead, neighbor: pr), neighborIst: nIst, leadingIst: lIst),
+                         neighbor: pw, other: w)
+            }
+        }
+        log.notice("\(name, privacy: .public): Mindestgröße, nachgesteuert auf \(NSStringFromRect(c.lead), privacy: .public)")
+        return lIst?.size
+    }
+
+    struct Correction: Equatable {
+        let lead: CGRect
+        let partner: CGRect?
+        /// true = das gesetzte Fenster hielt seine Mindestgröße, false = der Nachbar.
+        let leadHitMinimum: Bool
+    }
+
+    /// Nachsteuern nach einem Kürzel (getestet). `lead` = gesetztes Fenster, `partner` = ein mitgesetzter
+    /// Nachbar (Soll, Ist). Rückgabe nil = alles passt.
+    nonisolated static func correction(goal: CGRect, ist: CGRect, partner: (wanted: CGRect, ist: CGRect)?,
+                                       visible: CGRect) -> Correction? {
+        if let p = partner {
+            // Gesetztes Fenster größer geblieben: seine Außenkante bleibt, der Nachbar gibt nach (wie setPair).
+            if let fix = Geometry.resolveMinimum(leading: p.wanted, wanted: goal, actual: ist) {
+                return Correction(lead: fix.neighbor, partner: fix.leading, leadHitMinimum: true)
+            }
+            // Nachbar größer geblieben: die Naht bleibt an seiner Mindestgröße stehen.
+            if let fix = Geometry.resolveMinimum(leading: goal, wanted: p.wanted, actual: p.ist) {
+                return Correction(lead: fix.leading, partner: fix.neighbor, leadHitMinimum: false)
+            }
+        }
+        // Sonst wenigstens zurück in den sichtbaren Bereich.
+        guard !visible.insetBy(dx: -1, dy: -1).contains(ist) else { return nil }
+        return Correction(lead: Geometry.clamp(ist, to: visible), partner: nil, leadHitMinimum: true)
+    }
+
+    /// Steht das Fenster noch in der Größe, in die Seam es gesetzt hat? (getestet)
+    nonisolated static func stillSnapped(_ snapped: CGSize?, now: CGSize) -> Bool {
+        guard let snapped else { return false }
+        return abs(snapped.width - now.width) <= 2 && abs(snapped.height - now.height) <= 2
+    }
+
+    /// Ursprüngliche Größe, falls das Fenster noch so angedockt ist, wie Seam es gesetzt hat.
+    /// Von Hand verändert → Eintrag vergessen.
+    func wasSnapped(_ w: AXWindow, now: CGSize) -> CGRect? {
+        guard let o = original[w] else { return nil }
+        guard Self.stillSnapped(snappedSize[w], now: now) else { forget(w); return nil }
+        return o
+    }
+
+    /// Seam hat ein angedocktes Fenster selbst neu gesetzt (Mitziehen): bleibt angedockt, neue Größe.
+    func keepSnapped(_ w: AXWindow, size: CGSize) {
+        if original[w] != nil { snappedSize[w] = size }
+    }
+
+    func forget(_ w: AXWindow) {
+        original[w] = nil
+        snappedSize[w] = nil
+    }
+
+    /// Nur für Fenster, die Seam noch als angedockt führt; Ist-Größe nach dem Setzen.
+    private func noteSnappedSizes(_ sizes: [(AXWindow, CGSize?)]) {
+        for (w, size) in sizes where original[w] != nil { if let size { snappedSize[w] = size } }
+    }
+
+    /// Einträge beendeter Apps (die AX-Referenzen gehören zu toten Prozessen).
+    private func dropEndedApps() {
+        for w in original.keys where NSRunningApplication(processIdentifier: w.pid) == nil { forget(w) }
+    }
 }

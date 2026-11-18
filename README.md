@@ -43,7 +43,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   Monitore, verteilt nach deren echter Größe (Millimeter statt Bildpunkte). Ohne zusätzliche Freigabe.
   Seit 0.10: eigene Datei für hell und dunkel, Ausgleich je Monitor in 2-mm-Schritten und
   „Online aussuchen“ (kostenlose Fotos und Videos von Pixabay, Pexels, Wikimedia Commons; Pixabay und
-  Pexels mit eigenem kostenlosem Schlüssel im Schlüsselbund).
+  Pexels mit eigenem kostenlosem Schlüssel im Schlüsselbund). Seit 1.0: das Bild auf allen
+  Schreibtischen (Spaces), wahlweise je Schreibtisch ein eigenes Bild.
 - **Mitziehen beim Loslassen:** Ziehst du die gemeinsame Kante mit der Maus, setzt Seam das
   Nachbarfenster beim Loslassen bündig an. Mindestgrößen halten die Kante, ein Schild an der
   Naht sagt dann kurz, welches Fenster nicht kleiner geht (0.5.4). Nur sichtbare Nachbarn ziehen mit.
@@ -63,7 +64,7 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   auf anderen Schreibtischen), ⌘< die Fenster der vorderen App, ⇧ zurück, Esc, Q beendet die App.
   Schaltet dafür den Umschalter von macOS ab, solange er an ist, und beim Beenden wieder ein.
 - **Dock-Vorschau** (ab Werk aus): Fenster einer App beim Zeigen auf ihr Dock-Symbol, Klick holt
-  das Fenster nach vorn. Vorschaugröße und Verzögerung einstellbar.
+  das Fenster nach vorn. Vorschaugröße und Verzögerung einstellbar (0 bis 2 s, ab Werk 0,5 s).
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
@@ -139,6 +140,7 @@ Voraussetzungen: macOS 27, Xcode, `xcodegen`, `swiftlint`.
 | `Seam/Core/OnlineMedia.swift` | Online-Auswahl für Hintergründe: Quellen, Treffer, Adressen, Dateinamen (reine Rechnung, ohne Netz) |
 | `Seam/Core/OnlineFetcher.swift` | Netzabrufe der Online-Auswahl: nur auf Handlung, feste Server, Größen- und Zeitgrenzen, Dateien blockweise in eigener Sitzung, keine Cookies |
 | `spike/` | Machbarkeits-Prototyp vom 2026-10-08 mit Messwerten |
+| `tools/` | Messwerkzeuge für die Fehlersuche am echten System, **nicht Teil der App**: `fensterlog` (Fensterlagen alle 30 ms), `fokuslog` (vordere App und oberste Fenster, für die Abdunklung), `livetest` (echte Maus-/Tastaturereignisse für Tests, braucht Bedienungshilfen), `pruefstand/` (eigene Test-App für die Schreibtisch-Anordnung, `build.sh`) |
 
 ## Lizenz
 

@@ -33,7 +33,7 @@ final class Switcher {
     private var openedAt = Date()
     private var poll: Timer?
     private var loaded = false
-    private var pendingSteps = 0
+    private var pending = PendingSteps()
     private var previousApp: NSRunningApplication?
     private var loadTask: Task<Void, Never>?
     private var imageTask: Task<Void, Never>?
@@ -81,7 +81,7 @@ final class Switcher {
         mode = m
         openedAt = Date()
         loaded = false
-        pendingSteps = 0
+        pending = PendingSteps()
         previousApp = NSWorkspace.shared.frontmostApplication
         startPolling()
         let pid = m == .frontApp ? previousApp?.processIdentifier : nil
@@ -99,10 +99,9 @@ final class Switcher {
         guard mode != nil else { return }
         guard !list.isEmpty else { close(); return }
         loaded = true
-        // Erster Schritt landet auf dem zweiten Eintrag (das vordere Fenster ist ja schon vorn).
-        let steps = pendingSteps
-        pendingSteps = 0
-        let start = Self.wrap(steps, count: list.count)
+        let steps = pending.steps
+        pending = PendingSteps()
+        let start = Self.start(steps: steps, list: list, mode: mode ?? .all, front: previousApp?.processIdentifier)
         let screen = Screens.containing(Screens.mouse) ?? Screens.all().first
         let columns = Self.columns(count: list.count, tileWidth: prefs.previewSize.tileWidth,
                                    maxWidth: (screen?.visible.width ?? 1200) * 0.92)
@@ -121,7 +120,7 @@ final class Switcher {
     }
 
     private func step(_ delta: Int) {
-        guard loaded else { pendingSteps += delta; return }
+        guard loaded else { pending.press(delta); return }
         model.selection = Self.wrap(model.selection + delta, count: model.windows.count)
     }
 
@@ -159,9 +158,9 @@ final class Switcher {
                           width: size.width, height: size.height)
         panel.setFrame(Geometry.toAppKit(rect, primaryHeight: Screens.primaryHeight), display: true)
         panel.makeKeyAndOrderFront(nil)
-        let list = model.windows
+        let list = model.windows, tile = prefs.previewSize.tileWidth
         imageTask = Task { [weak self] in
-            await WindowCatalog.captureImages(for: list) { id, image in self?.model.images[id] = image }
+            await WindowCatalog.captureImages(for: list, tileWidth: tile) { id, image in self?.model.images[id] = image }
         }
     }
 
@@ -214,10 +213,31 @@ final class Switcher {
     private func tick() {
         guard mode != nil else { return }
         if Date().timeIntervalSince(openedAt) > Self.maxOpen { cancel(); return }
-        if !Self.modifierHeld, loaded { commit() }
+        if !Self.modifierHeld {
+            if loaded { commit() } else { pending.release() }
+        }
     }
 
     // MARK: Rechnen (getestet)
+
+    /// Tab-Schritte, bevor die Liste geladen ist. Nach dem Loslassen von ⌘ ist die Geste zu Ende:
+    /// Weitere Drücke zählen nicht mehr dazu (Audit 18.11.: zweimal schnell ⌘Tab sprang zum dritten Fenster).
+    struct PendingSteps {
+        private(set) var steps = 0
+        private var released = false
+        mutating func press(_ delta: Int) { if !released { steps += delta } }
+        mutating func release() { released = true }
+    }
+
+    /// Startauswahl nach `steps` Tab-Schritten. ⌘Tab vorwärts: der erste Schritt springt über die
+    /// übrigen Fenster der vorderen App zur zuletzt benutzten App (wie macOS). ⌘< und rückwärts: Eintrag für Eintrag.
+    nonisolated static func start(steps: Int, list: [CatalogWindow], mode: Mode, front frontPID: pid_t? = nil) -> Int {
+        guard mode == .all, steps > 0, let front = list.first?.pid else { return wrap(steps, count: list.count) }
+        // Vordere App hat kein Fenster in der Liste: Die erste App der Liste ist schon die zuletzt benutzte.
+        if let frontPID, front != frontPID { return wrap(steps - 1, count: list.count) }
+        guard let other = list.firstIndex(where: { $0.pid != front }) else { return wrap(steps, count: list.count) }
+        return wrap(other + steps - 1, count: list.count)
+    }
 
     nonisolated static func wrap(_ i: Int, count: Int) -> Int {
         guard count > 0 else { return 0 }

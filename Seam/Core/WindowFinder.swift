@@ -62,18 +62,22 @@ enum WindowFinder {
 
     /// ⌃⌥S: das vorderste andere Fenster auf demselben Bildschirm (also meist das
     /// zuletzt benutzte), als Partner zum Teilen.
-    static func nextWindow(after moving: AXWindow, frame: CGRect, on screen: CGRect) -> (AXWindow, CGRect)? {
+    static func nextWindow(after moving: AXWindow, on screen: CGRect) -> (AXWindow, CGRect)? {
         for e in WindowList.onScreen() {
             let b = e.bounds
-            guard b.width >= 200, b.height >= 150,
-                  screen.contains(CGPoint(x: b.midX, y: b.midY)),
-                  !Geometry.close(b, frame),
+            guard isPartnerCandidate(b, on: screen),
                   WindowList.isRegularApp(e.pid),
-                  let w = AXAccess.window(of: e.pid, matching: b),
-                  w != moving else { continue }
+                  let w = AXAccess.window(of: e.pid, matching: b, excluding: moving) else { continue }
             return (w, b)
         }
         return nil
+    }
+
+    /// Lage-Vorprüfung für ⌃⌥S (getestet). Kein Lagevergleich mit dem gesetzten Fenster: Ein gleich
+    /// großer Nachbar (zwei maximierte Fenster) wäre sonst nie Partner; die AX-Suche überspringt das gesetzte Fenster selbst (`excluding`).
+    nonisolated static func isPartnerCandidate(_ b: CGRect, on screen: CGRect) -> Bool {
+        b.width >= 200 && b.height >= 150
+            && screen.contains(CGPoint(x: b.midX, y: b.midY))
     }
 
     private static func mostlyOverlaps(_ a: CGRect, _ b: CGRect) -> Bool {

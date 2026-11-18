@@ -251,4 +251,17 @@ final class LinkRulesTests: XCTestCase {
         XCTAssertEqual(LinkRules.decode(Data("kein json".utf8)), [])
         XCTAssertEqual(LinkRules.decode(nil), [])
     }
+
+    /// Audit 18.11.: Beim Zurückgeben bekam der Browser auch die .html-Dateien, ein früherer Öffner
+    /// (z. B. ein Editor) war weg. Jetzt geht .html an den Öffner von vorher.
+    func testHTMLGoesBackToPreviousOpener() {
+        XCTAssertEqual(LinkRules.htmlReturn(previous: "com.panic.Nova", own: "dev.mwlr.seam", fallback: "com.apple.Safari"),
+                       "com.panic.Nova")
+        XCTAssertEqual(LinkRules.htmlReturn(previous: nil, own: "dev.mwlr.seam", fallback: "com.apple.Safari"),
+                       "com.apple.Safari")
+        XCTAssertEqual(LinkRules.htmlReturn(previous: "dev.mwlr.seam", own: "dev.mwlr.seam", fallback: "com.apple.Safari"),
+                       "com.apple.Safari")
+        XCTAssertEqual(LinkRules.htmlReturn(previous: "kaputt/../x", own: "dev.mwlr.seam", fallback: "com.apple.Safari"),
+                       "com.apple.Safari")
+    }
 }

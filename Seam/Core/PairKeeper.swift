@@ -142,6 +142,17 @@ final class PairKeeper {
 
     private func minimizedChanged(_ w: AXWindow, minimized: Bool) {
         guard !isEcho(w), let partner = book.partner(of: w) else { return }
+        // Wie beim Anheben: Stehen die beiden nicht mehr nebeneinander (z. B. eines auf einen anderen
+        // Bildschirm gezogen), löst sich das Paar, statt den Partner mitzunehmen (Audit 18.11.).
+        // Minimierte Fenster behalten ihren Rahmen. Nicht lesbar → dieses Mal nichts tun, Paar behalten.
+        guard let wf = w.frame, let pf = partner.frame else {
+            Self.log.notice("Partner nicht mitgenommen: Rahmen nicht lesbar (\(w.logName, privacy: .public))")
+            return
+        }
+        guard Geometry.stillSideBySide(wf, pf, gap: CGFloat(prefs.gap)) else {
+            dissolve(w, "nicht mehr nebeneinander")
+            return
+        }
         markEcho(w, partner)
         inFlight.formUnion([w, partner])
         let log = Self.log, name = partner.logName

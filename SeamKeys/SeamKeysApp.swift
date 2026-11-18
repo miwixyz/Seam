@@ -38,6 +38,11 @@ final class HyperKey {
             Self.log.notice("Seam läuft nicht, beende")
             exit(0)
         }
+        // Von Hand gestartet, Supertaste in Seam aber aus (Audit 18.11.): nichts belegen, sofort beenden.
+        guard HyperSettings.isEnabled(suite: Self.seamID) else {
+            Self.log.notice("Supertaste in Seam ausgeschaltet, beende")
+            exit(0)
+        }
         let nc = NSWorkspace.shared.notificationCenter
         tokens.append(nc.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { note in
             let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
@@ -46,7 +51,7 @@ final class HyperKey {
         })
         // Nach dem Aufwachen kann macOS die Belegung neuer Geräte verlieren → neu setzen.
         tokens.append(nc.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { KeyMapping.set(capsToF18: true) }
+            MainActor.assumeIsolated { if self.tap != nil { KeyMapping.set(capsToF18: true) } }
         })
         // Seam beendet den Helfer per `terminate()` (Beenden-Anfrage). Das läuft über NSApplication und
         // erreicht weder den SIGTERM-Weg noch die Beende-Meldung → hier aufräumen (code-audit 18.11.).
@@ -59,7 +64,9 @@ final class HyperKey {
         source.resume()
         termSource = source
 
-        KeyMapping.set(capsToF18: true)
+        // Belegung erst, wenn der Tap steht (installTap): ohne Freigabe bliebe die Feststelltaste sonst
+        // auf F18 ohne Abnehmer, also tot (code-audit 18.11.).
+        Self.reportTap(active: false)
         Self.log.notice("Einstellungen: Sondertasten \(self.state.flags.rawValue, privacy: .public), Escape bei kurzem Druck: \(self.state.escapeOnTap, privacy: .public)")
         if !installTap() {
             // E22e: Freigabe fehlt. Einmal anfragen, dann nachsehen, bis sie da ist.
@@ -79,6 +86,7 @@ final class HyperKey {
     }
 
     private static func cleanUp(_ why: String) {
+        reportTap(active: false)
         KeyMapping.set(capsToF18: false)
         log.notice("Beendet (\(why, privacy: .public)), Belegung entfernt")
     }
@@ -96,8 +104,17 @@ final class HyperKey {
         CFRunLoopAddSource(CFRunLoopGetMain(), src, .commonModes)
         CGEvent.tapEnable(tap: port, enable: true)
         tap = port
+        KeyMapping.set(capsToF18: true)
+        Self.reportTap(active: true)
         Self.log.notice("Tap aktiv")
         return true
+    }
+
+    /// Status für Seams Einstellungen, nur in der EIGENEN Domain: Prozessnummer bei aktivem Tap, sonst 0.
+    private static func reportTap(active: Bool) {
+        let d = UserDefaults.standard
+        d.set(active ? Int(ProcessInfo.processInfo.processIdentifier) : 0, forKey: HyperSettings.tapPIDKey)
+        d.synchronize()
     }
 
     fileprivate func reenable() {

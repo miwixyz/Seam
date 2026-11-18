@@ -18,6 +18,14 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 1.0
+
+**Hintergrund auf allen Schreibtischen.** macOS übernimmt ein Hintergrundbild nur für den Schreibtisch, der gerade offen ist. Seam setzt dein Bild deshalb auf jedem weiteren nach, sobald du dorthin wechselst. Du kannst einzelnen Schreibtischen auch ein eigenes Bild geben, die übrigen zeigen das Hauptbild. Und die Dock-Vorschau wartet länger, bevor sie aufgeht (einstellbar bis 2 Sekunden). Wer nur übers Dock fährt, sieht sie nicht mehr.
+
+**Korrekturen.** Kurz ⌘Tab geht zur App, die du davor benutzt hast, nicht mehr zum zweiten Fenster der App vorn. Liegen zwei gleich große Fenster übereinander, holt Seam kein falsches nach vorn. Hält ein Fenster seine Mindestgröße, ragt es nach einem Kürzel nicht mehr aus dem Bildschirm; der Nachbar rückt nach. Die Supertaste legt die Feststelltaste erst um, wenn die Freigabe da ist. Hintergrundbilder schneidet Seam jetzt nebenbei zu, Kürzel und ⌘Tab reagieren dabei weiter.
+
+---
+
 ## Neu in 0.12
 
 **Fensterumschalter.** ⌘Tab zeigt jedes Fenster einzeln mit Vorschaubild, auch minimierte und solche auf anderen Schreibtischen. ⌘< zeigt nur die Fenster der vorderen App. Solange du ihn nutzt, schaltet Seam den Umschalter von macOS ab und beim Beenden wieder ein.

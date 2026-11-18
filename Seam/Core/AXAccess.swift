@@ -231,6 +231,19 @@ enum AXAccess {
     /// Das verwaltbare Fenster einer App, das an `bounds` liegt (aus der Fensterliste des Systems).
     /// Erst die Lage vergleichen, dann nur den Treffer auf „verwaltbar“ prüfen. Code-Audit 09.10.:
     /// vorher wurde jedes Fenster der App zuerst voll geprüft (4 AX-Aufrufe je Fenster, bei jedem Klick).
+    /// Wie `window(of:matching:)`, aber ohne `excluded`: Zwei gleich große Fenster derselben App
+    /// (z. B. zwei maximierte) — der erste Treffer wäre oft das bewegte Fenster selbst (Code-Audit 18.11.).
+    static func window(of pid: pid_t, matching bounds: CGRect, excluding excluded: AXWindow) -> AXWindow? {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        for el in elements(app, .windows) {
+            let w = AXWindow(el)
+            guard w != excluded, let f = w.frame, Geometry.close(f, bounds) else { continue }
+            return w.isManageable ? w : nil
+        }
+        return nil
+    }
+
     static func window(of pid: pid_t, matching bounds: CGRect) -> AXWindow? {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, AXWindow.timeout)

@@ -38,6 +38,28 @@ final class SwitcherTests: XCTestCase {
         XCTAssertEqual(left.maxX, rightIcon.minX - 8)
     }
 
+    /// Michael 18.11.: „die Vorschau stört, wenn ich aus Versehen über das Dock fahre“ — 200 ms Standard
+    /// war zu kurz, und 800 ms das Höchste. Standard 500 ms, wählbar bis 2 s.
+    @MainActor
+    func testDockDelayDefaultAndLongChoices() {
+        let suite = "dev.mwlr.seam.tests.dockdelay"
+        let d = UserDefaults(suiteName: suite)!
+        d.removePersistentDomain(forName: suite)
+        XCTAssertEqual(Preferences(defaults: d).dockPreviewDelay, 500)
+        XCTAssertTrue(Preferences.dockDelayChoices.contains(2000))
+        d.set(1500, forKey: "dockPreviewDelay")
+        XCTAssertEqual(Preferences(defaults: d).dockPreviewDelay, 1500)
+        d.removePersistentDomain(forName: suite)
+    }
+
+    /// Audit 18.11.: Dock beim Start noch nicht bereit → nach 2, 5 und 15 s erneut versuchen.
+    func testDockRetryBacksOff() {
+        XCTAssertEqual(DockPreview.retryDelay(after: 0), .seconds(2))
+        XCTAssertEqual(DockPreview.retryDelay(after: 1), .seconds(5))
+        XCTAssertEqual(DockPreview.retryDelay(after: 2), .seconds(15))
+        XCTAssertNil(DockPreview.retryDelay(after: 3))
+    }
+
     /// E21c: fremde Titel ohne Steuerzeichen, gekürzt.
     func testTitleSanitizing() {
         XCTAssertEqual(WindowCatalog.sanitize("  Bank\u{0}\u{1B}[31m – Login\n "), "Bank[31m – Login")
@@ -55,7 +77,7 @@ final class SwitcherTests: XCTestCase {
         d.set("riesig", forKey: "previewSize")
         d.set("vielleicht", forKey: "spaceOrderPrevious")
         let p = Preferences(defaults: d)
-        XCTAssertEqual(p.dockPreviewDelay, 200)
+        XCTAssertEqual(p.dockPreviewDelay, 500)
         XCTAssertEqual(p.previewSize, .normal)
         XCTAssertNil(p.spaceOrderPreviousValue)
         XCTAssertFalse(p.switcherEnabled)
@@ -91,9 +113,86 @@ final class SwitcherOrderTests: XCTestCase {
         XCTAssertEqual(out.map(\.id), [2, 3, 1])
     }
 
+    /// Audit 18.11. (Mittel): Kurzes ⌘Tab landete auf dem zweiten Fenster der vorderen App
+    /// statt auf der zuletzt benutzten App. ⌘< bleibt innerhalb der App.
+    func testShortCmdTabGoesToPreviousAppNotSecondWindow() {
+        let list = [w(1, 10), w(2, 10), w(3, 20), w(4, 30)]
+        XCTAssertEqual(Switcher.start(steps: 1, list: list, mode: .all), 2)
+        XCTAssertEqual(Switcher.start(steps: 2, list: list, mode: .all), 3)
+        XCTAssertEqual(Switcher.start(steps: -1, list: list, mode: .all), 3)
+        XCTAssertEqual(Switcher.start(steps: 1, list: list, mode: .frontApp), 1)
+        XCTAssertEqual(Switcher.start(steps: 1, list: [w(1, 10), w(2, 10)], mode: .all), 1)  // nur eine App
+        XCTAssertEqual(Switcher.start(steps: 0, list: list, mode: .all), 0)
+        // Code-Audit 18.11. (Prüfer): Vordere App ohne Fenster in der Liste (Finder, Schreibtisch angeklickt) —
+        // die erste App der Liste IST dann die zuletzt benutzte.
+        XCTAssertEqual(Switcher.start(steps: 1, list: [w(2, 20), w(3, 20), w(4, 30)], mode: .all, front: 10), 0)
+        XCTAssertEqual(Switcher.start(steps: 1, list: list, mode: .all, front: 10), 2)
+    }
+
+    /// Audit 18.11. (Mittel): Zwei gleich große, gestapelte Fenster — der erste AX-Treffer gewann.
+    /// Zuordnung ohne Titel (E3/E21c): minimiert vs. nicht minimiert trennt, sonst bei Mehrdeutigkeit auslassen.
+    func testPickTargetWindowWithoutGuessing() {
+        let r = CGRect(x: 100, y: 100, width: 800, height: 600)
+        // Minimiertes Zwillingsfenster steht in der AX-Liste vorn.
+        XCTAssertEqual(WindowCatalog.pick([(r, true), (r, false)], frame: r, minimized: false), 1)
+        XCTAssertEqual(WindowCatalog.pick([(r, false), (r, true)], frame: r, minimized: true), 1)
+        // Zwei sichtbare Zwillinge: nicht raten.
+        XCTAssertNil(WindowCatalog.pick([(r, false), (r, false)], frame: r, minimized: false))
+        // Eindeutige Lage bleibt eindeutig, einziges Fenster bleibt Ausweg.
+        let other = CGRect(x: 0, y: 0, width: 300, height: 300)
+        XCTAssertEqual(WindowCatalog.pick([(other, false), (r, false)], frame: r, minimized: false), 1)
+        XCTAssertEqual(WindowCatalog.pick([(other, false)], frame: r, minimized: false), 0)
+        XCTAssertNil(WindowCatalog.pick([(other, false), (other, false)], frame: r, minimized: false))
+        // Code-Audit 18.11. (Prüfer): Fenster auf einem anderen Space — die AX-Liste kennt nur den Zwilling hier.
+        XCTAssertNil(WindowCatalog.pick([(r, false)], frame: r, minimized: false, elsewhere: true))
+    }
+
     func testVisibleWindowOfAppFirst() {
         let hidden = w(1, 10, on: false), shown = w(2, 10)
         let out = WindowCatalog.order([hidden, shown], stack: [1: 0, 2: 1], appOrder: [10])
         XCTAssertEqual(out.map(\.id), [2, 1])
+    }
+}
+
+/// Audit 18.11.: Hing ScreenCaptureKit beim Listen, passierte auf ⌘Tab 30 s lang nichts.
+final class DeadlineTests: XCTestCase {
+    func testHangingWorkFallsBackInTime() async {
+        let start = Date()
+        let v = await Deadline.value(within: .milliseconds(200), otherwise: -1) {
+            try? await Task.sleep(for: .seconds(3))
+            return 1
+        }
+        XCTAssertEqual(v, -1)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 1)
+    }
+
+    func testQuickWorkWins() async {
+        let v = await Deadline.value(within: .seconds(2), otherwise: -1) { 7 }
+        XCTAssertEqual(v, 7)
+    }
+}
+
+final class PendingStepsTests: XCTestCase {
+    func testPressAfterEarlyReleaseDoesNotAddSteps() {
+        var p = Switcher.PendingSteps()
+        p.press(1)
+        p.press(1)
+        XCTAssertEqual(p.steps, 2)               // gehalten, zweimal Tab: zwei Schritte
+        var q = Switcher.PendingSteps()
+        q.press(1)
+        q.release()
+        q.press(1)
+        XCTAssertEqual(q.steps, 1)               // losgelassen, dann neues ⌘Tab: Geste war schon zu Ende
+    }
+}
+
+/// Ungeklärter Punkt aus dem Audit 18.11.: Hover bei ruhendem Zeiger. Abgesichert: erst nach Bewegung.
+final class HoverGateTests: XCTestCase {
+    func testHoverCountsOnlyAfterPointerMoved() {
+        let start = CGPoint(x: 500, y: 400)
+        XCTAssertFalse(PreviewModel.pointerMoved(from: start, to: start))
+        XCTAssertFalse(PreviewModel.pointerMoved(from: start, to: CGPoint(x: 502, y: 401)))
+        XCTAssertTrue(PreviewModel.pointerMoved(from: start, to: CGPoint(x: 510, y: 400)))
+        XCTAssertTrue(PreviewModel.pointerMoved(from: nil, to: start))
     }
 }

@@ -192,6 +192,12 @@ enum LinkRules {
         try? JSONEncoder().encode(rules)
     }
 
+    /// Wer bekommt .html beim Zurückgeben (getestet)? Der Öffner von vorher, sonst der Rückfall-Browser.
+    static func htmlReturn(previous: String?, own: String, fallback: String) -> String {
+        guard let previous, isBundleID(previous), previous != own else { return fallback }
+        return previous
+    }
+
     static func isBundleID(_ s: String) -> Bool {
         !s.isEmpty && s.count <= maxBundleIDLength && s.unicodeScalars.allSatisfy {
             CharacterSet.alphanumerics.contains($0) && $0.isASCII || $0 == "." || $0 == "-"

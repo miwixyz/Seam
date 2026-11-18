@@ -44,4 +44,15 @@ final class KeyHelperTests: XCTestCase {
         XCTAssertFalse(KeyHelper.isOnlyOurMapping("RegistryID  Key  Value\n1000008dd   UserKeyMapping   (null)\n"))
         XCTAssertFalse(KeyHelper.isOnlyOurMapping(""))
     }
+
+    /// Audit 18.11. (Mittel): „SeamKeys läuft“ stand schon da, wenn der Prozess lief, der Tap aber
+    /// mangels Freigabe nicht aktiv war. Der Status hängt jetzt an der vom Helfer gemeldeten Tap-PID.
+    func testStatusNeedsActiveTapOfRunningHelper() {
+        XCTAssertEqual(KeyHelper.status(running: [], tapPID: 0), .off)
+        XCTAssertEqual(KeyHelper.status(running: [], tapPID: 812), .off)            // alter Eintrag, Helfer weg
+        XCTAssertEqual(KeyHelper.status(running: [812], tapPID: 0), .waitingForAccess)
+        XCTAssertEqual(KeyHelper.status(running: [900], tapPID: 812), .waitingForAccess) // Eintrag vom Vorgänger
+        XCTAssertEqual(KeyHelper.status(running: [812], tapPID: 812), .active)
+        XCTAssertEqual(KeyHelper.tapPIDKey, HyperSettings.tapPIDKey)                // Helfer und Seam: derselbe Schlüssel
+    }
 }

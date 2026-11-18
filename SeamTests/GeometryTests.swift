@@ -359,3 +359,61 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(r.minX, 846, accuracy: 1)
     }
 }
+
+/// Audit 18.11. (Mittel): ⌃⌥S fand kein gleich großes Fenster als Partner (z. B. zwei
+/// maximierte Fenster). Das gesetzte Fenster selbst schließt `w != moving` aus.
+final class PartnerCandidateTests: XCTestCase {
+    func testSameSizeWindowIsPartnerCandidate() {
+        let screen = CGRect(x: 0, y: 0, width: 1600, height: 1000)
+        let full = CGRect(x: 0, y: 25, width: 1600, height: 975)
+        XCTAssertTrue(WindowFinder.isPartnerCandidate(full, on: screen))
+        XCTAssertFalse(WindowFinder.isPartnerCandidate(CGRect(x: 0, y: 0, width: 100, height: 100), on: screen))
+        XCTAssertFalse(WindowFinder.isPartnerCandidate(CGRect(x: 2000, y: 0, width: 800, height: 600), on: screen))
+    }
+}
+
+/// Audit 18.11.: ⌃⌥→ auf Outlook (Mindestbreite 980) am 1470-pt-MacBook ragte 245 pt aus dem Bildschirm,
+/// der mitgesetzte linke Nachbar lag darunter, ohne Hinweis.
+final class SnapCorrectionTests: XCTestCase {
+    let visible = CGRect(x: 0, y: 25, width: 1470, height: 875)
+    let right = CGRect(x: 735, y: 25, width: 735, height: 875)
+    let left = CGRect(x: 0, y: 25, width: 735, height: 875)
+
+    func testTooWideWindowComesBackAndNeighborYields() {
+        let ist = CGRect(x: 735, y: 25, width: 980, height: 875)
+        let c = WindowActions.correction(goal: right, ist: ist, partner: (left, left), visible: visible)
+        XCTAssertEqual(c?.lead, CGRect(x: 490, y: 25, width: 980, height: 875))
+        XCTAssertEqual(c?.partner, CGRect(x: 0, y: 25, width: 490, height: 875))
+        XCTAssertEqual(c?.leadHitMinimum, true)
+    }
+
+    func testTooWideWithoutNeighborIsPulledIntoScreen() {
+        let ist = CGRect(x: 735, y: 25, width: 980, height: 875)
+        let c = WindowActions.correction(goal: right, ist: ist, partner: nil, visible: visible)
+        XCTAssertEqual(c?.lead, CGRect(x: 490, y: 25, width: 980, height: 875))
+        XCTAssertNil(c?.partner)
+    }
+
+    func testNeighborWithMinimumKeepsSeam() {
+        let pIst = CGRect(x: 0, y: 25, width: 900, height: 875)
+        let c = WindowActions.correction(goal: right, ist: right, partner: (left, pIst), visible: visible)
+        XCTAssertEqual(c?.partner, CGRect(x: 0, y: 25, width: 900, height: 875))
+        XCTAssertEqual(c?.lead, CGRect(x: 900, y: 25, width: 570, height: 875))
+        XCTAssertEqual(c?.leadHitMinimum, false)
+    }
+
+    func testExactFitNeedsNothing() {
+        XCTAssertNil(WindowActions.correction(goal: right, ist: right, partner: (left, left), visible: visible))
+    }
+}
+
+/// Audit 18.11.: Angedockt, dann von Hand auf Wunschgröße gezogen — beim nächsten Verschieben sprang das
+/// Fenster auf die Größe von vor dem Andocken.
+final class RestoreOnDragOutTests: XCTestCase {
+    func testRestoreOnlyWhileStillAtSnappedSize() {
+        let snapped = CGSize(width: 735, height: 875)
+        XCTAssertTrue(WindowActions.stillSnapped(snapped, now: CGSize(width: 736, height: 874)))
+        XCTAssertFalse(WindowActions.stillSnapped(snapped, now: CGSize(width: 900, height: 875)))
+        XCTAssertFalse(WindowActions.stillSnapped(nil, now: snapped))
+    }
+}

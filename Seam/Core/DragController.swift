@@ -175,7 +175,7 @@ final class DragController {
     /// vorher synchron auf dem Hauptthread, bei hängender App bis ~1,25 s Stillstand mitten in der
     /// Geste, entgegen E6b/E5). Einmal setzen ohne Nachprüfung: Der Nutzer zieht ja weiter.
     private func restoreSizeIfSnapped(_ g: Gesture, w: AXWindow, now: CGRect) {
-        guard prefs.restoreOnDragOut, let orig = actions.wasSnapped(w) else { return }
+        guard prefs.restoreOnDragOut, let orig = actions.wasSnapped(w, now: now.size) else { return }
         let p = Screens.mouse
         let rel = now.width > 0 ? (p.x - now.minX) / now.width : 0.5
         var target = CGRect(x: p.x - rel * orig.width, y: now.minY, width: orig.width, height: orig.height)
@@ -220,9 +220,12 @@ final class DragController {
                 guard let nw = windows[id] else { continue }
                 let (got, attempts) = NeighborWriter.setVerifiedCounting(nw, wanted, while: stillWanted)
                 guard let actual = got else { continue }
+                // Von Seam mitgesetzt: bleibt angedockt, mit neuer Größe (Code-Audit 18.11.).
+                Task { @MainActor in actions.keepSnapped(nw, size: actual.size) }
                 log.notice("Endwert Nachbar: \(attempts, privacy: .public) Versuch(e), \(Int((CFAbsoluteTimeGetCurrent() - t0) * 1000), privacy: .public) ms")
                 if let fix = Geometry.resolveMinimum(leading: leading, wanted: wanted, actual: actual) {
                     let nIst = NeighborWriter.setVerified(nw, fix.neighbor)
+                    if let nIst { Task { @MainActor in actions.keepSnapped(nw, size: nIst.size) } }
                     leading = fix.leading
                     let lIst = NeighborWriter.setVerified(w, leading)
                     actions.announce(MinimumHit(wanted: wanted, actual: actual, fix: fix, neighborIst: nIst, leadingIst: lIst),

@@ -10,11 +10,13 @@ struct WallpaperSettingsView: View {
     @Environment(Preferences.self) private var prefs
     @Environment(\.openWindow) private var openWindow
     @State private var monitors: [DimSettingsView.Monitor] = []
+    @State private var spaces: [SpaceInfo] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
             fileCard
             layoutCard
+            spacesCard
             screensCard
             statusNote
         }
@@ -25,12 +27,16 @@ struct WallpaperSettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             reload()
         }
+        .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.activeSpaceDidChangeNotification)) { _ in
+            reload()
+        }
     }
 
     private func reload() {
         monitors = NSScreen.screens.compactMap { s in
             SpaceReader.displayIdentifier(of: s).map { DimSettingsView.Monitor(id: $0, name: s.localizedName) }
         }
+        spaces = (SpaceReader.read() ?? []).filter { !$0.isFullScreen && $0.slot != nil }
     }
 
     // MARK: - Datei
@@ -51,7 +57,7 @@ struct WallpaperSettingsView: View {
             fileRow(label: "Dunkel", symbol: "moon", name: fileName(prefs.wallpaperPathDark) ?? "wie hell", dark: true)
             divider
             HStack {
-                Text("Kostenlose Fotos und Videos von Pexels und Wikimedia")
+                Text("Kostenlose Fotos und Videos von Pixabay, Pexels und Wikimedia Commons")
                     .foregroundStyle(FamilyTheme.textSecondary)
                 Spacer()
                 Button {
@@ -135,6 +141,77 @@ struct WallpaperSettingsView: View {
                  : "Jeder Bildschirm zeigt das ganze Bild, füllend zugeschnitten.",
                  symbol: "rectangle.3.group")
         }
+    }
+
+    // MARK: - Schreibtische (Michael, 18.11.: „auf alle Spaces … oder pro Space ein anderes Bild“)
+
+    private var spacesCard: some View {
+        card("Schreibtische") {
+            row("Je Schreibtisch ein eigenes Bild") {
+                Toggle("Je Schreibtisch ein eigenes Bild", isOn: Binding(
+                    get: { prefs.wallpaperPerSpace },
+                    set: { prefs.wallpaperPerSpace = $0; engine.applyWallpaper() }))
+                    .labelsHidden()
+                    .toggleStyle(FamilySwitchStyle())
+            }
+            if prefs.wallpaperPerSpace {
+                ForEach(spaces) { space in
+                    divider
+                    spaceRow(space)
+                }
+                if spaces.isEmpty {
+                    note("macOS liefert gerade keine Schreibtische.", symbol: "exclamationmark.triangle")
+                }
+            }
+            note(prefs.wallpaperPerSpace
+                 ? "Ohne eigenes Bild zeigt ein Schreibtisch das Bild oben. Eigene Bilder gelten hell und dunkel, "
+                   + "nur Bilder: Ein Video läuft auf allen Schreibtischen. Das Bild gehört zum Platz des "
+                   + "Schreibtischs; damit es nicht wandert, „Spaces in fester Reihenfolge halten“ einschalten."
+                 : "Das Bild gilt auf allen Schreibtischen. macOS übernimmt es je Schreibtisch, Seam setzt es "
+                   + "deshalb beim ersten Wechsel auf einen Schreibtisch nach.",
+                 symbol: "square.stack.3d.up")
+        }
+    }
+
+    private func spaceRow(_ space: SpaceInfo) -> some View {
+        let slot = space.slot ?? ""
+        let screen = monitors.count > 1 ? (monitors.first { $0.id == space.display }?.name).map { " · \($0)" } ?? "" : ""
+        return HStack(spacing: FamilyTheme.Space.s) {
+            Text(verbatim: SpaceNames.title(space, prefs.spaceNames) + screen)
+                .lineLimit(1).truncationMode(.middle)
+                .frame(width: 170, alignment: .leading)
+            Text(verbatim: fileName(prefs.wallpaperSpacePaths[slot]) ?? "wie oben")
+                .foregroundStyle(FamilyTheme.textSecondary)
+                .lineLimit(1).truncationMode(.middle)
+            Spacer(minLength: FamilyTheme.Space.s)
+            if prefs.wallpaperSpacePaths[slot] != nil {
+                Button {
+                    prefs.setWallpaperSpacePath(nil, slot: slot)
+                    engine.applyWallpaper()
+                } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.familyGlass(.circle, size: 26))
+                    .help("Eigenes Bild entfernen, dann gilt das Bild oben")
+                    .accessibilityLabel("Eigenes Bild für \(SpaceNames.title(space, prefs.spaceNames)) entfernen")
+            }
+            Button("Wählen …") { chooseForSpace(space) }
+                .buttonStyle(.familyGlass(.capsule, size: 26))
+                .help("Bild für diesen Schreibtisch wählen")
+        }
+        .frame(minHeight: 34)
+    }
+
+    /// E18a: Der Pfad kommt nur aus diesem Dialog; je Schreibtisch nur Bilder.
+    private func chooseForSpace(_ space: SpaceInfo) {
+        guard let slot = space.slot else { return }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Bild für „\(SpaceNames.title(space, prefs.spaceNames))“ wählen"
+        NSApp.activate()
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        prefs.setWallpaperSpacePath(url.path, slot: slot)
+        engine.applyWallpaper()
     }
 
     // MARK: - Bildschirme
@@ -251,7 +328,7 @@ struct WallpaperSettingsView: View {
 
 /// Inhalt des Fensters „Hintergrund“ samt Rand und Hintergrund (wie `DimSettingsWindow`).
 struct WallpaperSettingsWindow: View {
-    static let size = CGSize(width: 500, height: 560)
+    static let size = CGSize(width: 520, height: 620)
 
     var body: some View {
         ScrollView {

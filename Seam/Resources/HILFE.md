@@ -124,6 +124,15 @@ einzelne Monitore aus; dort bleibt der bisherige Hintergrund.
 **Hell und dunkel** (seit 0.10): Für jede Darstellung wählst du eine eigene Datei. Schaltet macOS
 um, wechselt Seam mit. Ohne dunkle Datei gilt die helle.
 
+**Schreibtische** (seit 1.0): Das Bild gilt auf allen Schreibtischen (Spaces). macOS übernimmt ein
+Bild immer nur für den Schreibtisch, der gerade offen ist; Seam setzt es deshalb beim ersten Wechsel
+auf jeden weiteren Schreibtisch nach. Mit „Je Schreibtisch ein eigenes Bild“ wählst du für einzelne
+Schreibtische ein anderes Bild; ohne eigenes Bild zeigt ein Schreibtisch das Bild oben. Eigene Bilder
+gelten hell und dunkel und können nur Bilder sein: Ein Video läuft auf allen Schreibtischen. Das Bild
+gehört zum Platz des Schreibtischs (zweiter Schreibtisch auf diesem Bildschirm usw.). Ordnet macOS die
+Schreibtische nach der letzten Nutzung um, wandert es mit; schalte dann „Spaces in fester Reihenfolge
+halten“ ein.
+
 **Online aussuchen** (seit 0.10): „Online aussuchen …“ öffnet eine Auswahl kostenloser Fotos und
 Videos von Pixabay, Pexels und Wikimedia Commons. Suchwort eingeben (leer = Auswahl der Redaktion),
 ein Bild anklicken, dann „Für hell“ oder „Für dunkel“. Seam lädt die Datei in seinen eigenen Ordner
@@ -209,7 +218,9 @@ bis zum nächsten Start von Seam ohne Funktion; Seam schaltet ihn dann zuerst wi
 
 Einschalten: Einstellungen → „Fenster im Dock vorab anzeigen“. Ruht der Zeiger kurz auf einem
 App-Symbol im Dock, erscheinen die Fenster dieser App. Ein Klick holt das Fenster nach vorn. Die
-Wartezeit stellst du unter „Öffnungsverzögerung“ ein, die Größe der Bilder unter „Vorschaugröße“.
+Wartezeit stellst du unter „Öffnungsverzögerung“ ein (Standard 0,5 s, bis 2 s): Stört die Vorschau,
+wenn du nur über das Dock fährst, wähle einen längeren Wert. Die Größe der Bilder stellst du unter
+„Vorschaugröße“ ein.
 
 Für die Bilder braucht Seam die Freigabe **Bildschirmaufnahme** (Systemeinstellungen → Datenschutz
 & Sicherheit → Aufnahme von Bildschirm & Systemaudio). Nach dem Erteilen Seam einmal beenden und

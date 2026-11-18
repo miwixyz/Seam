@@ -13,6 +13,23 @@ enum KeyHelper {
 
     static var isRunning: Bool { !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty }
 
+    enum Status: Equatable { case off, waitingForAccess, active }
+
+    /// Schlüssel in SeamKeys' eigener Domain (gleich `HyperSettings.tapPIDKey`, Test hält das fest).
+    nonisolated static let tapPIDKey = "tapActivePID"
+
+    /// Aktueller Zustand: Prozess von macOS gelesen, Tap-Meldung aus der Domain des Helfers.
+    static var status: Status {
+        let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).map(\.processIdentifier)
+        return status(running: running, tapPID: UserDefaults(suiteName: bundleID)?.integer(forKey: tapPIDKey) ?? 0)
+    }
+
+    /// Getestet. Die Meldung zählt nur, wenn sie vom laufenden Helfer stammt (Absturz hinterlässt alte Werte).
+    nonisolated static func status(running: [pid_t], tapPID: Int) -> Status {
+        guard !running.isEmpty else { return .off }
+        return running.contains { Int($0) == tapPID } ? .active : .waitingForAccess
+    }
+
     /// Einstellungen gelten ab dem nächsten Start des Helfers: beenden, dann (falls an) neu starten.
     static func apply(enabled: Bool) {
         stop()
