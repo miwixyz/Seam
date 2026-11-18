@@ -2,6 +2,24 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [0.12.1] — 2026-11-18
+
+### Behoben
+
+- **Die Feststelltaste funktioniert nach dem Beenden wieder normal.** Mit eingeschalteter
+  Supertaste blieb sie nach dem Beenden von Seam bis zum Neustart des Macs ohne Funktion. Jetzt
+  gibt SeamKeys sie beim Beenden frei. Ist sie von einer älteren Version noch belegt, gibt Seam
+  sie beim nächsten Start frei, sofern die Supertaste aus ist. Eigene Tastenbelegungen bleiben
+  unberührt.
+- **Q im Fensterumschalter beendet die markierte App, nicht mehr Seam.** Weil dabei ⌘ gehalten
+  ist, kam Q als ⌘Q an und beendete Seam selbst.
+- **Kein Absturz mehr, wenn die Fensterliste kürzer wird.** Schloss sich ein Fenster, während
+  Umschalter oder Dock-Vorschau offen waren, konnte Seam abstürzen.
+
+### Intern
+
+- Neue Tests für Kachelliste, ⌘Q im Umschalter und die Belegungs-Prüfung (290 Tests).
+
 ## [0.12.0] — 2026-11-18
 
 ### Neu
