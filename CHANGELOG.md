@@ -9,7 +9,8 @@ Alle nennenswerten Änderungen an Seam.
 - **Fensterumschalter** (ab Werk aus): ⌘Tab zeigt alle Fenster mit Vorschaubild, auch minimierte
   und Fenster auf anderen Schreibtischen; ⌘< zeigt nur die Fenster der vorderen App. Tab
   wiederholen geht weiter, ⇧ zurück, Pfeile bewegen, Esc bricht ab, Q beendet die App des
-  markierten Fensters. Kurz ⌘Tab springt ohne Aufblitzen zum letzten Fenster. Solange der
+  markierten Fensters. Kurz ⌘Tab springt ohne Aufblitzen zur App, die du davor benutzt hast. Die
+  Reihenfolge folgt deiner Nutzung, nicht der Fensterliste von macOS. Solange der
   Umschalter an ist, schaltet Seam den Umschalter von macOS ab und beim Ausschalten oder Beenden
   wieder ein.
 - **Dock-Vorschau** (ab Werk aus): Ruht der Zeiger auf einem App-Symbol im Dock, zeigt Seam deren

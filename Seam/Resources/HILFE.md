@@ -198,7 +198,8 @@ zeigt alle Fenster als Vorschau, auch minimierte und solche auf anderen Schreibt
 Stapel-Zeichen). Weiter mit Tab, zurück mit ⇧Tab oder den Pfeilen, ⌘ loslassen holt das markierte
 Fenster nach vorn. ⌘< zeigt nur die Fenster der App, die gerade vorn ist. Esc bricht ab, Return
 wählt, Q beendet die App des markierten Fensters (sie fragt selbst nach ungesicherten Dokumenten).
-Ein Klick auf eine Vorschau wählt sie ebenfalls.
+Ein Klick auf eine Vorschau wählt sie ebenfalls. Ein kurzer Druck auf ⌘Tab springt direkt zur App,
+die du davor benutzt hast; die Liste ist nach deiner Nutzung sortiert.
 
 Damit ⌘Tab bei Seam ankommt, schaltet Seam den Umschalter von macOS ab, solange seiner an ist.
 Beim Ausschalten und beim Beenden schaltet Seam ihn wieder ein. Stürzt Seam einmal ab, bleibt ⌘Tab
