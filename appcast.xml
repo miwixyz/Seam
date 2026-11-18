@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>0.12.1</title>
+            <pubDate>Wed, 18 Nov 2026 15:43:32 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>94</sparkle:version>
+            <sparkle:shortVersionString>0.12.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Die Feststelltaste funktioniert nach dem Beenden wieder normal.</b> Mit eingeschalteter Supertaste blieb sie nach dem Beenden von Seam bis zum Neustart des Macs ohne Funktion. Jetzt gibt SeamKeys sie beim Beenden frei. Ist sie von einer älteren Version noch belegt, gibt Seam sie beim nächsten Start frei, sofern die Supertaste aus ist. Eigene Tastenbelegungen bleiben unberührt.</li><li><b>Q im Fensterumschalter beendet die markierte App, nicht mehr Seam.</b> Weil dabei ⌘ gehalten ist, kam Q als ⌘Q an und beendete Seam selbst.</li><li><b>Kein Absturz mehr, wenn die Fensterliste kürzer wird.</b> Schloss sich ein Fenster, während Umschalter oder Dock-Vorschau offen waren, konnte Seam abstürzen.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.12.1/Seam-0.12.1.zip" length="3992069" type="application/octet-stream" sparkle:edSignature="0z7x/6Qca0xpS86t41x1vCVevHC3Ymdt51yHuHy2O+zCAlKGnfBgU2kKJ48uPJl52eHCmKqX/x54gXXq7nrNDg=="/>
+        </item>
+        <item>
             <title>0.12.0</title>
             <pubDate>Wed, 18 Nov 2026 01:31:09 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Links mit <code>\</code> vor dem Fragezeichen reicht Seam nicht mehr weiter.</b> Ein Browser liest <code>\</code> wie <code>/</code>, Seam las es als Teil einer Benutzerangabe. So sah <code>evil.com\@cineweb.de</code> für Seam wie <code>cineweb.de</code> aus und bekam dessen Regel, also den dafür gewählten Browser. Solche Links werden jetzt verworfen. Normale Links ändern sich nicht; ein <code>\</code> hinter <code>?</code> oder <code>#</code> bleibt erlaubt.</li><li><b>Online-Hintergründe laden sauberer.</b> macOS lädt die Datei jetzt blockweise statt Byte für Byte. Seam bricht ab, sobald mehr als das Limit kommt oder der Server nicht mit „200“ antwortet, auch wenn er keine Größe ankündigt. Eine schon vorhandene Datei bleibt, bis die neue komplett da ist.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.11.1/Seam-0.11.1.zip" length="3898814" type="application/octet-stream" sparkle:edSignature="jzskmm235brsuB0roKVtdUW6cp/vGFf1EssBU4dqS6vEY7Px8cdiXKQtJkm9NfXyrViGpoT1qZmcmsq0r4KDDA=="/>
         </item>
-        <item>
-            <title>0.11.0</title>
-            <pubDate>Wed, 11 Nov 2026 11:38:47 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>80</sparkle:version>
-            <sparkle:shortVersionString>0.11.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>„Alles öffnen“.</b> Neben „Aufräumen“ im Seam-Fenster: öffnet die Apps aus dem Layout, die noch nicht offen sind, und räumt danach auf. „Aufräumen“ und ⌃⌥⌘L sortieren weiter nur Fenster, die schon offen sind. Apps öffnet Seam nur auf diesen Knopf, nie von selbst.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.11.0/Seam-0.11.0.zip" length="3894493" type="application/octet-stream" sparkle:edSignature="S7gwB+IAf5dlQBaMIrnX0PogMw6L+lJVrQjSn2qxojYJ/pe24ZSVWCClJEHZH5azRzyXf/qrrVI/NAKb8Z0ECw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: URWLMDIP/2yT6Xt0/HjcaIJNokq2JRuA9+KnUW82AlbAdSoTkgz9mjr0lkGVvuFA/8fNT2uPCTMipOJSzOjSAQ==
-length: 5587
+edSignature: BtW1HTpGfnigpx6uJTOGzAIqf1wdfq7+aw/+vrdqLw4qcf4N5wLawCcvkyEmFD00kNx+mSpcPx0s3SH7Zj+OCw==
+length: 6013
 -->
