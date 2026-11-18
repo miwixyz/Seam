@@ -991,7 +991,10 @@ Gemessen 18.11.: Vorsaint hatte die Feststelltaste per `hidutil` auf F18 gelegt
   Taste: nichts oder Escape (ein künstliches Escape, sonst keine erzeugten Tasten).
 - **E22c – Fremde Belegung, fester Befehl.** `/usr/bin/hidutil property --set` mit festem Text
   (Feststelltaste → F18), kein Nutzer-Text, keine Shell. Beim Beenden (normal, SIGTERM, Seam weg)
-  wird die Belegung geleert. **Restrisiko:** Andere eigene `hidutil`-Belegungen des Nutzers werden
+  wird die Belegung geleert, auch bei Seams Beenden-Anfrage (`terminate()` → `willTerminate`;
+  bis 0.12.0 fehlte dieser Weg, code-audit 18.11.). Startet Seam mit ausgeschalteter Supertaste
+  und läuft kein SeamKeys, liest Seam die Belegung (`hidutil property --get`) und leert sie nur,
+  wenn ausschließlich Feststelltaste → F18 gesetzt ist (verwaiste Belegung). **Restrisiko:** Andere eigene `hidutil`-Belegungen des Nutzers werden
   dabei überschrieben (gemessen: außer Vorsaints gleicher Belegung keine vorhanden).
 - **E22d – Nur solange Seam läuft.** SeamKeys beendet sich (mit Aufräumen), wenn keine Seam
   (`dev.mwlr.seam`) läuft — beim Start geprüft und über die Beende-Meldung von macOS. Einstellungen

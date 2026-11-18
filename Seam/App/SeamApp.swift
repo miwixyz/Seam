@@ -254,6 +254,7 @@ final class Engine {
         source.resume()
         termSource = source
         // E22: Supertaste läuft im Helfer mit eigener Freigabe, unabhängig von Seams Bedienungshilfen.
+        if !prefs.hyperKeyEnabled { KeyHelper.clearOrphanedMapping() }
         KeyHelper.apply(enabled: prefs.hyperKeyEnabled)
         // E18: braucht keine Freigabe, startet also vor der Prüfung.
         wallpaper.apply()

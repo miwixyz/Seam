@@ -34,6 +34,14 @@ final class PreviewPanel: NSPanel {
     override var canBecomeMain: Bool { false }
     override func keyDown(with event: NSEvent) { onKey?(event) }
 
+    /// Im Umschalter ist ⌘ gehalten: Q kommt als ⌘Q an und ging bis 0.12.0 an Seams Menü „Beenden“
+    /// (Sichttest 18.11.). Solange das Panel Tasten annimmt, gehören ⌘-Tasten ihm.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard acceptsKey else { return super.performKeyEquivalent(with: event) }
+        onKey?(event)
+        return true
+    }
+
     /// E21h: randlos, Seam wird nicht aktiv, auf jedem Space, nicht im eigenen Umschalter.
     static func make(model: PreviewModel) -> PreviewPanel {
         let p = PreviewPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
@@ -82,20 +90,31 @@ struct WindowGridView: View {
     nonisolated static let spacing: CGFloat = 6
     nonisolated static let padding: CGFloat = 12
 
+    /// Eine Kachel mit ihrer Position. Fenster und Index reisen zusammen, damit SwiftUI beim
+    /// Schrumpfen der Liste nie mit einem alten Index in `model.windows` greift (Absturz 18.11.).
+    struct Tile: Identifiable {
+        let index: Int
+        let window: CatalogWindow
+        var id: CGWindowID { window.id }
+    }
+
+    nonisolated static func rows(_ windows: [CatalogWindow], columns: Int) -> [[Tile]] {
+        let tiles = windows.enumerated().map { Tile(index: $0.offset, window: $0.element) }
+        let step = max(1, columns)
+        return stride(from: 0, to: tiles.count, by: step).map { Array(tiles[$0..<min($0 + step, tiles.count)]) }
+    }
+
     var body: some View {
-        let rows = stride(from: 0, to: model.windows.count, by: model.columns).map { start in
-            Array(model.windows.indices[start..<min(start + model.columns, model.windows.count)])
-        }
         VStack(alignment: .leading, spacing: Self.spacing) {
-            ForEach(rows, id: \.first) { row in
+            ForEach(Self.rows(model.windows, columns: model.columns), id: \.first?.id) { row in
                 HStack(alignment: .top, spacing: Self.spacing) {
-                    ForEach(row, id: \.self) { i in
-                        let w = model.windows[i]
+                    ForEach(row) { tile in
+                        let w = tile.window
                         WindowTile(window: w, image: model.images[w.id], width: model.size.tileWidth,
-                                   selected: model.showsSelection && i == model.selection)
+                                   selected: model.showsSelection && tile.index == model.selection)
                             .contentShape(Rectangle())
-                            .onHover { inside in if inside { model.onHover?(i) } }
-                            .onTapGesture { model.onClick?(i) }
+                            .onHover { inside in if inside { model.onHover?(tile.index) } }
+                            .onTapGesture { model.onClick?(tile.index) }
                     }
                 }
             }

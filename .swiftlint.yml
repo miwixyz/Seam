@@ -113,7 +113,8 @@ custom_rules:
     regex: 'AXUIElementPostKeyboardEvent|CGEventPost|CGEventTapCreate|CGEvent\.tapCreate|\.post\(tap:|\.keyDown|\.keyUp|\.flagsChanged'
     # E17a (19.10., Michaels Zustimmung): Ausnahme InputSynth, Positivliste + Test dort.
     # E22 (18.11.): Ausnahme der Helfer SeamKeys (eigener Prozess, eigene Freigabe).
-    excluded: 'Seam/Core/InputSynth\.swift|SeamKeys/.*\.swift|SeamTests/HyperKeyTests\.swift'
+    # 18.11.: WindowGridTests baut ein ⌘Q-Ereignis als Objekt für den Umschalter-Test, schickt es nie ab.
+    excluded: 'Seam/Core/InputSynth\.swift|SeamKeys/.*\.swift|SeamTests/HyperKeyTests\.swift|SeamTests/WindowGridTests\.swift'
     excluded_match_kinds:
       - comment
       - doccomment

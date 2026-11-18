@@ -48,6 +48,11 @@ final class HyperKey {
         tokens.append(nc.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { KeyMapping.set(capsToF18: true) }
         })
+        // Seam beendet den Helfer per `terminate()` (Beenden-Anfrage). Das läuft über NSApplication und
+        // erreicht weder den SIGTERM-Weg noch die Beende-Meldung → hier aufräumen (code-audit 18.11.).
+        tokens.append(NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { Self.cleanUp("Beenden-Anfrage") }
+        })
         signal(SIGTERM, SIG_IGN)
         let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         source.setEventHandler { MainActor.assumeIsolated { self.quit("SIGTERM") } }
@@ -69,9 +74,13 @@ final class HyperKey {
     }
 
     private func quit(_ why: String) {
-        KeyMapping.set(capsToF18: false)
-        Self.log.notice("Beendet (\(why, privacy: .public)), Belegung entfernt")
+        Self.cleanUp(why)
         exit(0)
+    }
+
+    private static func cleanUp(_ why: String) {
+        KeyMapping.set(capsToF18: false)
+        log.notice("Beendet (\(why, privacy: .public)), Belegung entfernt")
     }
 
     /// Aktiver Tap auf Tasten-Ereignisse. Rückgabe false = macOS verweigert (Freigabe fehlt).
