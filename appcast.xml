@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.1.0</title>
+            <pubDate>Fri, 20 Nov 2026 16:17:05 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>101</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Wach bei zugeklapptem Deckel</b> (Tassen-Knopf unten im Seam-Fenster): Das MacBook arbeitet zugeklappt weiter, auch ohne externen Bildschirm. Ein kleiner Helfer namens <b>SeamWake</b> schaltet dafür den Ruhezustand ab und von allein wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das Seam-Symbol in der Menüleiste gefüllt. Beim ersten Einschalten fragt macOS einmal nach einer Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.0/Seam-1.1.0.zip" length="4079962" type="application/octet-stream" sparkle:edSignature="wBO/BL664NE8PA5lCEDOKxtyXFWGLzsGqzuGA5LQFVEjcxCHPZdFc5FoqJN0DN3JLaXYkx9+8FsqoN60iGq2Aw=="/>
+        </item>
+        <item>
             <title>1.0.0</title>
             <pubDate>Wed, 18 Nov 2026 20:52:47 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Die Feststelltaste funktioniert nach dem Beenden wieder normal.</b> Mit eingeschalteter Supertaste blieb sie nach dem Beenden von Seam bis zum Neustart des Macs ohne Funktion. Jetzt gibt SeamKeys sie beim Beenden frei. Ist sie von einer älteren Version noch belegt, gibt Seam sie beim nächsten Start frei, sofern die Supertaste aus ist. Eigene Tastenbelegungen bleiben unberührt.</li><li><b>Q im Fensterumschalter beendet die markierte App, nicht mehr Seam.</b> Weil dabei ⌘ gehalten ist, kam Q als ⌘Q an und beendete Seam selbst.</li><li><b>Kein Absturz mehr, wenn die Fensterliste kürzer wird.</b> Schloss sich ein Fenster, während Umschalter oder Dock-Vorschau offen waren, konnte Seam abstürzen.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.12.1/Seam-0.12.1.zip" length="3992069" type="application/octet-stream" sparkle:edSignature="0z7x/6Qca0xpS86t41x1vCVevHC3Ymdt51yHuHy2O+zCAlKGnfBgU2kKJ48uPJl52eHCmKqX/x54gXXq7nrNDg=="/>
         </item>
-        <item>
-            <title>0.12.0</title>
-            <pubDate>Wed, 18 Nov 2026 01:31:09 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>91</sparkle:version>
-            <sparkle:shortVersionString>0.12.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Fensterumschalter</b> (ab Werk aus): ⌘Tab zeigt alle Fenster mit Vorschaubild, auch minimierte und Fenster auf anderen Schreibtischen; ⌘&lt; zeigt nur die Fenster der vorderen App. Tab wiederholen geht weiter, ⇧ zurück, Pfeile bewegen, Esc bricht ab, Q beendet die App des markierten Fensters. Kurz ⌘Tab springt ohne Aufblitzen zur App, die du davor benutzt hast. Die Reihenfolge folgt deiner Nutzung, nicht der Fensterliste von macOS. Solange der Umschalter an ist, schaltet Seam den Umschalter von macOS ab und beim Ausschalten oder Beenden wieder ein.</li><li><b>Dock-Vorschau</b> (ab Werk aus): Ruht der Zeiger auf einem App-Symbol im Dock, zeigt Seam deren Fenster; ein Klick holt das Fenster nach vorn. Verzögerung und „Nur den aktuellen Schreibtisch“ einstellbar, Vorschaugröße Klein bis Sehr groß.</li><li><b>Supertaste</b> (ab Werk aus): Die Feststelltaste gehalten wirkt wie ⇧⌃⌥⌘ (wählbar). Kurz gedrückt macht sie nichts oder Escape. Läuft im eigenen kleinen Helfer „SeamKeys“ mit eigener Freigabe; Seam selbst liest weiter keine Tastatur mit.</li><li><b>Spaces in fester Reihenfolge halten:</b> verhindert, dass macOS die Spaces nach der letzten Nutzung umsortiert. Beim Ausschalten kehrt die vorherige Einstellung zurück; das Dock startet dafür einmal neu.</li></ul><h3>Berechtigung</h3><ul><li>Umschalter und Dock-Vorschau brauchen für die Bilder die Freigabe <b>Bildschirmaufnahme</b>. Seam fragt erst, wenn du eine der beiden einschaltest. Ohne Freigabe zeigen sie App-Symbole. Bilder und Fenstertitel bleiben im Arbeitsspeicher und stehen nie im Protokoll.</li><li>Die Supertaste braucht für „SeamKeys“ die Freigabe Bedienungshilfen. SeamKeys enthält nur Tastatur-Code, speichert und protokolliert keine Tasten und läuft nur, solange Seam läuft.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.12.0/Seam-0.12.0.zip" length="3987416" type="application/octet-stream" sparkle:edSignature="PZ5UcLcq4ooI2nLzzT3OGpUIo9l0l1ZOs1CQ1SfkUpQ+lsKiitMFVewNDCBazoKCtX+i2RzgRQA8sPrqhX0XBg=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: 6UrZIdFVLN5a8W4Rt5slX0pqSSTSySZ0l6dNOYfWDhWDA6RWT0gNMP4YmtHqNicGfTsCQDidGsiFQRjvqaqjDQ==
-length: 7861
+edSignature: zbrXoZz9f4ttJal8fMVfTx5OUSlFNqDtmdEXKR6rvAXJ7OdFcGyf6qYDvkxTuvfNQojvXksTVtvqT/jYCuL8BQ==
+length: 6587
 -->
