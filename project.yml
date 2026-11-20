@@ -112,6 +112,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         CREATE_INFOPLIST_SECTION_IN_BINARY: YES
         ENABLE_HARDENED_RUNTIME: YES
+        # Leere Berechtigungsdatei wie SeamKeys: ohne sie setzt Xcode beim Archivieren
+        # com.apple.application-identifier ein (Release-Gate E23 fing das am 20.11.).
+        CODE_SIGN_ENTITLEMENTS: Seam/Resources/Seam.entitlements
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
 
