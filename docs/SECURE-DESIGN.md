@@ -1023,6 +1023,68 @@ nichts protokolliert, kein Netz (E22b). **D** – Tap hängt: macOS schaltet ihn
 ab, SeamKeys schaltet ihn wieder an. **E** – SeamKeys erhält eine Freigabe für Eingaben; Gegenmaßnahme
 E22a (kein anderer Code) und E8 (Hardened Runtime, keine Berechtigungen).
 
+### E23 – Wach bei zugeklapptem Deckel über den Root-Helfer `SeamWake` (1.1, Durchgang 2026-11-20, VOR dem Code)
+
+Michael, 20.11.: MacBook soll zugeklappt weiterarbeiten, mit und ohne externen Bildschirm, „In Seam
+bauen“. Mit Bildschirm + Netzteil kann macOS das selbst (kein Code). Ohne Bildschirm hilft nur
+`pmset -a disablesleep 1`; Wachhalte-Anfragen (`IOPMAssertion`, `caffeinate`) verhindern den
+Schlaf beim Zuklappen nicht (gemessen 20.11.: Gnotchi, Claude, xcodebuild hielten Anfragen, Deckel
+schläft trotzdem). `disablesleep` braucht root.
+
+**Verworfen: Admin-Abfrage je Umschalten** (`do shell script … with administrator privileges`).
+Kein dauerhafter Root-Code, aber die eigentliche Gefahr — zugeklappt in der Tasche, Akku leer,
+Hitze — ließe sich nicht automatisch abfangen: Zum Ausschalten bräuchte es wieder ein Passwort, und
+bei zugeklapptem Deckel tippt niemand. Michael: „Ja, so bauen“ (Helfer).
+
+**Datenfluss:**
+```
+[Seam] ──(1) XPC dev.mwlr.seam.wake: setAwake(Bool) / status()──▶ [SeamWake, root, launchd]
+   ▲                                                                 ├──(2) /usr/bin/pmset -a disablesleep 1|0, -g
+   └──── Antwort: Zustand (gemessen) + Grund-Code ──────────────────┤──(3) Akku (IOPowerSources), Hitze (thermalState)
+                                                                     └──(4) Marker /Library/Application Support/dev.mwlr.seam.wake/aktiv
+```
+Grenzen: (1) Benutzerprozess → root (die neue, wertvollste Grenze) · (2) root → System.
+
+- **E23a – Was der Helfer kann.** `Seam.app/Contents/MacOS/SeamWake`, Kennung `dev.mwlr.seam.wake`,
+  registriert per `SMAppService.daemon` (`Contents/Library/LaunchDaemons/dev.mwlr.seam.wake.plist`).
+  Genau zwei XPC-Befehle, Parameter nur ein `Bool`. Einziger Prozess: `/usr/bin/pmset` mit festen
+  Argumenten, keine Shell, keine Pfade oder Texte von außen. Kein Netz, keine Oberfläche, kein
+  Nachladen — per Lint-Regel `seamwake_nur_pmset` erzwungen. Einzige Datei: der leere Marker.
+- **E23b – Wer ihn steuern darf.** Der Listener nimmt nur Verbindungen an, deren Absender die
+  Anforderung `anchor apple generic and identifier "dev.mwlr.seam" and certificate leaf[subject.OU]
+  = "LTKJ6Z2VYB"` erfüllt (`setConnectionCodeSigningRequirement`). Seam prüft umgekehrt den Helfer
+  (`identifier "dev.mwlr.seam.wake"`). Gemessen 20.11. an einer signierten Kopie: Seam und SeamWake
+  erfüllen die Anforderungen, SeamKeys und TextEdit nicht. Die Kennung steckt im Programm selbst
+  (`CREATE_INFOPLIST_SECTION_IN_BINARY`), sie übersteht erneutes Signieren (gemessen).
+- **E23c – Er schaltet selbst ab.** Alle 30 s und bei jedem Statusaufruf: Hitze ab `serious` →
+  aus; ohne Netzteil ≤ 20 % Akku → aus (und kein Einschalten darunter). Bricht die Verbindung der
+  Seam ab, die eingeschaltet hat (Beenden, Absturz, SIGTERM), → aus. Setzt jemand `disablesleep`
+  von außen auf 0, übernimmt der Helfer das. Jeder Schaltvorgang wird danach per `pmset -g`
+  gemessen (Regel 7); widerspricht die Messung, gilt er als fehlgeschlagen.
+- **E23d – Neustart und Absturz.** Der Marker entsteht **vor** dem Einschalten und verschwindet
+  erst nach gemessenem Ausschalten. `RunAtLoad` + `KeepAlive` bei Absturz: Startet der Helfer und
+  findet den Marker, setzt er `disablesleep 0`. Ohne Marker fasst er nichts an — ein vom Nutzer
+  selbst gesetztes `disablesleep` bleibt.
+- **E23e – Sichtbarkeit.** Solange an: gefülltes Menüleisten-Symbol, Tassen-Knopf in Akzentfarbe.
+  Schaltet der Helfer von allein ab, zeigt Seam den Grund als Hinweis. Protokoll nur Zustände und
+  Grund-Codes (`dev.mwlr.seam.wake`, Kategorie `wach`), nie Akkustand-Verläufe.
+
+**STRIDE (Grenze Seam → root):** **S** – ein anderes Programm gibt sich als Seam aus: Signatur-
+anforderung mit Team-Kennung, gemessen (E23b); den Mach-Dienstnamen eines Root-Dienstes kann nur
+launchd vergeben. **T** – manipulierte Nachricht: nur `Bool`, nichts zum Einschleusen; Seams
+Einstellungen spielen keine Rolle. **R** – entfällt (Einzelnutzer), Protokoll E23e. **I** – der
+Helfer gibt nur an/aus + Grund-Code heraus. **D** – ein Angreifer mit Seams Signatur könnte
+dauerhaft „an“ halten: Abschaltungen E23c greifen trotzdem; schlimmster Fall leerer Akku, kein
+Datenverlust. **E** – Übernahme des Helfers wäre root: Gegenmaßnahme E23a (kein Code außer pmset,
+Hardened Runtime, keine Berechtigungen, `release.sh` prüft Kennung, Team, Runtime, Berechtigungen
+und den launchd-Eintrag).
+
+**Restrisiken (bewusst angenommen):** (1) Stirbt der Helfer und startet launchd ihn nicht neu,
+bleibt `disablesleep 1` bis zum nächsten Start des Helfers (Neustart). (2) Ob ein Sparkle-Update die
+Freigabe unter Anmeldeobjekte erneut verlangt, ist **ungemessen** — beim ersten Update prüfen.
+(3) Ob `disablesleep 1` unter macOS 27.2 auf dem MacBook den Deckel-Schlaf wirklich verhindert, ist
+**ungemessen** — Vorab-Messung durch Michael (`sudo pmset -a disablesleep 1`, Deckel zu, `pmset -g log`).
+
 ## Abhängigkeiten
 
 | Abhängigkeit | Entscheidung | Warum |

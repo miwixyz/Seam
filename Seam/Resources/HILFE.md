@@ -241,6 +241,28 @@ Funktion zurück. Lass unter Systemeinstellungen → Tastatur → Sondertasten f
 die Standardaktion eingestellt. Hast du mit `hidutil` eigene Tastenbelegungen gesetzt, ersetzt
 SeamKeys sie.
 
+## Wach bei zugeklapptem Deckel
+
+Tassen-Knopf unten im Seam-Fenster. Ist er an, schläft das MacBook beim Zuklappen nicht ein,
+auch ohne externen Bildschirm: Downloads, Musik, Berechnungen laufen weiter. Das Seam-Symbol in
+der Menüleiste ist dann gefüllt, damit du es nicht vergisst. Mit externem Bildschirm und Netzteil
+brauchst du den Knopf nicht, das kann macOS selbst.
+
+Beim ersten Einschalten öffnet sich Systemeinstellungen → Allgemein → Anmeldeobjekte. Schalte dort
+weiter unten unter „App-Hintergrundaktivitäten“ den Eintrag für Seam ein und klicke danach noch
+einmal auf den Knopf. Seam bekommt
+dafür einen kleinen Helfer namens **SeamWake**, der den Ruhezustand ein- und ausschalten darf, sonst
+nichts.
+
+Der Helfer schaltet von allein wieder aus:
+- bei 20 % Akku, wenn kein Netzteil dran ist (und schaltet unter 20 % gar nicht erst ein),
+- wenn der Mac zu warm wird,
+- wenn du Seam beendest oder Seam abstürzt,
+- nach einem Neustart.
+
+Seam zeigt dann einen Hinweis im Fenster. Steck ein zugeklappt laufendes MacBook nicht in eine
+Tasche: Es wird warm.
+
 ## Spaces in fester Reihenfolge
 
 Einstellungen → Spaces → „Spaces in fester Reihenfolge halten“. macOS ordnet die Spaces dann nicht

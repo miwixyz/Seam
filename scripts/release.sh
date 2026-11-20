@@ -210,7 +210,18 @@ echo "${KEYS_INFO}" | grep -q "flags=.*runtime" || fail "SeamKeys ohne Hardened 
 KEYS_XML="$(codesign -d --entitlements - --xml "${KEYS}" 2>/dev/null)" || fail "Berechtigungen von SeamKeys nicht lesbar (codesign)"
 KEYS_ENTS="$(printf '%s' "${KEYS_XML}" | grep -o '<key>[^<]*</key>' || true)"
 [ -z "${KEYS_ENTS}" ] || fail "Unerwartete Berechtigungen in SeamKeys: ${KEYS_ENTS} (SECURE-DESIGN E22)"
-echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App und SeamKeys)"
+# E23: Der Root-Helfer SeamWake — gleiche Anforderungen, dazu Kennung (Seam prüft sie per XPC) und launchd-Eintrag.
+WAKE="${APP_PATH}/Contents/MacOS/SeamWake"
+[ -f "${WAKE}" ] || fail "SeamWake fehlt im Paket (Wach bei zugeklapptem Deckel)"
+[ -f "${APP_PATH}/Contents/Library/LaunchDaemons/dev.mwlr.seam.wake.plist" ] || fail "launchd-Eintrag für SeamWake fehlt"
+WAKE_INFO="$(codesign -dv --verbose=4 "${WAKE}" 2>&1)"
+echo "${WAKE_INFO}" | grep -q "Identifier=dev.mwlr.seam.wake" || fail "SeamWake mit falscher Kennung signiert (erwartet dev.mwlr.seam.wake)"
+echo "${WAKE_INFO}" | grep -q "TeamIdentifier=LTKJ6Z2VYB" || fail "SeamWake nicht mit Team LTKJ6Z2VYB signiert"
+echo "${WAKE_INFO}" | grep -q "flags=.*runtime" || fail "SeamWake ohne Hardened Runtime"
+WAKE_XML="$(codesign -d --entitlements - --xml "${WAKE}" 2>/dev/null)" || fail "Berechtigungen von SeamWake nicht lesbar (codesign)"
+WAKE_ENTS="$(printf '%s' "${WAKE_XML}" | grep -o '<key>[^<]*</key>' || true)"
+[ -z "${WAKE_ENTS}" ] || fail "Unerwartete Berechtigungen in SeamWake: ${WAKE_ENTS} (SECURE-DESIGN E23)"
+echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App, SeamKeys, SeamWake)"
 
 # ---------------------------------------------------------------------------
 # 4. Notarisieren

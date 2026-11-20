@@ -68,6 +68,9 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
+- **Wach bei zugeklapptem Deckel** (ab Werk aus): `pmset disablesleep` über den Root-Helfer
+  `SeamWake` (launchd, `SMAppService.daemon`, XPC nur von Seams Signatur angenommen). Schaltet von
+  selbst ab bei ≤ 20 % Akku ohne Netzteil, Hitze ab „ernst“, Seams Ende und Neustart (E23).
 - **Spaces in fester Reihenfolge halten:** setzt `mru-spaces` des Docks, merkt sich den alten Wert.
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
@@ -95,7 +98,9 @@ signiert und notarisiert; Seam prüft die Signatur vor dem Entpacken.
 ## Datenschutz und Berechtigung
 
 Seam braucht die Freigabe **Gerätesteuerung und Datenzugriff**, keine Eingabeüberwachung. Die
-Supertaste läuft im getrennten Helfer `SeamKeys` mit eigener Freigabe (E22).
+Supertaste läuft im getrennten Helfer `SeamKeys` mit eigener Freigabe (E22). „Wach bei zugeklapptem
+Deckel“ nutzt den Root-Helfer `SeamWake`, der nur `/usr/bin/pmset -a disablesleep 1|0` ausführt und
+nur Seam antwortet; Freigabe einmal unter Anmeldeobjekte (E23).
 **Bildschirmaufnahme** nur, wenn du Fensterumschalter oder Dock-Vorschau einschaltest: Dann erfasst
 Seam Bilder und Titel der Fenster nur auf ⌘Tab bzw. beim Zeigen aufs Dock, nur im Arbeitsspeicher,
 nie im Protokoll (E21). Sonst liest es von fremden Fenstern Lage, Größe und Art, nie Titel oder Inhalte.

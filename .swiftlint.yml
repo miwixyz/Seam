@@ -158,6 +158,17 @@ custom_rules:
     message: "SeamKeys enthält nur Tastatur-Code (SECURE-DESIGN E22a)."
     severity: error
 
+  # E23a: Der Root-Helfer kann nur pmset. Kein Netz, keine Shell, keine Oberfläche, kein Nachladen.
+  seamwake_nur_pmset:
+    name: "SeamWake nur pmset"
+    regex: '(\b(import AppKit|import SwiftUI|AXUIElement\w*|URLSession|URLRequest|NSURLConnection|dlopen|dlsym|NSClassFromString|NSAppleScript|posix_spawn)\b)|\bsystem\(|"/bin/|"/usr/bin/(?!pmset")'
+    included: 'SeamWake/.*\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "SeamWake läuft als root und darf nur /usr/bin/pmset aufrufen (SECURE-DESIGN E23a)."
+    severity: error
+
   # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
   # SwiftUI-App mit @NSApplicationDelegateAdaptor ist NSApp.delegate NICHT die
   # eigene AppDelegate-Instanz — der Cast liefert immer nil, `?.` verschluckt es,

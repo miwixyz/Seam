@@ -32,6 +32,14 @@ targets:
     platform: macOS
     sources:
       - path: Seam
+      # E23: Schnittstelle zum Root-Helfer SeamWake, in beiden Zielen.
+      - path: Shared
+      # E23: launchd-Eintrag für SMAppService.daemon, an der Stelle, an der macOS ihn sucht.
+      - path: LaunchDaemons/dev.mwlr.seam.wake.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchDaemons
     resources:
       - path: Seam/Resources/HILFE.md
       - path: Seam/Resources/CHANGELOG.md
@@ -47,6 +55,11 @@ targets:
         copy:
           destination: wrapper
           subpath: Contents/Helpers
+      # E23: Root-Helfer, liegt neben Seam in Contents/MacOS (BundleProgram im launchd-Eintrag).
+      - target: SeamWake
+        embed: true
+        copy:
+          destination: executables
     settings:
       base:
         INFOPLIST_FILE: Seam/Resources/Info.plist
@@ -79,6 +92,25 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.mwlr.seam.keys
         CODE_SIGN_ENTITLEMENTS: Seam/Resources/Seam.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+
+  # E23: Wach bei zugeklapptem Deckel. Läuft als root (launchd), kann nur pmset disablesleep.
+  SeamWake:
+    type: tool
+    platform: macOS
+    sources:
+      - path: SeamWake
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_NAME: SeamWake
+        PRODUCT_BUNDLE_IDENTIFIER: dev.mwlr.seam.wake
+        # Kennung im Programm selbst, damit sie auch ein erneutes Signieren übersteht
+        # (Seam prüft sie in WakeXPC.helperRequirement).
+        GENERATE_INFOPLIST_FILE: YES
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES

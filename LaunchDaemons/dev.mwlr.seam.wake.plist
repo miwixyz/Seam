@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- E23: Root-Helfer für „Wach bei zugeklapptem Deckel“. Registriert über SMAppService.daemon.
+	     RunAtLoad: nach einem Neustart räumt der Helfer einen von ihm gesetzten Wachmodus ab.
+	     KeepAlive bei Absturz: der Neustart des Helfers räumt ebenso ab. -->
+	<key>Label</key>
+	<string>dev.mwlr.seam.wake</string>
+	<key>BundleProgram</key>
+	<string>Contents/MacOS/SeamWake</string>
+	<key>MachServices</key>
+	<dict>
+		<key>dev.mwlr.seam.wake</key>
+		<true/>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>dev.mwlr.seam</string>
+	</array>
+</dict>
+</plist>

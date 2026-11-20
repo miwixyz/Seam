@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Wach bei zugeklapptem Deckel** (Tassen-Knopf unten im Seam-Fenster): Das MacBook arbeitet
+  zugeklappt weiter, auch ohne externen Bildschirm. Ein kleiner Helfer namens **SeamWake** schaltet
+  dafür den Ruhezustand ab und von allein wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu
+  warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das
+  Seam-Symbol in der Menüleiste gefüllt. Beim ersten Einschalten fragt macOS einmal nach einer
+  Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.
+
 ## [1.0.0] — 2026-11-18
 
 ### Neu

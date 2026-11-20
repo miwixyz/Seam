@@ -90,6 +90,7 @@ struct PopoverView: View {
             notice(icon: "keyboard", text: "\(engine.failedShortcuts.count) Kürzel belegt (läuft Magnet noch?)",
                    action: nil, color: FamilyTheme.warning) {}
         }
+        lidWakeNotices
         if let version = engine.updater?.pendingVersion {
             notice(icon: "arrow.down.circle", text: "Update \(version) verfügbar",
                    action: "Laden", color: FamilyTheme.accent) { engine.updater?.checkForUpdates() }
@@ -344,6 +345,7 @@ struct PopoverView: View {
                 .buttonStyle(.familyGlass(.circle, size: 30))
                 .modifier(HoverHint(text: "Eigener Hintergrund: Video oder Bild", current: $footerHint))
                 .accessibilityLabel("Hintergrund")
+                lidWakeButton
                 Spacer()
                 Button {
                     open("einstellungen")
@@ -388,6 +390,40 @@ struct PopoverView: View {
             NSApp.activate()
             NSApp.windows.first { $0.identifier?.rawValue.hasPrefix(id) == true }?.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+// MARK: - Wach bei zugeklapptem Deckel (E23)
+
+extension PopoverView {
+
+    /// Freigabe des Helfers fehlt, er antwortet nicht, oder er hat von allein abgeschaltet.
+    @ViewBuilder
+    fileprivate var lidWakeNotices: some View {
+        let wake = engine.lidWake
+        if wake.state == .needsApproval {
+            notice(icon: "cup.and.saucer", text: "Wach-Helfer erlauben: „App-Hintergrundaktivitäten“",
+                   action: "Öffnen", color: FamilyTheme.warning) { wake.openApproval() }
+        }
+        if case .failed(let text) = wake.state {
+            notice(icon: "cup.and.saucer", text: text, action: nil, color: FamilyTheme.warning) {}
+        }
+        if let text = wake.notice {
+            notice(icon: "cup.and.saucer", text: text, action: "OK", color: FamilyTheme.warning) { wake.dismissNotice() }
+        }
+    }
+
+    fileprivate var lidWakeButton: some View {
+        let wake = engine.lidWake
+        return Button { wake.toggle() } label: {
+            Image(systemName: wake.isOn ? "cup.and.saucer.fill" : "cup.and.saucer")
+                .foregroundStyle(wake.isOn ? FamilyTheme.accent : FamilyTheme.textPrimary)
+        }
+        .buttonStyle(.familyGlass(.circle, size: 30))
+        .modifier(HoverHint(text: wake.isOn ? "Wach bei zugeklapptem Deckel ist an – klicken zum Ausschalten"
+                                            : "Wach bei zugeklapptem Deckel – klicken zum Einschalten",
+                            current: $footerHint))
+        .accessibilityLabel("Wach bei zugeklapptem Deckel")
     }
 }
 

@@ -16,7 +16,9 @@ struct SeamApp: App {
                 .environment(engine)
                 .environment(engine.prefs)
         } label: {
-            let symbol = engine.isTrusted ? "rectangle.split.2x1" : "rectangle.split.2x1.slash"
+            // E23: gefülltes Symbol, solange der Mac zugeklappt wach bleibt (nicht vergessen).
+            let symbol = !engine.isTrusted ? "rectangle.split.2x1.slash"
+                : engine.lidWake.isOn ? "rectangle.split.2x1.fill" : "rectangle.split.2x1"
             // E14: selbst vergebener Name des aktuellen Space neben dem Symbol.
             let name = engine.spaces.menuBarTitle(engine.prefs)
             let icon = SpaceWatcher.showsIcon(title: name, hideWhenNamed: engine.prefs.hideIconWithSpaceName,
@@ -613,4 +615,9 @@ struct MoveToActiveSpace: NSViewRepresentable {
             window?.collectionBehavior.insert(.moveToActiveSpace)
         }
     }
+}
+
+extension Engine {
+    /// Wach bei zugeklapptem Deckel (E23): Seam bittet nur, der Root-Helfer SeamWake setzt.
+    var lidWake: LidWake { LidWake.shared }
 }

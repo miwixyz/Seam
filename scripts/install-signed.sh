@@ -28,7 +28,7 @@ ditto build-dev/Build/Products/Release/Seam.app "$STAGE/Seam.app"
 # Hilfsprogramme behalten ihre eigenen Berechtigungen, nur die App bekommt Seams.
 SPK="$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework/Versions/B"
 for part in "$SPK"/XPCServices/*.xpc "$SPK/Autoupdate" "$SPK/Updater.app" "$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework" \
-    "$STAGE/Seam.app/Contents/Helpers/SeamKeys.app"; do
+    "$STAGE/Seam.app/Contents/Helpers/SeamKeys.app" "$STAGE/Seam.app/Contents/MacOS/SeamWake"; do
     codesign --force --options runtime --timestamp --preserve-metadata=entitlements \
         --sign "$IDENTITY" "$part"
 done
