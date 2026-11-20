@@ -20,7 +20,7 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ## Neu in 1.1
 
-**Wach bei zugeklapptem Deckel.** Ein Klick auf die Tasse unten im Seam-Fenster, und das MacBook arbeitet zugeklappt weiter, auch ohne externen Bildschirm. Der kleine Helfer SeamWake schaltet dafür den Ruhezustand ab und von selbst wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das Seam-Symbol in der Menüleiste gefüllt.
+**Wach bei zugeklapptem Deckel.** Klappst du ein MacBook ohne externen Bildschirm zu, schläft es ein. Mit der Tasse unten im Seam-Fenster nicht. Der kleine Helfer SeamWake schaltet dafür den Ruhezustand ab. Und er schaltet ihn selbst wieder ein, wenn der Akku ohne Netzteil auf 20 % fällt oder der Mac zu warm wird, ebenso wenn Seam beendet wird oder der Mac neu startet. Ob es gerade an ist, siehst du am gefüllten Seam-Symbol in der Menüleiste. Beim ersten Einschalten will macOS eine Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.
 
 ---
 
