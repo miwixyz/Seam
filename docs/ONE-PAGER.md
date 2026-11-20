@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 1.1
+
+**Wach bei zugeklapptem Deckel.** Ein Klick auf die Tasse unten im Seam-Fenster, und das MacBook arbeitet zugeklappt weiter, auch ohne externen Bildschirm. Der kleine Helfer SeamWake schaltet dafür den Ruhezustand ab und von selbst wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das Seam-Symbol in der Menüleiste gefüllt.
+
+---
+
 ## Neu in 1.0
 
 **Hintergrund auf allen Schreibtischen.** macOS übernimmt ein Hintergrundbild nur für den Schreibtisch, der gerade offen ist. Seam setzt dein Bild deshalb auf jedem weiteren nach, sobald du dorthin wechselst. Du kannst einzelnen Schreibtischen auch ein eigenes Bild geben, die übrigen zeigen das Hauptbild. Und die Dock-Vorschau wartet länger, bevor sie aufgeht (einstellbar bis 2 Sekunden). Wer nur übers Dock fährt, sieht sie nicht mehr.
