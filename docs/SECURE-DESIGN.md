@@ -1065,6 +1065,12 @@ Grenzen: (1) Benutzerprozess → root (die neue, wertvollste Grenze) · (2) root
   erst nach gemessenem Ausschalten. `RunAtLoad` + `KeepAlive` bei Absturz: Startet der Helfer und
   findet den Marker, setzt er `disablesleep 0`. Ohne Marker fasst er nichts an — ein vom Nutzer
   selbst gesetztes `disablesleep` bleibt.
+- **E23f – Läuft nur bei Bedarf (1.1.1).** Ist der Helfer aus und hat keine Verbindung zu Seam,
+  beendet er sich nach 10 s mit Exit 0 (`KeepAlive` startet ihn dann nicht neu); beim nächsten
+  Auftrag startet launchd ihn über den Mach-Dienst aus der aktuellen Programmdatei. Grund: 1.1.0
+  lief nach dem Sparkle-Update mit der ersetzten Datei weiter, Seam lehnte ihn an der Signatur ab
+  und stürzte im Fehlerblock ab (dieser war `@MainActor` statt `@Sendable`, behoben). Nebeneffekt:
+  weniger Laufzeit für den Root-Code.
 - **E23e – Sichtbarkeit.** Solange an: gefülltes Menüleisten-Symbol, Tassen-Knopf in Akzentfarbe.
   Schaltet der Helfer von allein ab, zeigt Seam den Grund als Hinweis. Protokoll nur Zustände und
   Grund-Codes (`dev.mwlr.seam.wake`, Kategorie `wach`), nie Akkustand-Verläufe.
@@ -1080,8 +1086,9 @@ Hardened Runtime, keine Berechtigungen, `release.sh` prüft Kennung, Team, Runti
 und den launchd-Eintrag).
 
 **Restrisiken (bewusst angenommen):** (1) Stirbt der Helfer und startet launchd ihn nicht neu,
-bleibt `disablesleep 1` bis zum nächsten Start des Helfers (Neustart). (2) Ob ein Sparkle-Update die
-Freigabe unter Anmeldeobjekte erneut verlangt, ist **ungemessen** — beim ersten Update prüfen.
+bleibt `disablesleep 1` bis zum nächsten Start des Helfers (Neustart). (2) Ein Sparkle-Update verlangt die
+Freigabe unter Anmeldeobjekte nicht erneut (gemessen 20.11., 1.0.0 Build 97 → 1.1.0); ein laufender
+alter Helfer blieb aber bis zum Neustart stehen (→ E23f).
 (3) Ob `disablesleep 1` unter macOS 27.2 auf dem MacBook den Deckel-Schlaf wirklich verhindert, ist
 **ungemessen** — Vorab-Messung durch Michael (`sudo pmset -a disablesleep 1`, Deckel zu, `pmset -g log`).
 

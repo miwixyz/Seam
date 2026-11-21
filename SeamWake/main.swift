@@ -15,6 +15,9 @@ private let markerURL = URL(fileURLWithPath: "/Library/Application Support/dev.m
 /// Prüftakt, solange der Wachmodus an ist.
 private let checkInterval: DispatchTimeInterval = .seconds(30)
 
+/// So lange wartet der Helfer, aus und ohne Verbindung, bevor er sich beendet.
+private let idleExit: DispatchTimeInterval = .seconds(10)
+
 /// Aller Zustand lebt auf der Hauptwarteschlange; XPC-Aufrufe springen dorthin.
 final class Helper: NSObject, NSXPCListenerDelegate, SeamWakeProtocol, @unchecked Sendable {
 
@@ -24,6 +27,11 @@ final class Helper: NSObject, NSXPCListenerDelegate, SeamWakeProtocol, @unchecke
     /// Als Kennung, nicht als Objekt: die Verbindung gehört der XPC-Warteschlange (Swift 6).
     private var owner: ObjectIdentifier?
     private var timer: DispatchSourceTimer?
+    /// Offene Seam-Verbindungen. Aus + keine Verbindung → nach `idleExit` beenden (1.1.1): launchd
+    /// startet den Helfer beim nächsten Auftrag neu, aus der dann aktuellen Programmdatei. Sonst lief
+    /// nach einem Update der alte Helfer weiter, und Seam lehnte ihn an der Signatur ab.
+    private var connections = Set<ObjectIdentifier>()
+    private var idleGeneration = 0
 
     // MARK: - Start
 
@@ -41,6 +49,20 @@ final class Helper: NSObject, NSXPCListenerDelegate, SeamWakeProtocol, @unchecke
                 log.error("Beim Start NICHT abgeräumt: pmset scheiterte, Marker bleibt")
             }
         }
+        scheduleIdleExit()
+    }
+
+    /// Beendet den Helfer, wenn er nach `idleExit` immer noch aus ist und keine Verbindung hat.
+    /// Exit 0: KeepAlive {SuccessfulExit: false} startet ihn dann nicht sofort neu, erst bei Bedarf.
+    private func scheduleIdleExit() {
+        guard !isOn, connections.isEmpty else { return }
+        idleGeneration += 1
+        let generation = idleGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + idleExit) { [weak self] in
+            guard let self, generation == self.idleGeneration, !self.isOn, self.connections.isEmpty else { return }
+            log.notice("Beendet (aus, keine Verbindung)")
+            exit(0)
+        }
     }
 
     // MARK: - XPC
@@ -50,6 +72,10 @@ final class Helper: NSObject, NSXPCListenerDelegate, SeamWakeProtocol, @unchecke
         connection.exportedInterface = NSXPCInterface(with: SeamWakeProtocol.self)
         connection.exportedObject = self
         let id = ObjectIdentifier(connection)
+        DispatchQueue.main.async {
+            self.connections.insert(id)
+            self.idleGeneration += 1   // laufende Beenden-Wartezeit verwerfen
+        }
         connection.invalidationHandler = { [weak self] in
             DispatchQueue.main.async { self?.lost(id) }
         }
@@ -111,7 +137,9 @@ final class Helper: NSObject, NSXPCListenerDelegate, SeamWakeProtocol, @unchecke
 
     private func lost(_ connection: ObjectIdentifier) {
         // Die einschaltende Verbindung ist weg (Seam beendet, abgestürzt).
+        connections.remove(connection)
         if isOn, connection == owner { turnOff(.clientGone) }
+        scheduleIdleExit()
     }
 
     // MARK: - Überwachung

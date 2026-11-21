@@ -4,7 +4,8 @@
 <dict>
 	<!-- E23: Root-Helfer für „Wach bei zugeklapptem Deckel“. Registriert über SMAppService.daemon.
 	     RunAtLoad: nach einem Neustart räumt der Helfer einen von ihm gesetzten Wachmodus ab.
-	     KeepAlive bei Absturz: der Neustart des Helfers räumt ebenso ab. -->
+	     KeepAlive bei Absturz: der Neustart des Helfers räumt ebenso ab.
+	     Exit 0 im Leerlauf (E23f) startet launchd nicht neu; der nächste Auftrag über MachServices schon. -->
 	<key>Label</key>
 	<string>dev.mwlr.seam.wake</string>
 	<key>BundleProgram</key>

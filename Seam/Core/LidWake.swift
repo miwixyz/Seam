@@ -84,9 +84,12 @@ final class LidWake {
             c.resume()
             connection = c
         }
-        return connection?.remoteObjectProxyWithErrorHandler { [weak self] error in
+        // @Sendable ist Pflicht: XPC ruft den Block auf seiner eigenen Warteschlange auf. Ohne erbt er
+        // @MainActor von der Klasse, und Swift 6 bricht mit SIGTRAP ab (Absturz 1.1.0, 20.11.).
+        return connection?.remoteObjectProxyWithErrorHandler { @Sendable [weak self] error in
             let text = error.localizedDescription
-            Task { @MainActor in self?.fail(text) }
+            let code = (error as NSError).code
+            Task { @MainActor in self?.fail(text, code: code) }
         } as? SeamWakeProtocol
     }
 
@@ -121,12 +124,22 @@ final class LidWake {
         }
     }
 
-    private func fail(_ text: String) {
-        Self.log.error("XPC: \(text, privacy: .public)")
+    private func fail(_ text: String, code: Int) {
+        Self.log.error("XPC \(code, privacy: .public): \(text, privacy: .public)")
+        // Trennen: Hatte der Helfer den Auftrag schon ausgeführt, schaltet er beim Verbindungsende ab.
         connection?.invalidate()
         connection = nil
-        state = .failed("Helfer antwortet nicht")
+        state = .failed(Self.failureText(code: code))
         stopPolling()
+    }
+
+    /// Getestet. Signatur des Helfers passt nicht: Meist läuft noch der Helfer aus der Version vor
+    /// einem Update (seine Programmdatei wurde ersetzt). Ab 1.1.1 beendet er sich selbst, ein
+    /// 1.1.0-Helfer erst mit dem Neustart.
+    nonisolated static func failureText(code: Int) -> String {
+        code == NSXPCConnectionCodeSigningRequirementFailure
+            ? "Alter Wach-Helfer: Mac neu starten"
+            : "Helfer antwortet nicht"
     }
 
     /// Solange an: alle 30 s fragen, damit Seam eine Abschaltung des Helfers sofort zeigt.

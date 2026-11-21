@@ -46,4 +46,10 @@ final class LidWakeTests: XCTestCase {
         XCTAssertEqual(WakeReason.clientGone.rawValue, "seam-weg")
         XCTAssertEqual(WakeXPC.machService, "dev.mwlr.seam.wake")
     }
+
+    /// Alter Helfer nach einem Update: eigener Hinweis mit Abhilfe statt „antwortet nicht“.
+    func testSigningFailureNamesRestart() {
+        XCTAssertTrue(LidWake.failureText(code: NSXPCConnectionCodeSigningRequirementFailure).contains("neu starten"))
+        XCTAssertEqual(LidWake.failureText(code: NSXPCConnectionInterrupted), "Helfer antwortet nicht")
+    }
 }
