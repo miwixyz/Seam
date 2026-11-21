@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.1.1] — 2026-11-21
+
+### Behoben
+
+- **Seam stürzte ab, wenn der Wach-Helfer nicht antwortete** (Tassen-Knopf nach dem Update auf
+  1.1.0). Seam zeigt jetzt einen Hinweis.
+- **Nach einem Update lief der alte Wach-Helfer weiter,** und Seam lehnte ihn ab. Der Helfer beendet
+  sich jetzt selbst, sobald der Knopf aus ist, und startet beim nächsten Einschalten aus der neuen
+  Version. Steht „Alter Wach-Helfer: Mac neu starten“ im Fenster, läuft noch der Helfer aus 1.1.0:
+  einmal den Mac neu starten.
+
 ## [1.1.0] — 2026-11-20
 
 ### Neu

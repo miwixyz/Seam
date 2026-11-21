@@ -263,6 +263,10 @@ Der Helfer schaltet von allein wieder aus:
 Seam zeigt dann einen Hinweis im Fenster. Steck ein zugeklappt laufendes MacBook nicht in eine
 Tasche: Es wird warm.
 
+Zeigt das Fenster „Alter Wach-Helfer: Mac neu starten“, läuft nach einem Update noch der Helfer aus
+der Vorversion. Starte den Mac einmal neu. Ab 1.1.1 beendet sich der Helfer selbst, sobald der Knopf
+aus ist, und das passiert nicht mehr.
+
 ## Spaces in fester Reihenfolge
 
 Einstellungen → Spaces → „Spaces in fester Reihenfolge halten“. macOS ordnet die Spaces dann nicht
