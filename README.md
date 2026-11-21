@@ -70,7 +70,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
 - **Wach bei zugeklapptem Deckel** (ab Werk aus): `pmset disablesleep` über den Root-Helfer
   `SeamWake` (launchd, `SMAppService.daemon`, XPC nur von Seams Signatur angenommen). Schaltet von
-  selbst ab bei ≤ 20 % Akku ohne Netzteil, Hitze ab „ernst“, Seams Ende und Neustart (E23).
+  selbst ab bei ≤ 20 % Akku ohne Netzteil, Hitze ab „ernst“, Seams Ende und Neustart (E23) Der Helfer läuft nur bei Bedarf:
+  aus und ohne Verbindung beendet er sich nach 10 s, launchd startet ihn beim nächsten Auftrag neu (E23f, ab 1.1.1).
 - **Spaces in fester Reihenfolge halten:** setzt `mru-spaces` des Docks, merkt sich den alten Wert.
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
 
