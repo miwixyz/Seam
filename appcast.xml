@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.1.1</title>
+            <pubDate>Sat, 21 Nov 2026 21:57:19 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>105</sparkle:version>
+            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Seam stürzte ab, wenn der Wach-Helfer nicht antwortete</b> (Tassen-Knopf nach dem Update auf 1.1.0). Seam zeigt jetzt einen Hinweis.</li><li><b>Nach einem Update lief der alte Wach-Helfer weiter,</b> und Seam lehnte ihn ab. Der Helfer beendet sich jetzt selbst, sobald der Knopf aus ist, und startet beim nächsten Einschalten aus der neuen Version. Steht „Alter Wach-Helfer: Mac neu starten“ im Fenster, läuft noch der Helfer aus 1.1.0: einmal den Mac neu starten.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.1/Seam-1.1.1.zip" length="4083810" type="application/octet-stream" sparkle:edSignature="O0QP2hfvUU+5NRCFr5LbCxW0q6FBQzymAQCue31ogDKJGQz1yVxmygQsfgdXzkpkvT8XH+UByoFFZeQ70HoECQ=="/>
+        </item>
+        <item>
             <title>1.1.0</title>
             <pubDate>Fri, 20 Nov 2026 16:17:05 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hintergrund auf allen Schreibtischen.</b> Ein Bild stand bisher nur auf dem Schreibtisch, der beim Setzen offen war. Jetzt setzt Seam es beim Wechsel auf jeden weiteren Schreibtisch nach.</li><li><b>Je Schreibtisch ein eigenes Bild</b> (Fenster „Hintergrund“ → „Schreibtische“): Für einzelne Schreibtische wählst du ein anderes Bild, die übrigen zeigen das Hauptbild.</li><li><b>Dock-Vorschau mit längerer Wartezeit:</b> „Öffnungsverzögerung“ jetzt bis 2 s, ab Werk 0,5 s statt 0,2 s. Fährst du nur über das Dock, bleibt die Vorschau weg.</li></ul><h3>Behoben</h3><ul><li><b>Kurz ⌘Tab springt zur zuletzt benutzten App,</b> nicht mehr zum zweiten Fenster der App vorn.</li><li><b>Zweimal schnell ⌘Tab springt nicht mehr zum dritten Fenster.</b> Lässt du ⌘ los, bevor die Liste da ist, ist die Geste zu Ende.</li><li><b>⌘Tab hängt nicht mehr,</b> wenn die Bildschirmaufnahme von macOS nicht antwortet: Die Liste kommt nach höchstens einer halben Sekunde, notfalls ohne Titel.</li><li><b>Gleich große Fenster:</b> Umschalter und Dock-Vorschau holen kein falsches Fenster mehr nach vorn, wenn zwei Fenster genau übereinander liegen. ⌃⌥S findet ein gleich großes Fenster als Partner.</li><li><b>Mindestgröße:</b> Bleibt ein Fenster nach einem Kürzel größer als verlangt (z. B. Outlook auf dem MacBook), schiebt Seam es zurück in den Bildschirm, rückt den Nachbarn nach und zeigt den Hinweis wie beim Teilen.</li><li><b>Paar:</b> Minimierst du ein Fenster eines geteilten Paars, das nicht mehr neben seinem Partner steht, löst sich das Paar, statt den Partner mitzunehmen.</li><li><b>Ursprüngliche Größe beim Herausziehen</b> nur noch, solange das Fenster so angedockt ist, wie Seam es gesetzt hat. Hast du es zwischendurch selbst größer gezogen, bleibt deine Größe.</li><li><b>Dock-Vorschau nach der Anmeldung:</b> Startet Seam vor dem Dock, versucht es die Verbindung nach 2, 5 und 15 s erneut.</li><li><b>Supertaste:</b> Die Feststelltaste wird erst umgelegt, wenn SeamKeys die Freigabe hat; bis dahin bleibt sie eine normale Feststelltaste. Die Einstellungen zeigen „wartet auf die Freigabe“. SeamKeys startet nur, wenn die Supertaste eingeschaltet ist.</li><li><b>Links:</b> Gibst du die Browser-Rolle zurück, öffnen .html-Dateien wieder mit dem Programm von vorher, statt dauerhaft im Browser.</li><li><b>Hintergrund ohne Stocken:</b> Laden und Zuschneiden laufen im Hintergrund; ⌘Tab und Kürzel reagieren währenddessen. Fertige Bildstücke verwendet Seam wieder.</li><li><b>Weniger Speicher für Vorschaubilder:</b> so groß wie die Kachel statt 1280 px, höchstens 60.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.0.0/Seam-1.0.0.zip" length="4038837" type="application/octet-stream" sparkle:edSignature="NeqtBbZccTM0RcZDTPoS9Z1165c1qAzzyGUW1mGQm9BW4zpRu+wbfYyNzuyIv+ef/O7gMOR8DXLAjH347VfxCw=="/>
         </item>
-        <item>
-            <title>0.12.1</title>
-            <pubDate>Wed, 18 Nov 2026 15:43:32 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>94</sparkle:version>
-            <sparkle:shortVersionString>0.12.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Die Feststelltaste funktioniert nach dem Beenden wieder normal.</b> Mit eingeschalteter Supertaste blieb sie nach dem Beenden von Seam bis zum Neustart des Macs ohne Funktion. Jetzt gibt SeamKeys sie beim Beenden frei. Ist sie von einer älteren Version noch belegt, gibt Seam sie beim nächsten Start frei, sofern die Supertaste aus ist. Eigene Tastenbelegungen bleiben unberührt.</li><li><b>Q im Fensterumschalter beendet die markierte App, nicht mehr Seam.</b> Weil dabei ⌘ gehalten ist, kam Q als ⌘Q an und beendete Seam selbst.</li><li><b>Kein Absturz mehr, wenn die Fensterliste kürzer wird.</b> Schloss sich ein Fenster, während Umschalter oder Dock-Vorschau offen waren, konnte Seam abstürzen.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v0.12.1/Seam-0.12.1.zip" length="3992069" type="application/octet-stream" sparkle:edSignature="0z7x/6Qca0xpS86t41x1vCVevHC3Ymdt51yHuHy2O+zCAlKGnfBgU2kKJ48uPJl52eHCmKqX/x54gXXq7nrNDg=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: zbrXoZz9f4ttJal8fMVfTx5OUSlFNqDtmdEXKR6rvAXJ7OdFcGyf6qYDvkxTuvfNQojvXksTVtvqT/jYCuL8BQ==
-length: 6587
+edSignature: zlPYr+zDFXMDswZDTUMEMnuKeZYOU6NKT0Mg27NG78B7kfmzmF0p4T32bqvmPkA7OUXCS7O5F1i3jh03S5AGBw==
+length: 6346
 -->
