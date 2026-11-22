@@ -36,6 +36,8 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
 - **Verworfen:** `CGEventTap` oder `NSEvent`-Monitor auf Tastenereignisse. Das wäre technisch ein
   Keylogger und bräuchte zusätzlich die Freigabe „Eingabeüberwachung“.
 - **Warum:** Kein Pfad, über den Passwörter oder Texte durch Seam laufen können.
+- **Geändert 22.11. (E24a):** einzige Ausnahme ist ein Monitor nur für Änderungen der Sondertasten
+  (`.flagsChanged`) in `CommandHold.swift`; er liest nur den ⌘-Zustand, nie Zeichen.
 
 ### E2 – Maus nur beobachten, nie verändern
 - **Entschieden:** Für Andocken per Ziehen ein **passiver** Beobachter
@@ -60,6 +62,8 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
   Mail-Betreffe, Dokumentnamen, Chat-Partner. Für Seam ist der Titel nie nötig, die AX-Referenz
   identifiziert das Fenster (Lehre aus dem Prototyp: Auswahl über die Referenz, nicht über die Lage).
 - **Folge:** Nichts aus fremden Apps landet in Logs, Einstellungen oder Absturzberichten.
+- **Geändert 22.11. (E24b):** Menütitel mit Kürzel der Vorder-App werden gelesen, gefiltert und nur
+  für die Dauer der Anzeige im Speicher gehalten. Fenstertitel bleiben verworfen.
 
 ### E4 – Nur echte App-Fenster anfassen
 - **Entschieden:** Nur Rolle `AXWindow` mit Unterrolle `AXStandardWindow`, nicht minimiert, nicht im
@@ -1091,6 +1095,118 @@ Freigabe unter Anmeldeobjekte nicht erneut (gemessen 20.11., 1.0.0 Build 97 → 
 alter Helfer blieb aber bis zum Neustart stehen (→ E23f).
 (3) Ob `disablesleep 1` unter macOS 27.2 auf dem MacBook den Deckel-Schlaf wirklich verhindert, ist
 **ungemessen** — Vorab-Messung durch Michael (`sudo pmset -a disablesleep 1`, Deckel zu, `pmset -g log`).
+
+### E24 – Kürzel-Blatt beim Halten von ⌘ (Durchgang 2026-11-22, VOR dem Code)
+
+Michael, 22.11.: Idee nach Cheatr (twoplus11.com/cheatr, Closed Source, nur Ideenquelle): Wer ⌘ hält,
+sieht alle Kürzel der vordersten App. Gnotchi abgelehnt (läuft bewusst ohne Bedienungshilfen),
+„Kommt gleich in Seam“. **Umfang: nur das Blatt (Weg 3).** Verworfen bleibt der Teil mit Lerneffekt
+(„Nudge“ nach Mausklick, „abgeschlossen“ nach einmaliger Nutzung, Wochenzähler): Er bräuchte
+Tastenbeobachtung (bricht E1 und E22a) und eine dauerhafte Liste, welche Befehle Michael wie oft
+benutzt (ein Nutzungsprofil, E10). Falls je gewünscht: eigener Helfer `SeamCoach` im Muster von
+SeamKeys, eigener Durchgang.
+
+**Gemessen 22.11. (macOS 27.2, Messapps ohne Seam, eigene Kennungen, ad hoc signiert):**
+- ⌘-Halten ohne jede Freigabe (Bedienungshilfen `false`, Eingabeüberwachung `false`) erkannt: globaler
+  `flagsChanged`-Monitor (4 Ereignisse bei 2 Drücken), `NSEvent.modifierFlags` und
+  `CGEventSource.flagsState` je 2×, alle im selben Moment (Takt 30 ms). `keyDown`-Kontrolle 0, aber
+  nicht belegt, ob dabei getippt wurde → für diesen Entwurf unerheblich, Buchstaben werden nicht gebraucht.
+- Menüleiste fremder Apps per Bedienungshilfen lesbar: 10 laufende Apps (Finder, Claude/Electron,
+  Helium/Chromium, WhatsApp, Spotify, Bambu Studio, Kalender …), 0 Lesefehler, 172–701 Menüpunkte,
+  26–111 mit Kürzel (`AXMenuItemCmdChar` + `AXMenuItemCmdModifiers`) plus je 12 mit Sondertaste oder
+  Symbol (`AXMenuItemCmdVirtualKey`/`AXMenuItemCmdGlyph`). Lesezeit des ganzen Baums (Tiefe 4)
+  **122–485 ms**. Die ersten Treffer waren in jeder App dieselben (⌥⌘⎋, ⇧⌘Q, ⌃⌘Q): das Apple-Menü.
+- **Nicht gemessen:** Safari, Notizen, Mail, VS Code; Apps mit Dialogfenster im Vordergrund;
+  Vollbild, mehrere Bildschirme; dass das Apple-Menü immer das erste Menüleisten-Element ist.
+
+**Datenfluss:**
+```
+[Tastatur: nur ⌘-Zustand] ──(1) flagsChanged-Monitor, liest nur modifierFlags──▶ [Seam: CommandHold]
+[Seam] ──(2) AX lesen: Menüleiste der Vorder-App (Hintergrund-Queue, Zeitlimit)──▶ [fremde App]
+[Seam] ──(3) eigenes Panel, ohne Fokus und Mausereignisse, zeigt Menü + Kürzel──▶ [Bildschirm]
+```
+Grenzen: (1) Nutzer → Seam · (2) Seam ↔ fremde App (Menütexte sind **nicht vertrauenswürdig**) ·
+(3) Seam → Bildschirm. Es entsteht **kein** neuer Prozess, **keine** neue Freigabe, **kein** Netz.
+
+- **E24a – ⌘ erkennen, ohne Tasten zu lesen.** *Entschieden:* globaler Monitor nur für
+  `.flagsChanged` in **einer** neuen Datei `CommandHold.swift`. Der Handler liest ausschließlich
+  `modifierFlags` (nur „⌘ allein gehalten“ ja/nein) und speichert nur den Beginn der laufenden
+  Haltephase, keine Verlaufszeiten. Das Blatt erscheint nach einer Haltezeit (0,6 s, Michael 22.11.;
+  wählbar 0,3–1,5 s), und zwar nur bei „⌘ allein“ (kein ⇧, ⌥, ⌃ dabei) und verschwindet beim Loslassen, bei jeder weiteren Sondertaste (Flags ändern
+  sich), bei jedem Mausklick (passiver Maus-Beobachter aus E2 liefert das) und wenn Seams eigener
+  Umschalter (E21) öffnet. *Verworfen:* Dauer-Timer auf `NSEvent.modifierFlags` /
+  `CGEventSource.flagsState` (funktioniert gleich gut, gemessen, aber läuft ständig und hält Seam wach).
+  *Verworfen:* `keyDown`-Monitor, Event-Tap. Wie schon E1: kein Pfad für Zeichen. Die Lint-Regel
+  `keine_synthetischen_ereignisse` bekommt **genau diese eine Datei** als Ausnahme für `.flagsChanged`;
+  eine neue Regel `commandhold_nur_flags` verbietet dort `.characters`, `.charactersIgnoringModifiers`,
+  `.keyCode`, `.keyDown`, `.keyUp`. Bekannte Unschärfe: Seam sieht keine Buchstaben und kann ein
+  langsames „⌘ halten, dann C“ nicht von bloßem Halten unterscheiden; das Blatt kann dann kurz
+  erscheinen und ist beim Loslassen weg. Kein Schaden, weil es nichts bedient (E24c).
+- **E24b – Menü lesen: Positivliste erweitern, nichts speichern.** *Entschieden:* `AXAttribute` in
+  `AXAccess.swift` bekommt `menuBar` (`AXMenuBar`), `title` (`AXTitle`), `enabled` (`AXEnabled`),
+  `menuItemCmdChar`, `menuItemCmdModifiers`, `menuItemCmdVirtualKey`, `menuItemCmdGlyph`; `children` und
+  `role` gibt es schon. Lesen läuft nur über eine neue Funktion in `AXAccess.swift` (`menuShortcuts(of:)`),
+  die Lint-Regel `ax_nur_ueber_allowlist` bleibt scharf. **Das öffnet E3 für `AXTitle` an Menüpunkten
+  und Menüleisten-Einträgen, nie an Fenstern** (Fenstertitel bleiben verworfen, Regel „Keine
+  Fenstertitel aus der Fensterliste“ unverändert). Weil Menütitel Dokumentnamen enthalten können
+  („Zuletzt benutzt“, Fensterliste, Verlauf), gilt ein **Filter vor der Anzeige**:
+  1. nur Punkte **mit Kürzel** (Zeichen, Sondertaste oder Symbol) kommen durch, alle anderen werden
+     verworfen, bevor ein Titel weitergereicht wird;
+  2. Punkte mit **⌘ + Ziffer** (Terminal- und Browser-Fensterlisten) werden verworfen;
+  3. das **erste Menüleisten-Element** (Apple-Menü) wird übersprungen — gemessen ist nur, dass dessen
+     Kürzel in allen 10 Apps identisch auftauchen; dass es immer an erster Stelle steht, ist
+     **Annahme**, vor dem Code mit Attrappe und mehreren Apps prüfen;
+  4. Titel werden auf 80 Zeichen gekürzt, Steuerzeichen entfernt, höchstens 400 Punkte, Tiefe 4.
+  Lesen läuft auf einer Hintergrund-Queue (nie auf dem Hauptthread), Zeitlimit je Aufruf 0,25 s
+  (`AXWindow.timeout`), Gesamtfrist 1,5 s, nur ein Lesevorgang gleichzeitig. **Beginnt beim ⌘-Druck**,
+  nicht beim App-Wechsel, und liegt nur so lange im Speicher, wie das Blatt sichtbar ist.
+  *Verworfen:* Zwischenspeicher je App und Beobachtung des App-Wechsels (mehr Zustand, kein Gewinn
+  bei 0,6 s Haltezeit gegen 122–485 ms Lesezeit). *Verworfen:* Menüpunkte auslösen (`AXPress`):
+  Die Positivliste der Aktionen (E12) bleibt bei `AXRaise`.
+- **E24c – Anzeige: nur ansehen.** Eigenes Panel (nicht aktivierend, `ignoresMouseEvents`, kein
+  Tastaturfokus) auf dem Bildschirm des Fokusfensters, Kopf mit App-Name (aus dem System, nicht aus dem
+  Menü). Text immer als `Text(verbatim:)`, nie als Markdown oder Link; kein Nachladen, keine Schaltflächen.
+  Der Inhalt steht nie in Log, UserDefaults, Absturzbericht oder Zwischenablage.
+- **E24d – Ein- und Ausschalter.** *Entschieden (Michael, 22.11.):* Standard **aus**, Schalter und Haltezeit in den
+  Einstellungen; beim Einschalten ein Satz, was gelesen wird (Menütitel mit Kürzel der vordersten App,
+  nur im Speicher, nur solange das Blatt sichtbar ist). Grund: neue Beobachtung, E5 („Seam handelt nur
+  auf eine Geste“) bleibt erfüllt, weil das Blatt nur auf die Geste „⌘ halten“ erscheint. Nicht
+  anzeigen, wenn die vorderste App Seam selbst ist oder der Bildschirm gesperrt ist.
+- **E24e – Protokoll (ergänzt E11).** Nur: Blatt gezeigt/versteckt, Bundle-ID der App (öffentlich),
+  Anzahl der Einträge, Lesezeit in ms, Grund eines Abbruchs (Zeitlimit, Mausklick). Keine Titel, keine
+  Kürzel, keine Haltezeiten. Lint-Regel analog „Keine Fenstertitel aus der Fensterliste“ für Menütitel.
+- **E24f – Tests und Lint.** `AXAllowlistTests` hält die erweiterte Liste fest. Tests: Filter
+  (Apple-Menü, ⌘+Ziffer, Punkte ohne Kürzel, Länge, Steuerzeichen, Anzahl), Wechsel der Anzeige bei
+  Sondertaste/Mausklick, Zeitlimit mit hängender Attrappe. `commandhold_nur_flags` und die
+  Ausnahmeliste in `keine_synthetischen_ereignisse` sind Teil des Doku-Gates.
+
+**STRIDE:**
+- **Grenze (1) Nutzer → Seam.** **S** – entfällt (lokale Eingabe). **T** – entfällt. **I** – der
+  Monitor sieht alle Änderungen der Sondertasten, auch ⇧ beim Großschreiben: nichts davon wird
+  gespeichert, nur „⌘ allein, seit wann“ (E24a); Zeichen gibt es in `flagsChanged` nicht und die Lint-Regel
+  verbietet den Zugriff. **D** – viele Ereignisse: Handler vergleicht einen Wert, mehr nicht.
+  **E** – der Monitor kann nichts schlucken oder verändern (passiv, wie E2).
+- **Grenze (2) Seam ↔ fremde App.** **S** – eine App liefert irreführende Menütexte (z. B. „Drücke ⌘V
+  um …“): Anzeige hat Kopf mit Systemnamen der App, ist nicht bedienbar und verschwindet beim Loslassen;
+  Restrisiko angenommen. **T** – nur Lesen. **I** – Menütitel mit Dokumentnamen: Filter E24b,
+  nichts gespeichert/geloggt, nur auf Michaels eigenem Bildschirm sichtbar (Restrisiko: Titel von Punkten
+  mit Kürzel, die einen Namen enthalten, z. B. „Schließe „…““, bleiben sichtbar). **D** – hängende App
+  oder 701 Menüpunkte: Zeitlimit, Gesamtfrist, Höchstzahl, Hintergrund-Queue. **E** – Seam bekommt
+  **keine neue Macht**: nur Leselisten erweitert, keine Aktionen, keine Eingaben (Regeln E5/E12).
+- **Grenze (3) Seam → Bildschirm.** **I** – Blatt in Bildschirmaufnahme oder Teilen des Bildschirms
+  sichtbar: gewollt, es ist Anzeige für Michael; Restrisiko angenommen. **D** – Blatt bleibt hängen:
+  Lösen bei Loslassen, Mausklick, Fokuswechsel und nach 30 s ohne Flags-Ereignis.
+
+**Negativraum:** (1) Menüs sind ehrlich und vollständig — falsch für Apps mit eigenem Menü außerhalb
+der Menüleiste; gemessen nur für 10 Apps, vor dem Release für Safari, Notizen, Mail, VS Code nachholen.
+(2) Das Apple-Menü ist immer das erste Element — gemessen, vor dem Code mit einer Attrappe prüfen.
+(3) Ein Sicherheitsdialog (`SecurityAgent`) im Vordergrund: E4 schließt Systemflächen aus, das Blatt
+wird dort **nicht** angezeigt (App-Kennung `com.apple.SecurityAgent`, Anmeldefenster, Sperrbildschirm).
+(4) Im Ernstfall: Schalter aus, oder Freigabe entziehen; ohne Freigabe zeigt Seam den bekannten Hinweis.
+
+**Entschieden (Michael, 22.11.):** Standard aus, Haltezeit 0,6 s, nur „⌘ allein“. Eigene Blätter für
+„⌘⇧“, „⌘⌥“ wären ein späterer Schritt mit eigenem Durchgang. **Vor dem Code zu prüfen:** Apple-Menü
+an erster Stelle der Menüleiste (Attrappe + mehrere Apps).
 
 ## Abhängigkeiten
 
