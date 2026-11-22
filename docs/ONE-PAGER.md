@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 1.2
+
+**Kürzel-Blatt.** Halte ⌘ allein gedrückt, und nach einem kurzen Moment (ab Werk 0,6 Sekunden) zeigt Seam die Kürzel der App, die gerade vorn ist, nach Menüs geordnet. Das Blatt ist nur zum Ansehen: Du klickst nichts an, und es nimmt dir den Fokus nicht. Es verschwindet, sobald du ⌘ loslässt, klickst oder eine weitere Sondertaste dazunimmst. Dafür liest Seam die Menüleiste der vordersten App, nur Menüpunkte mit Kürzel, nur im Arbeitsspeicher und nur, solange das Blatt zu sehen ist. Von der Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, keine Buchstaben, und es braucht keine zusätzliche Freigabe. Kürzel mit ⌘ und einer Ziffer lässt das Blatt weg, weil dahinter oft Fensterlisten mit Dokumentnamen stehen. Apps, die ihre Kürzel nicht in der Menüleiste führen, zeigen weniger oder nichts. Ab Werk aus: Einstellungen → „Kürzel-Blatt“.
+
+---
+
 ## Neu in 1.1
 
 **Wach bei zugeklapptem Deckel.** Klappst du ein MacBook ohne externen Bildschirm zu, schläft es ein. Mit der Tasse unten im Seam-Fenster nicht. Der kleine Helfer SeamWake schaltet dafür den Ruhezustand ab. Und er schaltet ihn selbst wieder ein, wenn der Akku ohne Netzteil auf 20 % fällt oder der Mac zu warm wird, ebenso wenn Seam beendet wird oder der Mac neu startet. Ob es gerade an ist, siehst du am gefüllten Seam-Symbol in der Menüleiste. Beim ersten Einschalten will macOS eine Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.
@@ -139,6 +145,7 @@ Es ziehen nur sichtbare Nachbarn mit. Stößt ein Fenster an seine Mindestgröß
 | Sehen, wo du tippst | Hintergrund abdunkeln: alles außer dem aktiven Fenster tritt zurück, je Bildschirm einstellbar, Apps und Spaces lassen sich ausnehmen (ab Werk aus) |
 | Zwischen Fenstern wechseln | ⌘Tab zeigt alle Fenster mit Bild, ⌘< die der vorderen App (ab Werk aus) |
 | Fenster einer App im Dock sehen | Dock-Vorschau: Zeiger aufs Symbol, Fenster als Bilder, Klick holt es nach vorn (ab Werk aus) |
+| Kürzel nachsehen | Kürzel-Blatt: ⌘ halten zeigt die Kürzel der vordersten App, nur zum Ansehen (ab Werk aus) |
 | Mehr freie Kürzel | Supertaste: Feststelltaste gehalten = ⇧⌃⌥⌘ (ab Werk aus) |
 | Ohne Kürzel anordnen | Ein Klick auf das Seam-Symbol zeigt alle Anordnungen als Kacheln, ein Klick auf eine Kachel wirkt auf das vordere Fenster. Fährst du darüber, siehst du Name und Kürzel (nach deiner Tastaturbelegung). Quer und Hochkant passen sich dem Bildschirm an |
 
@@ -154,8 +161,8 @@ Seam läuft nur auf Macs mit Apple Silicon und macOS 27.
 
 ## Deine Daten bleiben auf deinem Mac
 
-- Seam braucht die Freigabe „Gerätesteuerung und Datenzugriff“ von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Titel und Bilder der Fenster sieht Seam nur, wenn du Umschalter oder Dock-Vorschau einschaltest. Dann braucht es die Freigabe „Bildschirmaufnahme“ und macht die Bilder nur im Moment von ⌘Tab oder dem Zeigen aufs Dock, nur im Arbeitsspeicher.
-- Tastatureingaben liest Seam nicht mit. Die Supertaste läuft im getrennten Helfer SeamKeys, der die Tasten sieht, aber nichts speichert und nichts anderes kann. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→, nur dafür und mit Abbruch, sobald du eingreifst.
+- Seam braucht die Freigabe „Gerätesteuerung und Datenzugriff“ von macOS. Von anderen Fenstern liest es nur Lage, Größe und Rolle, keine Fenstertitel und keine Inhalte. Dazu kommt, nur wenn du das Kürzel-Blatt einschaltest, die Menüleiste der vordersten App: nur Menüpunkte mit Kürzel samt Titel, nur im Arbeitsspeicher und nur, solange das Blatt zu sehen ist. Fürs Abdunkeln schaut es nur nach, welches Fenster vorn liegt, für die Space-Namen nur, welcher Space aktiv ist. Hast du Apps vom Abdunkeln ausgenommen, vergleicht Seam die App-Kennung der Fenster mit dieser Liste. Titel und Bilder der Fenster sieht Seam nur, wenn du Umschalter oder Dock-Vorschau einschaltest. Dann braucht es die Freigabe „Bildschirmaufnahme“ und macht die Bilder nur im Moment von ⌘Tab oder dem Zeigen aufs Dock, nur im Arbeitsspeicher.
+- Tastatureingaben liest Seam nicht mit. Die Supertaste läuft im getrennten Helfer SeamKeys, der die Tasten sieht, aber nichts speichert und nichts anderes kann. Es bekommt von macOS nur seine eigenen Kürzel gemeldet, die Maus beobachtet es nur passiv. Fürs Kürzel-Blatt sieht Seam nur, ob ⌘ allein gehalten wird, keine Buchstaben. Einzige Ausnahme: Beim Aufräumen der Layouts bewegt Seam selbst die Maus und drückt ⌃← / ⌃→, nur dafür und mit Abbruch, sobald du eingreifst.
 - Gespeichert werden nur deine Einstellungen und, wenn du eins speicherst, dein Layout: welche App auf welchem Schreibtisch liegt und wie groß ihre Fenster sind, ohne Fenstertitel und ohne Zeiten. Welche Fenster ein Paar bilden, weiß Seam nur bis zum Beenden. Deine Space-Namen bleiben in Seams Einstellungen auf deinem Mac. Es gibt kein Konto, keine Analyse und keine Kennungen.
 - Ist Seam dein Standardbrowser, gibt es jeden Link an einen Browser weiter, mehr nicht. Es lädt keine Seite, schreibt keine Adresse ins Protokoll und führt keinen Verlauf. Gespeichert sind nur deine Regeln, auf deinem Mac.
 - Ins Netz geht Seam nur für Updates bei GitHub (die erlaubst du beim ersten Mal selbst) und, wenn du Hintergründe online aussuchst, zu Pixabay, Pexels oder Wikimedia Commons. Jedes Update ist signiert.
