@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.2.0</title>
+            <pubDate>Sun, 22 Nov 2026 11:58:15 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>111</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Kürzel-Blatt</b> (ab Werk aus, Einstellungen → „Kürzel-Blatt“): Hältst du ⌘ allein gedrückt (Standard 0,6 s, wählbar bis 1,5 s), zeigt Seam die Kürzel der vordersten App, nach Menüs geordnet. Das Blatt ist nur zum Ansehen: kein Klick, kein Fokus. Seam liest dafür die Menüleiste der App, nur Menüpunkte mit Kürzel, nur im Arbeitsspeicher und nur, solange das Blatt sichtbar ist. Von der Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, nie Buchstaben. Kürzel mit ⌘ und einer Ziffer lässt das Blatt weg (das sind meist Fensterlisten mit Dokumentnamen).</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.2.0/Seam-1.2.0.zip" length="4114898" type="application/octet-stream" sparkle:edSignature="XljE4jZC5wubWTC5y9gEHmcAi2l2X5gmM4G3ao/dR3ih+v8Hb/SwUByCAGt9XasvLv4hvutDehoXL++Bo9VQAw=="/>
+        </item>
+        <item>
             <title>1.1.1</title>
             <pubDate>Sat, 21 Nov 2026 21:57:19 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Wach bei zugeklapptem Deckel</b> (Tassen-Knopf unten im Seam-Fenster): Das MacBook arbeitet zugeklappt weiter, auch ohne externen Bildschirm. Ein kleiner Helfer namens <b>SeamWake</b> schaltet dafür den Ruhezustand ab und von allein wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das Seam-Symbol in der Menüleiste gefüllt. Beim ersten Einschalten fragt macOS einmal nach einer Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.0/Seam-1.1.0.zip" length="4079962" type="application/octet-stream" sparkle:edSignature="wBO/BL664NE8PA5lCEDOKxtyXFWGLzsGqzuGA5LQFVEjcxCHPZdFc5FoqJN0DN3JLaXYkx9+8FsqoN60iGq2Aw=="/>
         </item>
-        <item>
-            <title>1.0.0</title>
-            <pubDate>Wed, 18 Nov 2026 20:52:47 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>96</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hintergrund auf allen Schreibtischen.</b> Ein Bild stand bisher nur auf dem Schreibtisch, der beim Setzen offen war. Jetzt setzt Seam es beim Wechsel auf jeden weiteren Schreibtisch nach.</li><li><b>Je Schreibtisch ein eigenes Bild</b> (Fenster „Hintergrund“ → „Schreibtische“): Für einzelne Schreibtische wählst du ein anderes Bild, die übrigen zeigen das Hauptbild.</li><li><b>Dock-Vorschau mit längerer Wartezeit:</b> „Öffnungsverzögerung“ jetzt bis 2 s, ab Werk 0,5 s statt 0,2 s. Fährst du nur über das Dock, bleibt die Vorschau weg.</li></ul><h3>Behoben</h3><ul><li><b>Kurz ⌘Tab springt zur zuletzt benutzten App,</b> nicht mehr zum zweiten Fenster der App vorn.</li><li><b>Zweimal schnell ⌘Tab springt nicht mehr zum dritten Fenster.</b> Lässt du ⌘ los, bevor die Liste da ist, ist die Geste zu Ende.</li><li><b>⌘Tab hängt nicht mehr,</b> wenn die Bildschirmaufnahme von macOS nicht antwortet: Die Liste kommt nach höchstens einer halben Sekunde, notfalls ohne Titel.</li><li><b>Gleich große Fenster:</b> Umschalter und Dock-Vorschau holen kein falsches Fenster mehr nach vorn, wenn zwei Fenster genau übereinander liegen. ⌃⌥S findet ein gleich großes Fenster als Partner.</li><li><b>Mindestgröße:</b> Bleibt ein Fenster nach einem Kürzel größer als verlangt (z. B. Outlook auf dem MacBook), schiebt Seam es zurück in den Bildschirm, rückt den Nachbarn nach und zeigt den Hinweis wie beim Teilen.</li><li><b>Paar:</b> Minimierst du ein Fenster eines geteilten Paars, das nicht mehr neben seinem Partner steht, löst sich das Paar, statt den Partner mitzunehmen.</li><li><b>Ursprüngliche Größe beim Herausziehen</b> nur noch, solange das Fenster so angedockt ist, wie Seam es gesetzt hat. Hast du es zwischendurch selbst größer gezogen, bleibt deine Größe.</li><li><b>Dock-Vorschau nach der Anmeldung:</b> Startet Seam vor dem Dock, versucht es die Verbindung nach 2, 5 und 15 s erneut.</li><li><b>Supertaste:</b> Die Feststelltaste wird erst umgelegt, wenn SeamKeys die Freigabe hat; bis dahin bleibt sie eine normale Feststelltaste. Die Einstellungen zeigen „wartet auf die Freigabe“. SeamKeys startet nur, wenn die Supertaste eingeschaltet ist.</li><li><b>Links:</b> Gibst du die Browser-Rolle zurück, öffnen .html-Dateien wieder mit dem Programm von vorher, statt dauerhaft im Browser.</li><li><b>Hintergrund ohne Stocken:</b> Laden und Zuschneiden laufen im Hintergrund; ⌘Tab und Kürzel reagieren währenddessen. Fertige Bildstücke verwendet Seam wieder.</li><li><b>Weniger Speicher für Vorschaubilder:</b> so groß wie die Kachel statt 1280 px, höchstens 60.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.0.0/Seam-1.0.0.zip" length="4038837" type="application/octet-stream" sparkle:edSignature="NeqtBbZccTM0RcZDTPoS9Z1165c1qAzzyGUW1mGQm9BW4zpRu+wbfYyNzuyIv+ef/O7gMOR8DXLAjH347VfxCw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: zlPYr+zDFXMDswZDTUMEMnuKeZYOU6NKT0Mg27NG78B7kfmzmF0p4T32bqvmPkA7OUXCS7O5F1i3jh03S5AGBw==
-length: 6346
+edSignature: EvJT1obAGpsVIkku/Wl+mmZEBO5IZXRhRWbfBgBROz+f936qSwqQI0QDmZXLxsu6DgiN6XtHZ4eC3sI+uoftDg==
+length: 4296
 -->
