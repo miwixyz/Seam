@@ -1117,7 +1117,7 @@ SeamKeys, eigener Durchgang.
   Symbol (`AXMenuItemCmdVirtualKey`/`AXMenuItemCmdGlyph`). Lesezeit des ganzen Baums (Tiefe 4)
   **122–485 ms**. Die ersten Treffer waren in jeder App dieselben (⌥⌘⎋, ⇧⌘Q, ⌃⌘Q): das Apple-Menü.
 - **Nicht gemessen:** Safari, Notizen, Mail, VS Code; Apps mit Dialogfenster im Vordergrund;
-  Vollbild, mehrere Bildschirme; dass das Apple-Menü immer das erste Menüleisten-Element ist.
+  Vollbild, mehrere Bildschirme. (Apple-Menü an erster Stelle: gemessen, siehe E24b.)
 
 **Datenfluss:**
 ```
@@ -1153,9 +1153,9 @@ Grenzen: (1) Nutzer → Seam · (2) Seam ↔ fremde App (Menütexte sind **nicht
   1. nur Punkte **mit Kürzel** (Zeichen, Sondertaste oder Symbol) kommen durch, alle anderen werden
      verworfen, bevor ein Titel weitergereicht wird;
   2. Punkte mit **⌘ + Ziffer** (Terminal- und Browser-Fensterlisten) werden verworfen;
-  3. das **erste Menüleisten-Element** (Apple-Menü) wird übersprungen — gemessen ist nur, dass dessen
-     Kürzel in allen 10 Apps identisch auftauchen; dass es immer an erster Stelle steht, ist
-     **Annahme**, vor dem Code mit Attrappe und mehreren Apps prüfen;
+  3. das **erste Menüleisten-Element** (Apple-Menü) wird übersprungen — gemessen 22.11. in 11 von 11
+     laufenden Apps: erstes Element, Titel „Apple“, 21 Punkte. Zusätzlich verlangt der Code, dass der
+     Titel „Apple“ ist, sonst wird nichts übersprungen (Schutz gegen eine App mit anderer Menüleiste);
   4. Titel werden auf 80 Zeichen gekürzt, Steuerzeichen entfernt, höchstens 400 Punkte, Tiefe 4.
   Lesen läuft auf einer Hintergrund-Queue (nie auf dem Hauptthread), Zeitlimit je Aufruf 0,25 s
   (`AXWindow.timeout`), Gesamtfrist 1,5 s, nur ein Lesevorgang gleichzeitig. **Beginnt beim ⌘-Druck**,
@@ -1199,14 +1199,14 @@ Grenzen: (1) Nutzer → Seam · (2) Seam ↔ fremde App (Menütexte sind **nicht
 
 **Negativraum:** (1) Menüs sind ehrlich und vollständig — falsch für Apps mit eigenem Menü außerhalb
 der Menüleiste; gemessen nur für 10 Apps, vor dem Release für Safari, Notizen, Mail, VS Code nachholen.
-(2) Das Apple-Menü ist immer das erste Element — gemessen, vor dem Code mit einer Attrappe prüfen.
+(2) Das Apple-Menü ist das erste Element — gemessen in 11 von 11 Apps (22.11.), nicht gemessen für
+Safari, Notizen, Mail, VS Code (liefen nicht); der Titel-Schutz in E24b Punkt 3 fängt Abweichungen ab.
 (3) Ein Sicherheitsdialog (`SecurityAgent`) im Vordergrund: E4 schließt Systemflächen aus, das Blatt
 wird dort **nicht** angezeigt (App-Kennung `com.apple.SecurityAgent`, Anmeldefenster, Sperrbildschirm).
 (4) Im Ernstfall: Schalter aus, oder Freigabe entziehen; ohne Freigabe zeigt Seam den bekannten Hinweis.
 
 **Entschieden (Michael, 22.11.):** Standard aus, Haltezeit 0,6 s, nur „⌘ allein“. Eigene Blätter für
-„⌘⇧“, „⌘⌥“ wären ein späterer Schritt mit eigenem Durchgang. **Vor dem Code zu prüfen:** Apple-Menü
-an erster Stelle der Menüleiste (Attrappe + mehrere Apps).
+„⌘⇧“, „⌘⌥“ wären ein späterer Schritt mit eigenem Durchgang. Apple-Menü an erster Stelle: gemessen (E24b).
 
 ## Abhängigkeiten
 
