@@ -46,6 +46,8 @@ final class Preferences {
         static let hyperKeyEnabled = "hyperKeyEnabled"
         static let hyperKeyModifiers = "hyperKeyModifiers"
         static let hyperKeyTap = "hyperKeyTap"
+        static let commandSheetEnabled = "commandSheetEnabled"
+        static let commandSheetDelay = "commandSheetDelay"
     }
 
     private let defaults: UserDefaults
@@ -135,6 +137,14 @@ final class Preferences {
     var hyperKeyModifiers = 15 { didSet { defaults.set(hyperKeyModifiers, forKey: Key.hyperKeyModifiers) } }
     /// Kurzer Druck ohne andere Taste: `none` oder `escape`.
     var hyperKeyTap = "none" { didSet { defaults.set(hyperKeyTap, forKey: Key.hyperKeyTap) } }
+    /// Kürzel-Blatt (E24): ⌘ allein gehalten zeigt die Kürzel der vordersten App. Ab Werk aus (Michael, 22.11.).
+    var commandSheetEnabled = false { didSet { defaults.set(commandSheetEnabled, forKey: Key.commandSheetEnabled) } }
+    /// Haltezeit in ms, bis das Blatt erscheint (E24a). Ab Werk 600.
+    var commandSheetDelay = Preferences.defaultCommandSheetDelay {
+        didSet { defaults.set(commandSheetDelay, forKey: Key.commandSheetDelay) }
+    }
+    static let defaultCommandSheetDelay = 600
+    static let commandSheetDelayChoices = [300, 450, 600, 900, 1200, 1500]
 
     static let gapChoices = [0, 5, 10, 20]
     static let dimChoices = [20, 35, 50]
@@ -338,6 +348,7 @@ final class Preferences {
         (switcherEnabled, switcherCurrentSpaceOnly, dockPreviewEnabled, dockPreviewCurrentSpaceOnly,
          dockPreviewDelay, previewSize, spaceOrderPrevious, systemSwitcherOff) = Self.loadPreview(defaults)
         loadHyperKey()
+        loadCommandSheet()
     }
 
     // MARK: - Umschalter, Dock-Vorschau, Space-Reihenfolge (E21)
@@ -382,6 +393,13 @@ final class Preferences {
         let m = defaults.object(forKey: Key.hyperKeyModifiers) as? Int ?? 15
         hyperKeyModifiers = (1...15).contains(m) ? m : 15
         hyperKeyTap = defaults.string(forKey: Key.hyperKeyTap) == "escape" ? "escape" : "none"
+    }
+
+    /// Kürzel-Blatt: nur gültige Werte (STRIDE T), ungültige Haltezeit fällt auf den Standard.
+    private func loadCommandSheet() {
+        commandSheetEnabled = defaults.object(forKey: Key.commandSheetEnabled) as? Bool ?? false
+        let d = defaults.object(forKey: Key.commandSheetDelay) as? Int ?? Self.defaultCommandSheetDelay
+        commandSheetDelay = Self.commandSheetDelayChoices.contains(d) ? d : Self.defaultCommandSheetDelay
     }
 
     /// Sondertaste der Supertaste umschalten; mindestens eine bleibt an.

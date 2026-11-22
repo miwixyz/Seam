@@ -114,11 +114,37 @@ custom_rules:
     # E17a (19.10., Michaels Zustimmung): Ausnahme InputSynth, Positivliste + Test dort.
     # E22 (18.11.): Ausnahme der Helfer SeamKeys (eigener Prozess, eigene Freigabe).
     # 18.11.: WindowGridTests baut ein ⌘Q-Ereignis als Objekt für den Umschalter-Test, schickt es nie ab.
-    excluded: 'Seam/Core/InputSynth\.swift|SeamKeys/.*\.swift|SeamTests/HyperKeyTests\.swift|SeamTests/WindowGridTests\.swift'
+    # E24a (22.11., Michaels Zustimmung): Ausnahme CommandHold.swift, nur `.flagsChanged`; dort sperrt
+    # `commandhold_nur_flags` alles, was Zeichen oder Tastennummern liefern könnte.
+    excluded: 'Seam/Core/InputSynth\.swift|SeamKeys/.*\.swift|SeamTests/HyperKeyTests\.swift|SeamTests/WindowGridTests\.swift|Seam/Core/CommandHold\.swift'
     excluded_match_kinds:
       - comment
       - doccomment
     message: "Seam erzeugt keine Eingaben und liest keine Tastatur mit (SECURE-DESIGN E1/E2)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E24a: In der einzigen Datei mit einem Tasten-Monitor nur Sondertasten-
+  # Zustand lesen. Kein Zeichen, keine Tastennummer, keine Tasten-Ereignisse.
+  commandhold_nur_flags:
+    name: "CommandHold: nur Sondertasten-Zustand"
+    regex: '\.characters|\.charactersIgnoringModifiers|\.keyCode|\.keyDown|\.keyUp|CGEventTapCreate|CGEvent\.tapCreate'
+    included: 'Seam/Core/CommandHold\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "CommandHold liest nur modifierFlags (SECURE-DESIGN E24a)."
+    severity: error
+
+  # Seam, docs/SECURE-DESIGN.md E24b/E24e: Menütitel aus fremden Apps landen nie in Protokoll,
+  # Einstellungen, Zwischenablage oder Konsole. Protokoll nur mit festen Texten und Zahlen.
+  kuerzelblatt_keine_inhalte:
+    name: "Kürzel-Blatt: keine Menütexte nach außen"
+    regex: '\bprint\(|NSLog\(|dump\(|NSPasteboard|UserDefaults|defaults\.set|\.write\(|FileManager|URLSession'
+    included: 'Seam/(Core/(CommandHold|MenuShortcuts)|UI/ShortcutSheet)\.swift'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "Menütexte fremder Apps bleiben im Speicher (SECURE-DESIGN E24b/E24e)."
     severity: error
 
   # Seam, docs/SECURE-DESIGN.md E17a: In der einzigen Datei mit künstlichen Eingaben gibt es keine

@@ -138,6 +138,8 @@ struct SeamApp: App {
 /// Bedienungshilfen-Freigabe da ist.
 @MainActor
 @Observable
+// E24 (22.11.): Kürzel-Blatt hängt hier ein (Besitz + Schalter); die Aufteilung der Klasse ist ein eigenes Vorhaben.
+// swiftlint:disable:next type_body_length
 final class Engine {
 
     private static let log = Logger(subsystem: "dev.mwlr.seam", category: "start")
@@ -160,6 +162,8 @@ final class Engine {
     /// Umschalter und Dock-Vorschau (E21).
     @ObservationIgnored private lazy var switcher = Switcher(prefs: prefs)
     @ObservationIgnored private lazy var dockPreview = DockPreview(prefs: prefs)
+    /// Kürzel-Blatt beim Halten von ⌘ (E24). Ab Werk aus.
+    @ObservationIgnored private lazy var commandHold = CommandHold(prefs: prefs)
     @ObservationIgnored private var terminateToken: NSObjectProtocol?
     @ObservationIgnored private var termSource: DispatchSourceSignal?
     /// Bildschirmaufnahme erteilt? Für den Hinweis in den Einstellungen (E21a).
@@ -318,6 +322,8 @@ final class Engine {
         pairs.onRaised = { [weak self] in self?.dimmer.refresh() }
         dimmer.apply()
         dockPreview.apply()
+        commandHold.isBlocked = { [weak self] in self?.switcher.isOpen ?? false }
+        commandHold.apply()
         watchTrust()
         // E17b: nach Anmeldung und nach jeder Bildschirmänderung, sobald die Bildschirme ruhig sind.
         screenToken = NotificationCenter.default.addObserver(
@@ -432,6 +438,12 @@ final class Engine {
         applyShortcutSetting()
         guard running else { return }
         dockPreview.apply()
+    }
+
+    /// Schalter Kürzel-Blatt (E24): Monitor an- oder abmelden. Vor dem Start der Dienste tut es nichts.
+    func applyCommandSheet() {
+        guard running else { return }
+        commandHold.apply()
     }
 
     func refreshCaptureState() { canCapture = WindowCatalog.canCapture }

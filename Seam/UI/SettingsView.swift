@@ -241,6 +241,7 @@ struct SettingsView: View {
                 .disabled(!prefs.dockPreviewEnabled)
             }
             hyperKeyCard
+            commandSheetCard
             card("Vorschaubilder") {
                 row("Vorschaugröße") {
                     Picker("Vorschaugröße", selection: $prefs.previewSize) {
@@ -459,5 +460,35 @@ private struct FamilySwitch: View {
             .accessibilityRepresentation {
                 Toggle(isOn: configuration.$isOn) { configuration.label }
             }
+    }
+}
+
+// MARK: - Kürzel-Blatt (E24)
+
+extension SettingsView {
+    private var commandSheetCard: some View {
+        @Bindable var prefs = prefs
+        return card("Kürzel-Blatt") {
+            toggleRow("⌘ halten zeigt die Kürzel der App", isOn: $prefs.commandSheetEnabled)
+                .onChange(of: prefs.commandSheetEnabled) { engine.applyCommandSheet() }
+            divider
+            row("Haltezeit") {
+                Picker("Haltezeit", selection: $prefs.commandSheetDelay) {
+                    ForEach(Preferences.commandSheetDelayChoices, id: \.self) { ms in
+                        Text((Double(ms) / 1000).formatted(.number.locale(Locale(identifier: "de_DE"))) + " s").tag(ms)
+                    }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+            .disabled(!prefs.commandSheetEnabled)
+            note("Seam liest dafür die Menüleiste der vordersten App: nur Punkte mit Kürzel, nur im Speicher, "
+                 + "nur solange das Blatt sichtbar ist. Es erscheint nur bei ⌘ allein",
+                 symbol: "info.circle", color: FamilyTheme.textSecondary)
+            if prefs.commandSheetEnabled, !engine.isTrusted {
+                note("Ohne Freigabe „Bedienungshilfen“ zeigt Seam kein Blatt",
+                     symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+            }
+        }
     }
 }

@@ -2,6 +2,17 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unreleased]
+
+### Neu
+
+- **Kürzel-Blatt** (ab Werk aus, Einstellungen → „Kürzel-Blatt“): Hältst du ⌘ allein gedrückt
+  (Standard 0,6 s, wählbar bis 1,5 s), zeigt Seam die Kürzel der vordersten App, nach Menüs geordnet.
+  Das Blatt ist nur zum Ansehen: kein Klick, kein Fokus. Seam liest dafür die Menüleiste der App,
+  nur Menüpunkte mit Kürzel, nur im Arbeitsspeicher und nur, solange das Blatt sichtbar ist. Von der
+  Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, nie Buchstaben. Kürzel mit ⌘ und einer
+  Ziffer lässt das Blatt weg (das sind meist Fensterlisten mit Dokumentnamen).
+
 ## [1.1.1] — 2026-11-21
 
 ### Behoben

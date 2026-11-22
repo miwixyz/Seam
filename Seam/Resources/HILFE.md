@@ -226,6 +226,18 @@ Für die Bilder braucht Seam die Freigabe **Bildschirmaufnahme** (Systemeinstell
 & Sicherheit → Aufnahme von Bildschirm & Systemaudio). Nach dem Erteilen Seam einmal beenden und
 neu starten. Ohne Freigabe zeigen Umschalter und Dock-Vorschau nur App-Symbole und App-Namen.
 
+## Kürzel-Blatt
+
+Einstellungen → „⌘ halten zeigt die Kürzel der App“ (ab Werk aus). Hältst du ⌘ allein gedrückt,
+erscheint nach der eingestellten Haltezeit (Standard 0,6 s) ein Blatt mit den Kürzeln der App, die
+gerade vorn ist, nach Menüs geordnet. Es verschwindet beim Loslassen von ⌘, bei einem Mausklick
+und sobald eine weitere Sondertaste dazukommt. Das Blatt ist nur zum Ansehen: Du kannst nichts
+darin anklicken, und es nimmt dir den Fokus nicht.
+
+Kürzel mit ⌘ und einer Ziffer (⌘1 bis ⌘9) zeigt das Blatt nicht, weil dahinter oft Fensterlisten
+mit Dokumentnamen stehen. In Seam selbst, im Anmeldefenster und im Sicherheitsdialog erscheint
+es nie. Apps, die ihre Kürzel nicht in der Menüleiste führen, zeigen weniger oder nichts.
+
 ## Supertaste
 
 Einstellungen → „Feststelltaste als Supertaste“. Hältst du die Feststelltaste, wirkt jede andere
@@ -295,6 +307,9 @@ Seam liest von anderen Fenstern nur Lage, Größe und Art des Fensters.
 Ausnahme, wenn du Umschalter oder Dock-Vorschau einschaltest: Dann erfasst Seam Bilder und Titel
 der Fenster, nur in dem Moment, in dem du ⌘Tab drückst oder auf das Dock zeigst, und nur im
 Arbeitsspeicher, nie auf der Platte, im Netz oder im Protokoll.
+Mit eingeschaltetem Kürzel-Blatt liest Seam in dem Moment, in dem du ⌘ hältst, die Menüleiste der
+vordersten App: nur Menüpunkte mit Kürzel samt Titel, nur im Arbeitsspeicher, nur solange das Blatt
+sichtbar ist. Von der Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, nie Buchstaben.
 Es beobachtet keine Tastatureingaben: Die Kürzel sind beim System angemeldet, Seam erfährt nur,
 dass eines gedrückt wurde. Einzige Ausnahme ist die Supertaste, und die läuft im getrennten Helfer
 SeamKeys: Er sieht die Tasten, um bei gehaltener Feststelltaste Sondertasten hinzuzufügen, speichert

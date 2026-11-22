@@ -64,6 +64,9 @@ final class Switcher {
         if appOrder.count > 100 { appOrder.removeLast() }
     }
 
+    /// Umschalter ist offen (E24a: dann zeigt das Kürzel-Blatt nichts).
+    var isOpen: Bool { mode != nil }
+
     /// Kürzel gedrückt. true = gehört dem Umschalter.
     func handle(_ key: KeyCombo) -> Bool {
         guard prefs.switcherEnabled, Self.keys.contains(key) else { return false }

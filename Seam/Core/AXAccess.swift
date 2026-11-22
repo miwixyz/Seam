@@ -255,3 +255,117 @@ enum AXAccess {
         return nil
     }
 }
+
+// MARK: - Menüleiste der Vorder-App (E24b) — nur lesend
+
+/// **E24b: eigene, kleine Positivliste für das Kürzel-Blatt.** Fenster bleiben bei `AXAttribute` ohne
+/// Titel (E3). `AXTitle` gibt es nur hier, nur an Menüleisten-Einträgen und an Menüpunkten, die ein
+/// Kürzel haben. `AXAllowlistTests` hält die Liste fest; die Lint-Regel `ax_nur_ueber_allowlist`
+/// verbietet das Lesen außerhalb dieser Datei.
+enum AXMenuAttribute: String, CaseIterable {
+    case menuBar = "AXMenuBar"
+    case children = "AXChildren"
+    case role = "AXRole"
+    case title = "AXTitle"
+    case cmdChar = "AXMenuItemCmdChar"
+    case cmdModifiers = "AXMenuItemCmdModifiers"
+    case cmdVirtualKey = "AXMenuItemCmdVirtualKey"
+}
+
+/// Ergebnis eines Lesevorgangs: nur Speicher, nie auf Platte oder ins Protokoll (E24b/E24e).
+struct MenuRead: Sendable {
+    var sections: [MenuSection]
+    /// Lage des Fokusfensters der App (AX-Koordinaten), um den Bildschirm fürs Blatt zu wählen.
+    var focusFrame: CGRect?
+    /// Zeit- oder Mengengrenze erreicht, es fehlt etwas.
+    var truncated: Bool
+}
+
+extension AXAccess {
+
+    /// Gesamtfrist je Lesevorgang (E24b); Zeitlimit je Aufruf ist `AXWindow.timeout`.
+    static let menuBudget: TimeInterval = 1.5
+    fileprivate static let menuMaxDepth = 4
+    fileprivate static let menuMaxVisited = 3000
+
+    /// Menüs der App mit ihren Punkten mit Kürzel, gefiltert nach E24b. Blockiert bis zur Frist, gehört
+    /// deshalb nie auf den Hauptthread. Der Titel eines Punkts wird nur gelesen, wenn er ein Kürzel hat.
+    static func menuShortcuts(pid: pid_t, budget: TimeInterval = menuBudget) -> MenuRead? {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXWindow.timeout)
+        guard let bar = menuElement(app, .menuBar) else { return nil }
+        var reader = MenuReader(deadline: Date().addingTimeInterval(budget))
+        var sections: [MenuSection] = []
+        var total = 0
+        for (index, top) in menuElements(bar, .children).enumerated() {
+            if reader.expired || total >= MenuShortcuts.maxItems { reader.truncated = true; break }
+            let name = menuString(top, .title) ?? ""
+            if MenuShortcuts.isAppleMenu(index: index, name: name) { continue }
+            var raws: [RawMenuItem] = []
+            reader.collect(top, depth: 0, into: &raws)
+            if let section = MenuShortcuts.section(name: name, items: raws, limit: MenuShortcuts.maxItems - total) {
+                sections.append(section)
+                total += section.items.count
+            }
+        }
+        return MenuRead(sections: sections, focusFrame: focusedWindow(of: pid)?.frame, truncated: reader.truncated)
+    }
+
+    fileprivate static func menuCopy(_ e: AXUIElement, _ a: AXMenuAttribute) -> CFTypeRef? {
+        var v: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(e, a.rawValue as CFString, &v) == .success else { return nil }
+        return v
+    }
+
+    fileprivate static func menuString(_ e: AXUIElement, _ a: AXMenuAttribute) -> String? { menuCopy(e, a) as? String }
+    fileprivate static func menuInt(_ e: AXUIElement, _ a: AXMenuAttribute) -> Int? { (menuCopy(e, a) as? NSNumber)?.intValue }
+    fileprivate static func menuElements(_ e: AXUIElement, _ a: AXMenuAttribute) -> [AXUIElement] {
+        (menuCopy(e, a) as? [AXUIElement]) ?? []
+    }
+
+    fileprivate static func menuElement(_ e: AXUIElement, _ a: AXMenuAttribute) -> AXUIElement? {
+        guard let v = menuCopy(e, a), CFGetTypeID(v) == AXUIElementGetTypeID() else { return nil }
+        return (v as! AXUIElement)                                        // swiftlint:disable:this force_cast
+    }
+}
+
+/// Läuft den Menübaum ab (Tiefe 4, Frist, Höchstzahl) und sammelt nur Punkte mit Kürzel.
+private struct MenuReader {
+    let deadline: Date
+    var truncated = false
+    private var visited = 0
+
+    init(deadline: Date) { self.deadline = deadline }
+
+    var expired: Bool { Date() > deadline }
+
+    mutating func collect(_ element: AXUIElement, depth: Int, into out: inout [RawMenuItem]) {
+        for child in AXAccess.menuElements(element, .children) {
+            if expired || visited >= AXAccess.menuMaxVisited || out.count >= MenuShortcuts.maxItems {
+                truncated = true
+                return
+            }
+            visited += 1
+            switch AXAccess.menuString(child, .role) {
+            case "AXMenu":
+                if depth < AXAccess.menuMaxDepth { collect(child, depth: depth + 1, into: &out) }
+            case "AXMenuItem":
+                let char = AXAccess.menuString(child, .cmdChar)
+                let key = AXAccess.menuInt(child, .cmdVirtualKey)
+                if char?.isEmpty == false || key != nil {
+                    var item = RawMenuItem(title: nil, cmdChar: char,
+                                           modifiers: AXAccess.menuInt(child, .cmdModifiers), virtualKey: key)
+                    // E24b Punkte 1 und 2: Titel erst lesen, wenn ein anzeigbares Kürzel feststeht. ⌘ + Ziffer
+                    // (Fensterlisten) wird gar nicht erst nach dem Titel gefragt.
+                    if MenuShortcuts.keys(for: item) != nil, !MenuShortcuts.isCommandDigit(item) {
+                        item.title = AXAccess.menuString(child, .title)
+                        out.append(item)
+                    }
+                }
+                if depth < AXAccess.menuMaxDepth { collect(child, depth: depth + 1, into: &out) }
+            default:
+                break
+            }
+        }
+    }
+}

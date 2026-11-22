@@ -1142,24 +1142,27 @@ Grenzen: (1) Nutzer → Seam · (2) Seam ↔ fremde App (Menütexte sind **nicht
   `.keyCode`, `.keyDown`, `.keyUp`. Bekannte Unschärfe: Seam sieht keine Buchstaben und kann ein
   langsames „⌘ halten, dann C“ nicht von bloßem Halten unterscheiden; das Blatt kann dann kurz
   erscheinen und ist beim Loslassen weg. Kein Schaden, weil es nichts bedient (E24c).
-- **E24b – Menü lesen: Positivliste erweitern, nichts speichern.** *Entschieden:* `AXAttribute` in
-  `AXAccess.swift` bekommt `menuBar` (`AXMenuBar`), `title` (`AXTitle`), `enabled` (`AXEnabled`),
-  `menuItemCmdChar`, `menuItemCmdModifiers`, `menuItemCmdVirtualKey`, `menuItemCmdGlyph`; `children` und
-  `role` gibt es schon. Lesen läuft nur über eine neue Funktion in `AXAccess.swift` (`menuShortcuts(of:)`),
+- **E24b – Menü lesen: Positivliste erweitern, nichts speichern.** *Entschieden:* `AXAccess.swift`
+  bekommt eine **eigene** Positivliste `AXMenuAttribute` (`AXMenuBar`, `AXChildren`, `AXRole`, `AXTitle`,
+  `AXMenuItemCmdChar`, `AXMenuItemCmdModifiers`, `AXMenuItemCmdVirtualKey`); `AXAttribute` für Fenster
+  bleibt unverändert und ohne Titel. `AXEnabled` und `AXMenuItemCmdGlyph` entfallen (nicht nötig, weniger
+  Fläche). Lesen läuft nur über eine neue Funktion in `AXAccess.swift` (`menuShortcuts(of:)`),
   die Lint-Regel `ax_nur_ueber_allowlist` bleibt scharf. **Das öffnet E3 für `AXTitle` an Menüpunkten
   und Menüleisten-Einträgen, nie an Fenstern** (Fenstertitel bleiben verworfen, Regel „Keine
   Fenstertitel aus der Fensterliste“ unverändert). Weil Menütitel Dokumentnamen enthalten können
   („Zuletzt benutzt“, Fensterliste, Verlauf), gilt ein **Filter vor der Anzeige**:
-  1. nur Punkte **mit Kürzel** (Zeichen, Sondertaste oder Symbol) kommen durch, alle anderen werden
-     verworfen, bevor ein Titel weitergereicht wird;
-  2. Punkte mit **⌘ + Ziffer** (Terminal- und Browser-Fensterlisten) werden verworfen;
+  1. nur Punkte **mit anzeigbarem Kürzel** (Zeichen oder bekannte Sondertaste) kommen durch; der Titel
+     wird **erst danach** gelesen (Code: `MenuReader.collect`), alle anderen Titel bleiben ungelesen;
+  2. Punkte mit **⌘ + Ziffer** (Terminal- und Browser-Fensterlisten) werden verworfen, **ohne dass ihr
+     Titel überhaupt gelesen wird**;
   3. das **erste Menüleisten-Element** (Apple-Menü) wird übersprungen — gemessen 22.11. in 11 von 11
      laufenden Apps: erstes Element, Titel „Apple“, 21 Punkte. Zusätzlich verlangt der Code, dass der
      Titel „Apple“ ist, sonst wird nichts übersprungen (Schutz gegen eine App mit anderer Menüleiste);
-  4. Titel werden auf 80 Zeichen gekürzt, Steuerzeichen entfernt, höchstens 400 Punkte, Tiefe 4.
+  4. Titel werden auf 80 Zeichen gekürzt, Steuer- und unsichtbare Formatzeichen (Textrichtung, Nullbreite) entfernt, höchstens 400 Punkte, Tiefe 4.
   Lesen läuft auf einer Hintergrund-Queue (nie auf dem Hauptthread), Zeitlimit je Aufruf 0,25 s
-  (`AXWindow.timeout`), Gesamtfrist 1,5 s, nur ein Lesevorgang gleichzeitig. **Beginnt beim ⌘-Druck**,
-  nicht beim App-Wechsel, und liegt nur so lange im Speicher, wie das Blatt sichtbar ist.
+  (`AXWindow.timeout`), Gesamtfrist 1,5 s, nur ein Lesevorgang gleichzeitig. **Beginnt 0,2 s nach dem
+  ⌘-Druck, spätestens 0,4 s vor Ablauf der Haltezeit** (nicht schon beim Druck: sonst löste jedes kurze
+  ⌘C einen Lesevorgang aus; nicht beim App-Wechsel), und liegt nur so lange im Speicher, wie das Blatt sichtbar ist.
   *Verworfen:* Zwischenspeicher je App und Beobachtung des App-Wechsels (mehr Zustand, kein Gewinn
   bei 0,6 s Haltezeit gegen 122–485 ms Lesezeit). *Verworfen:* Menüpunkte auslösen (`AXPress`):
   Die Positivliste der Aktionen (E12) bleibt bei `AXRaise`.
@@ -1195,7 +1198,9 @@ Grenzen: (1) Nutzer → Seam · (2) Seam ↔ fremde App (Menütexte sind **nicht
   **keine neue Macht**: nur Leselisten erweitert, keine Aktionen, keine Eingaben (Regeln E5/E12).
 - **Grenze (3) Seam → Bildschirm.** **I** – Blatt in Bildschirmaufnahme oder Teilen des Bildschirms
   sichtbar: gewollt, es ist Anzeige für Michael; Restrisiko angenommen. **D** – Blatt bleibt hängen:
-  Lösen bei Loslassen, Mausklick, Fokuswechsel und nach 30 s ohne Flags-Ereignis.
+  Lösen bei Loslassen, Mausklick und Umschalter; geht ein Loslassen verloren, fragt das Blatt alle 250 ms
+  `NSEvent.modifierFlags` ab (nur solange es sichtbar ist) und schließt spätestens nach 30 s. Vor dem
+  Zeigen gilt: vorn ist noch dieselbe App wie beim Lesen, und es läuft nie mehr als ein Lesevorgang.
 
 **Negativraum:** (1) Menüs sind ehrlich und vollständig — falsch für Apps mit eigenem Menü außerhalb
 der Menüleiste; gemessen nur für 10 Apps, vor dem Release für Safari, Notizen, Mail, VS Code nachholen.

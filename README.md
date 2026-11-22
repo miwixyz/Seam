@@ -65,6 +65,10 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   Schaltet dafür den Umschalter von macOS ab, solange er an ist, und beim Beenden wieder ein.
 - **Dock-Vorschau** (ab Werk aus): Fenster einer App beim Zeigen auf ihr Dock-Symbol, Klick holt
   das Fenster nach vorn. Vorschaugröße und Verzögerung einstellbar (0 bis 2 s, ab Werk 0,5 s).
+- **Kürzel-Blatt** (ab Werk aus): ⌘ allein halten (Standard 0,6 s) zeigt die Kürzel der vordersten App,
+  nach Menüs geordnet, nur zum Ansehen. Liest die Menüleiste (nur Punkte mit Kürzel, nur im Speicher)
+  und von der Tastatur nur „⌘ allein gehalten“ (`flagsChanged`, eine einzige Datei, per Lint-Regel
+  erzwungen, E24). Braucht keine Eingabeüberwachung.
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
@@ -105,6 +109,8 @@ nur Seam antwortet; Freigabe einmal unter Anmeldeobjekte (E23).
 **Bildschirmaufnahme** nur, wenn du Fensterumschalter oder Dock-Vorschau einschaltest: Dann erfasst
 Seam Bilder und Titel der Fenster nur auf ⌘Tab bzw. beim Zeigen aufs Dock, nur im Arbeitsspeicher,
 nie im Protokoll (E21). Sonst liest es von fremden Fenstern Lage, Größe und Art, nie Titel oder Inhalte.
+Das Kürzel-Blatt (E24, wenn eingeschaltet) liest die Menüleiste der vordersten App: Titel nur von
+Menüpunkten mit Kürzel, nur im Arbeitsspeicher, nur solange das Blatt sichtbar ist.
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
 ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie abgedunkelt werden,
 vergleicht es die App-Kennung (Bundle-ID) der Fenster mit dieser Liste. Gespeichert werden nur deine

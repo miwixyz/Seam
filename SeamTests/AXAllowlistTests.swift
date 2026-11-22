@@ -22,6 +22,15 @@ final class AXAllowlistTests: XCTestCase {
         XCTAssertEqual(Set(AXActionName.allCases.map(\.rawValue)), ["AXRaise"])
     }
 
+    /// E24b: eigene Liste für die Menüleiste. `AXTitle` nur hier, nie in `AXAttribute` (Fenster).
+    /// Wer hier ergänzt, ändert E24b im Sicherheitsentwurf mit.
+    func testMenuAllowlistIsExactlyTheDesignedSet() {
+        XCTAssertEqual(Set(AXMenuAttribute.allCases.map(\.rawValue)), [
+            "AXMenuBar", "AXChildren", "AXRole", "AXTitle",
+            "AXMenuItemCmdChar", "AXMenuItemCmdModifiers", "AXMenuItemCmdVirtualKey",
+        ])
+    }
+
     func testNoContentOrTitleAttributes() {
         // AXURL ist seit E21e erlaubt, aber nur am Dock (Lint-Regel), daher nicht mehr in dieser Liste.
         let forbidden = ["AXTitle", "AXValue", "AXDescription", "AXSelectedText", "AXDocument"]
