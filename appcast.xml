@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.4.0</title>
+            <pubDate>Mon, 23 Nov 2026 12:39:04 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>117</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck: Layout.</b> Die Aktion „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt es wieder her. Beides löst erst aus, wenn du die Taste mindestens 0,8 Sekunden hältst, und höchstens einmal alle 3 Sekunden. „Aufräumen“ bewegt wie bisher für einige Sekunden Maus und Tastatur und bricht ab, sobald du eingreifst; alle bisherigen Sperren gelten (gesperrter Bildschirm, Vollbild, fehlende Kurzbefehle für Spaces). Die Taste zeigt die Zahl der gespeicherten Apps, „läuft …“ oder den Grund, warum nichts passierte.</li><li><b>Stream Deck: Hintergrund.</b> Regler oder Taste „Hintergrund“ wechseln zum nächsten oder vorigen Bild eines Ordners, den du in den Einstellungen unter „Stream Deck“ wählst (ohne Wahl: die Online-Auswahl). Es werden nur Dateien direkt in diesem Ordner genommen (Bilder und Videos, höchstens 200), nichts wird aus dem Netz geladen, und der Ordner lässt sich nur dort, nie vom Gerät aus, ändern. Höchstens ein Wechsel alle 1,5 Sekunden. Die Leiste zeigt „3/12“.</li><li><b>Stream Deck: Vorschau auf der Leiste</b> (ab Werk aus, eigener Schalter). Seam schickt ein kleines Bild (200 × 100) des gerade geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist. Für Videos gibt es keine Vorschau.</li><li>Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo (Layout, Bild ←/→, Teilen, Hälften, Regler).</li></ul><h3>Geändert</h3><ul><li>Plugin und Seam müssen zusammen aktualisiert werden (Einstellungen → „Stream Deck“ → „Plugin installieren …“).</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.4.0/Seam-1.4.0.zip" length="5039973" type="application/octet-stream" sparkle:edSignature="QTAPhJb+eAu1zSLCdMc8QvmxjKjEv7eawGY8IAGWTG6sBNGXmLPK/5fGjbXfnNyoG5jAxESnDjtHEhhdUvL5Aw=="/>
+        </item>
+        <item>
             <title>1.3.0</title>
             <pubDate>Mon, 23 Nov 2026 11:50:32 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Kürzel-Blatt</b> (ab Werk aus, Einstellungen → „Kürzel-Blatt“): Hältst du ⌘ allein gedrückt (Standard 0,6 s, wählbar bis 1,5 s), zeigt Seam die Kürzel der vordersten App, nach Menüs geordnet. Das Blatt ist nur zum Ansehen: kein Klick, kein Fokus. Seam liest dafür die Menüleiste der App, nur Menüpunkte mit Kürzel, nur im Arbeitsspeicher und nur, solange das Blatt sichtbar ist. Von der Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, nie Buchstaben. Kürzel mit ⌘ und einer Ziffer lässt das Blatt weg (das sind meist Fensterlisten mit Dokumentnamen).</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.2.0/Seam-1.2.0.zip" length="4114898" type="application/octet-stream" sparkle:edSignature="XljE4jZC5wubWTC5y9gEHmcAi2l2X5gmM4G3ao/dR3ih+v8Hb/SwUByCAGt9XasvLv4hvutDehoXL++Bo9VQAw=="/>
         </item>
-        <item>
-            <title>1.1.1</title>
-            <pubDate>Sat, 21 Nov 2026 21:57:19 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>105</sparkle:version>
-            <sparkle:shortVersionString>1.1.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Seam stürzte ab, wenn der Wach-Helfer nicht antwortete</b> (Tassen-Knopf nach dem Update auf 1.1.0). Seam zeigt jetzt einen Hinweis.</li><li><b>Nach einem Update lief der alte Wach-Helfer weiter,</b> und Seam lehnte ihn ab. Der Helfer beendet sich jetzt selbst, sobald der Knopf aus ist, und startet beim nächsten Einschalten aus der neuen Version. Steht „Alter Wach-Helfer: Mac neu starten“ im Fenster, läuft noch der Helfer aus 1.1.0: einmal den Mac neu starten.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.1/Seam-1.1.1.zip" length="4083810" type="application/octet-stream" sparkle:edSignature="O0QP2hfvUU+5NRCFr5LbCxW0q6FBQzymAQCue31ogDKJGQz1yVxmygQsfgdXzkpkvT8XH+UByoFFZeQ70HoECQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: JqxTOhEMAFeWiNgotDAcdxjcrSx6WFNxJ8o6GnFeR1uJI+Fi+1GnabkWKXVLnKppY88PRxxVI/E1Yg8MGbc9BA==
-length: 4920
+edSignature: HQIs+7ZqBwO5kn4p58ErMU0lV2osmTJHza5tWjSj0zWsgiFpBEqslLpu/2nzFMpJKMoCYa2V0Z2yQ5V6eOxbCA==
+length: 6041
 -->
