@@ -24,6 +24,9 @@ ditto build-dev/Build/Products/Release/Seam.app "$STAGE/Seam.app"
 # Build-Nummer wie release.sh (Anzahl Commits). Sonst trägt die lokale Fassung Build 1 und
 # Sparkle bietet das letzte Release als „Update“ an — das wäre ein Rückschritt (09.10.).
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" "$STAGE/Seam.app/Contents/Info.plist"
+# E20: Stream-Deck-Plugin, eigene Kennung wie in dev-signed.sh und der Prüfung in release.sh.
+DECK="$STAGE/Seam.app/Contents/Resources/dev.mwlr.seam.deck.sdPlugin/seamdeck"
+[ -f "$DECK" ] && codesign --force --options runtime --timestamp -i dev.mwlr.seam.deck --sign "$IDENTITY" "$DECK"
 # Von innen nach außen, ohne --deep (Sparkle rät davon ab; Rafter-Fund F3): Sparkles
 # Hilfsprogramme behalten ihre eigenen Berechtigungen, nur die App bekommt Seams.
 SPK="$STAGE/Seam.app/Contents/Frameworks/Sparkle.framework/Versions/B"

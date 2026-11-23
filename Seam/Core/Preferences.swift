@@ -48,6 +48,7 @@ final class Preferences {
         static let hyperKeyTap = "hyperKeyTap"
         static let commandSheetEnabled = "commandSheetEnabled"
         static let commandSheetDelay = "commandSheetDelay"
+        static let deckEnabled = "deckEnabled"
     }
 
     private let defaults: UserDefaults
@@ -137,6 +138,8 @@ final class Preferences {
     var hyperKeyModifiers = 15 { didSet { defaults.set(hyperKeyModifiers, forKey: Key.hyperKeyModifiers) } }
     /// Kurzer Druck ohne andere Taste: `none` oder `escape`.
     var hyperKeyTap = "none" { didSet { defaults.set(hyperKeyTap, forKey: Key.hyperKeyTap) } }
+    /// Stream Deck (E20): Socket für das eigene Plugin. Ab Werk aus.
+    var deckEnabled = false { didSet { defaults.set(deckEnabled, forKey: Key.deckEnabled) } }
     /// Kürzel-Blatt (E24): ⌘ allein gehalten zeigt die Kürzel der vordersten App. Ab Werk aus (Michael, 22.11.).
     var commandSheetEnabled = false { didSet { defaults.set(commandSheetEnabled, forKey: Key.commandSheetEnabled) } }
     /// Haltezeit in ms, bis das Blatt erscheint (E24a). Ab Werk 600.
@@ -398,6 +401,7 @@ final class Preferences {
     /// Kürzel-Blatt: nur gültige Werte (STRIDE T), ungültige Haltezeit fällt auf den Standard.
     private func loadCommandSheet() {
         commandSheetEnabled = defaults.object(forKey: Key.commandSheetEnabled) as? Bool ?? false
+        deckEnabled = defaults.object(forKey: Key.deckEnabled) as? Bool ?? false
         let d = defaults.object(forKey: Key.commandSheetDelay) as? Int ?? Self.defaultCommandSheetDelay
         commandSheetDelay = Self.commandSheetDelayChoices.contains(d) ? d : Self.defaultCommandSheetDelay
     }

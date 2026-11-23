@@ -103,6 +103,8 @@ vertrauenswürdig**) · (6) Seam ↔ Netz.
 - **Warum:** Jede dieser Schnittstellen würde anderen Programmen erlauben, die Bedienungshilfen-
   Freigabe von Seam zu benutzen (Confused Deputy). Kommt später eine dazu, braucht sie einen eigenen
   Durchgang durch dieses Dokument.
+- **Gelockert durch E20 für genau einen Absender:** das eigene Stream-Deck-Plugin, beidseitig
+  signaturgeprüft, mit fester Befehlsliste, ab Werk aus. Alles andere bleibt ausgeschlossen.
 
 ### E8 – Seam selbst gegen Übernahme härten
 - **Entschieden:** Hardened Runtime **ohne** Ausnahmen (keine `disable-library-validation`, keine
@@ -888,6 +890,65 @@ rafter-secure-design `ingestion.md` (Fetcher, Größen, Parser, Ablage).
 nicht, macOS-Netzwerkdiagnosen des Nutzers könnten sie aber zeigen. Ein manipulierter Server auf der Liste könnte eine bösartige
 Datei liefern → trifft die System-Decoder wie E18. Der Schlüssel ist für jeden Prozess desselben
 Nutzers lesbar, der im Schlüsselbund-Dialog zugelassen wird.
+
+### E20 – Stream Deck: Naht und Fensterplätze per Regler und Taste (Durchgang 2026-11-17, VOR dem Code; gebaut 2026-11-23)
+*(Nummer E20 war frei geblieben; die Spec nennt die Stufe „0.12.0“, die Auslieferung folgt mit der nächsten Seam-Version.)*
+
+**Was neu ist, und warum Seam der kritischste Fall der Plugin-Familie ist.** E7 schließt eine Fernsteuerung
+aus. Das ist der Durchgang, den E7 für später verlangt. Seam hat als einzige App der Familie die
+Bedienungshilfen-Freigabe: Wer Seam steuert, steuert **fremde Fenster** (Lage, Größe, Fokus, Space).
+In dieser Stufe erreicht das Deck nur `place` und `seam` (nur AX-Setzen, E3 bis E6). Kein Befehl liest etwas, der
+Rückkanal trägt nur Aufzählungswerte und Zahlen, kein Netz, keine Datei außer dem eigenen Socket-Ordner. Die
+schwerere Aktion `deskTidy` (künstliche Eingaben, E17a) und der Bildwechsel sind **nicht** Teil dieser Stufe und
+bekommen vor dem Bau einen eigenen Nachtrag zu E20.
+
+- **E20a – Weg.** Eigenes natives Swift-Plugin `SeamDeck` (kein Node), Kennung `dev.mwlr.seam.deck`, Developer ID
+  Team `LTKJ6Z2VYB`, Hardened Runtime, **ohne Berechtigungen**, in `Seam.app/Contents/Resources/dev.mwlr.seam.deck.sdPlugin/`.
+  Kette: Stream Deck ⇄ WebSocket 127.0.0.1 ⇄ SeamDeck ⇄ Unix-Socket `deck.sock` ⇄ Seam. Seam ist nicht sandboxed
+  (`Seam.entitlements` leer), der Server braucht keine Ausnahme von der Hardened Runtime.
+- **E20b – Prüfung vor dem ersten Byte.** Peer per Audit-Token gegen `identifier "dev.mwlr.seam.deck"` + Developer ID +
+  Team; **zusätzlich der Elternprozess** des Peers gegen Elgatos Stream Deck (`com.elgato.StreamDeck`, `Y93VXCB8Q5`).
+  Ohne die Eltern-Prüfung könnte jedes Programm das echte, signierte Plugin selbst starten und steuern.
+  **Gemessen 23.11. (Mac mini, Stream Deck 7.6.1, Probe-Server mit Seams Signaturlage):** von Stream Deck gestartet
+  → angenommen (Peer `0`, Eltern `0`); dasselbe signierte Plugin aus der Shell → Eltern `zsh`, abgelehnt; Python
+  ohne Signatur → abgelehnt; früh geschlossene Verbindung (Peer `-67065`) → abgelehnt, Server läuft weiter.
+  Das Plugin prüft umgekehrt Seams Developer-ID-Signatur und wartet auf `{"v":1,"ok":true}`, bevor es sendet.
+  Restrisiko: PID-Wiederverwendung des Elternprozesses, setzt Codeausführung als Nutzer voraus.
+- **E20c – Feste Befehle.** `{"v":1,"hello":"<Version>"}`, `{"cmd":"seam","dir":±1}`, `{"cmd":"place","what":<Aufzählung>}`.
+  Streng: `v` ist die Zahl 1, genau die erlaubten Schlüssel, unbekanntes Feld oder Wert → ungültig, Verbindung zu.
+  `what` bildet über eine Positivliste (`DeckLink.command(for:)`) auf `Command` ab; ein neues Seam-Kommando erscheint
+  nie von selbst am Deck (Test `testDeckReachesNothingBeyondTheFixedList`). **Keine** Felder für Fenster, App, Pfad,
+  Koordinaten, Prozentwert, Text. Die Naht-Stufe ist immer „eine weiter/zurück“, Seam rechnet.
+- **E20d – Socket.** `~/Library/Application Support/Seam/Deck/` mit `0700`, `deck.sock` mit `0600` (gemessen 23.11.);
+  Pfad 59 Zeichen bei Benutzername `mwlr`, Grenze 103, also Benutzernamen bis 48 Zeichen. Eine Verbindung, eine neue
+  geprüfte ersetzt die alte. Alte Socket-Datei wird nur gelöscht, wenn sie ein Socket und unser ist; ein Link oder eine
+  fremde Datei lässt den Start scheitern. Aus = Socket zu und Datei gelöscht.
+- **E20e – Grenzen.** Rahmen ≤ 512 Byte (Länge 0 oder größer → Verbindung zu), ≤ 20 Befehle/s (der Rest fällt weg,
+  Zähler im Protokoll), `place`/`seam` laufen über die vorhandene Schreibwarteschlange (E6) und `planned`.
+- **E20f – Einstellung „Stream Deck erlauben“ ab Werk aus.** Sie erweitert keine Freigabe: ohne Bedienungshilfen
+  antwortet Seam `needsPermission` und tut nichts. Sie hängt nicht am Schalter „Kürzel“. „Plugin installieren …“ übergibt
+  ein im Prozess gepacktes Paket an Stream Deck (das fragt selbst nach), nur wenn das Programm im Bundle die
+  Developer-ID-Anforderung erfüllt; Seam schreibt nie in Elgatos Ordner.
+- **E20g – Zielwahl und Geste.** Der Deck-Weg nutzt `Engine.perform(_ cmd:)` (Befehl statt Kürzel, wie das Popover): vordere
+  fremde App, sonst die zuletzt vordere; E15 gilt (Aktivieren nur, wenn nötig). Ein Tastendruck ist eine Geste des
+  Nutzers (E5); das Plugin sendet nie von selbst (keine Zeitsteuerung, kein Wiederholen, kein „beim Start“).
+  Gemessen 17.11. (Gnotchi-Probe, ca. 100 Drücke): ein Druck am Deck ändert die vorderste App nicht.
+- **E20h – Rückkanal ohne Inhalte.** Nur `{"seam":{"state":ok|noPair|noWindow|needsPermission|atEnd,"stop":8|9|12|15|16}}`.
+  Nie Fenster-, App-, Datei-, Bildschirm- oder Space-Namen; Fehlertexte bleiben in Seam. Das Plugin schreibt nie auf
+  stdout/stderr (Stream Deck führt je Plugin ein Protokoll), nur feste `os_log`-Texte.
+- **E20i – Protokoll (E11).** Verbindung auf/zu, abgelehnte Peers mit OSStatus, verworfene Rahmen/Befehle als Zähler.
+  Nie Inhalte. Die Plugin-Version wird beim `hello` verglichen; ein älteres Plugin ist kein Sicherheitsproblem, nur
+  ein Hinweis in den Einstellungen.
+- **E20j – Tests und Gegenproben.** `DeckWireTests` (Positivliste, Ablehnung, Rahmen, Rückkanal), `DeckServerTests` mit
+  echten Sockets in einem Wegwerf-Ordner: Rechte, Link/fremde Datei, falscher Peer, **gültiger Peer mit falschem Elternprozess**
+  (zeigt, dass die Eltern-Prüfung allein ablehnt), Befehlsflut (30 gesendet, 5 durchgelassen bei Grenze 5), zu großer
+  Rahmen, ungültiger Befehl. Release-Gate prüft das Plugin am ZIP (Kennung, Team, Hardened Runtime, keine Berechtigungen,
+  Manifest-Version = App-Version + „.0“).
+
+**Restrisiken (akzeptiert):** Wer schon Code als Nutzer ausführt, kann über den Deck-Weg Fenster verschieben; neu ist nur,
+dass er dafür kein eigenes AX-Recht braucht, beschränkt auf die feste Liste und ohne Lesezugriff. Elgatos Stream-Deck-App
+ist Teil der Vertrauenskette. **Offen:** `deskSave`/`deskTidy`/Bildwechsel (je eigener Nachtrag), Bildvorschau auf der Leiste
+(sendet Bilddaten an Elgatos Prozess, Entscheidung 17.11. ja, mit eigenem Schalter, Standard aus).
 
 ### E21 – Umschalter, Dock-Vorschau, feste Space-Reihenfolge (0.12, Durchgang 2026-11-18, VOR dem Code)
 

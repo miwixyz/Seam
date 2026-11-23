@@ -11,6 +11,7 @@ struct SettingsView: View {
     /// (C3): vorher wurde ein Fehler verworfen und „Freigabe nötig“ als „aus“ gezeigt.
     @State private var login = LoginItem.state
     @State private var loginError: String?
+    @State private var deckInstallNote: String?
     @State private var router = LinkRouter.shared
     @State private var linkError: String?
     @State private var hyperStatus = KeyHelper.status
@@ -242,6 +243,7 @@ struct SettingsView: View {
             }
             hyperKeyCard
             commandSheetCard
+            deckCard
             card("Vorschaubilder") {
                 row("Vorschaugröße") {
                     Picker("Vorschaugröße", selection: $prefs.previewSize) {
@@ -487,6 +489,40 @@ extension SettingsView {
                  symbol: "info.circle", color: FamilyTheme.textSecondary)
             if prefs.commandSheetEnabled, !engine.isTrusted {
                 note("Ohne Freigabe „Bedienungshilfen“ zeigt Seam kein Blatt",
+                     symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+            }
+        }
+    }
+
+    // MARK: - Stream Deck (E20)
+
+    private var deckCard: some View {
+        @Bindable var prefs = prefs
+        return card("Stream Deck") {
+            toggleRow("Stream Deck erlauben", isOn: $prefs.deckEnabled)
+                .onChange(of: prefs.deckEnabled) { engine.applyDeckSetting() }
+            note("Öffnet einen geschützten Socket nur für das Seam-Plugin. Es kennt feste Befehle: Naht ±, Fenster platzieren, "
+                 + "Teilen. Es liest nichts von dir und braucht kein Netz",
+                 symbol: "info.circle", color: FamilyTheme.textSecondary)
+            divider
+            Button("Plugin installieren …") {
+                switch DeckLink.installPlugin() {
+                case .success: deckInstallNote = "Stream Deck fragt jetzt nach der Installation."
+                case .failure: deckInstallNote = "Das Plugin konnte nicht übergeben werden."
+                }
+            }
+            .buttonStyle(CardButtonStyle())
+            .padding(.vertical, FamilyTheme.Space.s)
+            .disabled(!prefs.deckEnabled)
+            if let deckInstallNote {
+                note(deckInstallNote, symbol: "info.circle", color: FamilyTheme.textSecondary)
+            }
+            if prefs.deckEnabled, engine.deckFailed {
+                note("Der Socket für das Plugin ließ sich nicht öffnen. Schalter aus und wieder an, sonst Neustart von Seam",
+                     symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+            }
+            if prefs.deckEnabled, !engine.isTrusted {
+                note("Ohne Freigabe „Bedienungshilfen“ passiert am Gerät nichts",
                      symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
             }
         }

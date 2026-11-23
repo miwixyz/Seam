@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<!-- Einstellungen einer Seam-Aktion in Stream Deck (E20). Rein lokal: keine Netzzugriffe, keine fremden Skripte.
+     Speichert nur die feste Auswahl über Stream Decks eigenes setSettings. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src ws://127.0.0.1:*">
+<style>
+  body { margin: 0; padding: 8px 12px; background: #2d2d2d; color: #d8d8d8; font: 12px -apple-system, sans-serif; }
+  .row { display: flex; align-items: center; margin: 6px 0; }
+  label { width: 90px; flex: none; color: #9a9a9a; }
+  select { flex: 1; background: #3d3d3d; color: #e6e6e6; border: 1px solid #555; border-radius: 4px; padding: 3px 4px; font: inherit; }
+  p { color: #8c8c8c; margin: 10px 0 0; line-height: 1.4; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="row hidden" id="whatRow"><label for="what">Fläche</label>
+    <select id="what">
+      <option value="split">Zwei Fenster teilen</option>
+      <option value="left">Linke Hälfte</option>
+      <option value="right">Rechte Hälfte</option>
+      <option value="up">Obere Hälfte</option>
+      <option value="down">Untere Hälfte</option>
+      <option value="topLeft">Oben links</option>
+      <option value="topRight">Oben rechts</option>
+      <option value="bottomLeft">Unten links</option>
+      <option value="bottomRight">Unten rechts</option>
+      <option value="firstThird">Erstes Drittel</option>
+      <option value="centerThird">Mittleres Drittel</option>
+      <option value="lastThird">Letztes Drittel</option>
+      <option value="firstTwoThirds">Erste zwei Drittel</option>
+      <option value="centerTwoThirds">Mittlere zwei Drittel</option>
+      <option value="lastTwoThirds">Letzte zwei Drittel</option>
+      <option value="maximize">Maximieren</option>
+      <option value="center">Zentrieren</option>
+      <option value="restore">Ursprüngliche Größe</option>
+      <option value="nextDisplay">Nächster Bildschirm</option>
+      <option value="previousDisplay">Vorheriger Bildschirm</option>
+    </select>
+  </div>
+  <div class="row hidden" id="ringRow"><label for="ring">Ring</label>
+    <select id="ring">
+      <option value="halves">Hälften, Maximieren, Teilen</option>
+      <option value="thirds">Drittel und Zweidrittel</option>
+      <option value="quarters">Viertel (Ecken)</option>
+    </select>
+  </div>
+  <div class="row hidden" id="dirRow"><label for="dir">Richtung</label>
+    <select id="dir">
+      <option value="1">Naht nach rechts / unten (+)</option>
+      <option value="-1">Naht nach links / oben (−)</option>
+    </select>
+  </div>
+  <p id="hint"></p>
+<script>
+  let socket = null, uuid = null;
+  const allowedWhat = Array.from(document.querySelectorAll('#what option')).map(o => o.value);
+  const allowedDir = ['1', '-1'];
+  const allowedRing = ['halves', 'thirds', 'quarters'];
+
+  function save() {
+    const settings = { what: document.getElementById('what').value, dir: document.getElementById('dir').value,
+                       ring: document.getElementById('ring').value };
+    if (socket && socket.readyState === 1) {
+      socket.send(JSON.stringify({ event: 'setSettings', context: uuid, payload: settings }));
+    }
+  }
+
+  // Von Stream Deck aufgerufen.
+  window.connectElgatoStreamDeckSocket = function (port, inUUID, registerEvent, info, actionInfo) {
+    uuid = inUUID;
+    let action = {};
+    try { action = JSON.parse(actionInfo); } catch (e) { action = {}; }
+    const s = (action.payload && action.payload.settings) || {};
+    document.getElementById('what').value = allowedWhat.includes(s.what) ? s.what : 'left';
+    document.getElementById('ring').value = allowedRing.includes(s.ring) ? s.ring : 'halves';
+    document.getElementById('dir').value = allowedDir.includes(String(s.dir)) ? String(s.dir) : '1';
+    const hint = document.getElementById('hint');
+    if (action.action === 'dev.mwlr.seam.deck.place') {
+      const onDial = action.payload && action.payload.controller === 'Encoder';
+      document.getElementById(onDial ? 'ringRow' : 'whatRow').classList.remove('hidden');
+      hint.textContent = onDial
+        ? 'Drehen wählt die Fläche, Drücken wendet sie auf das Fenster der vordersten App an. Seam muss laufen und „Bedienungshilfen“ haben.'
+        : 'Wirkt auf das Fenster der vordersten App. Seam muss laufen und „Bedienungshilfen“ haben.';
+    }
+    if (action.action === 'dev.mwlr.seam.deck.seam') {
+      // Am Drehregler dreht der Regler, drücken teilt. Auf einer Taste gilt die Richtung.
+      if (action.payload && action.payload.controller === 'Keypad') document.getElementById('dirRow').classList.remove('hidden');
+      hint.textContent = 'Braucht zwei bündige Fenster oder ein zuletzt geteiltes Paar („Teilen“).';
+    }
+    socket = new WebSocket('ws://127.0.0.1:' + Number(port));
+    socket.onopen = function () { socket.send(JSON.stringify({ event: registerEvent, uuid: uuid })); };
+    document.getElementById('what').onchange = save;
+    document.getElementById('dir').onchange = save;
+    document.getElementById('ring').onchange = save;
+  };
+</script>
+</body>
+</html>

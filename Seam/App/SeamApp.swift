@@ -264,6 +264,7 @@ final class Engine {
         KeyHelper.apply(enabled: prefs.hyperKeyEnabled)
         // E18: braucht keine Freigabe, startet also vor der Prüfung.
         wallpaper.apply()
+        deck.apply()
         if AXAccess.isTrusted {
             startEngines()
         } else {
@@ -359,6 +360,9 @@ final class Engine {
         })
     }
 
+    /// Ausgang von `perform` (Popover, Stream Deck).
+    enum PerformResult: Equatable, Sendable { case done, notRunning, noWindow }
+
     /// Befehl aus dem Popover. Gemessen 09.10.: Solange das Popover offen ist, bleibt laut
     /// `NSWorkspace` die App davor vorn, für die Bedienungshilfen hat aber das Popover den
     /// Fokus — die systemweite Fokus-Abfrage fand deshalb „kein verwaltbares Fenster“. Darum
@@ -367,20 +371,30 @@ final class Engine {
     ///
     /// Übergeben wird der Befehl, nicht das Kürzel (Code-Audit 09.10., C1). Seam aktiviert die
     /// Ziel-App nur, wenn sie nicht ohnehin vorn ist (SECURE-DESIGN E15).
-    func perform(_ cmd: Command) {
+    @discardableResult
+    func perform(_ cmd: Command) -> PerformResult {
         guard running else {
             Self.log.notice("\(cmd.rawValue, privacy: .public): Seam läuft nicht (Freigabe fehlt)")
-            return
+            return .notRunning
         }
         guard let pid = targetPID, let w = AXAccess.focusedWindow(of: pid), w.isManageable else {
             Self.log.notice("\(cmd.rawValue, privacy: .public): kein verwaltbares Fenster bei der Ziel-App")
-            return
+            return .noWindow
         }
         if NSWorkspace.shared.frontmostApplication?.processIdentifier != pid {
             NSRunningApplication(processIdentifier: pid)?.activate()
         }
         actions.perform(cmd, on: w)
+        return .done
     }
+
+    // MARK: Stream Deck (E20)
+    @ObservationIgnored private lazy var deck = DeckLink(prefs: prefs) { [weak self] cmd in
+        guard let self else { return (.notRunning, nil) }
+        return (perform(cmd), actions.seamOutcome)
+    }
+    func applyDeckSetting() { deck.apply() }   // Schalter angewendet: Socket auf/zu, ab Werk aus
+    var deckFailed: Bool { deck.failed }
 
     /// Vordere fremde App, sonst die zuletzt vordere.
     private var targetPID: pid_t? {

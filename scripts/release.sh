@@ -221,7 +221,25 @@ echo "${WAKE_INFO}" | grep -q "flags=.*runtime" || fail "SeamWake ohne Hardened 
 WAKE_XML="$(codesign -d --entitlements - --xml "${WAKE}" 2>/dev/null)" || fail "Berechtigungen von SeamWake nicht lesbar (codesign)"
 WAKE_ENTS="$(printf '%s' "${WAKE_XML}" | grep -o '<key>[^<]*</key>' || true)"
 [ -z "${WAKE_ENTS}" ] || fail "Unerwartete Berechtigungen in SeamWake: ${WAKE_ENTS} (SECURE-DESIGN E23)"
-echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App, SeamKeys, SeamWake)"
+# E20: Stream-Deck-Plugin – da, ausführbar, Kennung dev.mwlr.seam.deck, gültig mit Developer ID, ohne Berechtigungen (Seam prüft es am
+# Socket; „Plugin installieren“ übergibt nur ein signaturgeprüftes Programm).
+DECK_DIR="${APP_PATH}/Contents/Resources/dev.mwlr.seam.deck.sdPlugin"
+[ -x "${DECK_DIR}/seamdeck" ] || fail "Stream-Deck-Plugin fehlt im Bundle oder ist nicht ausführbar"
+[ -f "${DECK_DIR}/manifest.json" ] || fail "Manifest des Stream-Deck-Plugins fehlt"
+codesign --verify --strict -R='anchor apple generic and certificate leaf[subject.OU] = "LTKJ6Z2VYB" and identifier "dev.mwlr.seam.deck"' "${DECK_DIR}/seamdeck" \
+    || fail "Stream-Deck-Plugin nicht gültig mit Developer ID signiert"
+DECK_INFO="$(codesign -dv --verbose=4 "${DECK_DIR}/seamdeck" 2>&1)"
+echo "${DECK_INFO}" | grep -q "flags=.*runtime" || fail "Stream-Deck-Plugin ohne Hardened Runtime"
+DECK_XML="$(codesign -d --entitlements - --xml "${DECK_DIR}/seamdeck" 2>/dev/null)" || fail "Berechtigungen des Plugins nicht lesbar (codesign)"
+DECK_ENTS="$(printf '%s' "${DECK_XML}" | grep -o '<key>[^<]*</key>' || true)"
+[ -z "${DECK_ENTS}" ] || fail "Unerwartete Berechtigungen im Stream-Deck-Plugin: ${DECK_ENTS} (SECURE-DESIGN E20)"
+# Plugin-Version von Hand gepflegt: gleiche Version wie installiert → Stream Deck verwirft das Paket („AlreadyInstalled“, bei Gnotchi
+# gemessen 17.11.). Deshalb bei jeder Plugin-Änderung die letzte Stelle anheben: App-Version + „.n“, n ≥ 0.
+DECK_MANIFEST_VERSION="$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["Version"])' "${DECK_DIR}/manifest.json")" \
+    || fail "Manifest des Stream-Deck-Plugins nicht lesbar"
+case "${DECK_MANIFEST_VERSION}" in "${VERSION}".[0-9]*) ;; *)
+    fail "Plugin-Manifest hat Version ${DECK_MANIFEST_VERSION}, erwartet ${VERSION}.n (SeamDeck/…/manifest.json anpassen)" ;; esac
+echo "  ✓ Developer ID (Team LTKJ6Z2VYB) + Hardened Runtime, keine Berechtigungen (App, SeamKeys, SeamWake, Stream-Deck-Plugin)"
 
 # ---------------------------------------------------------------------------
 # 4. Notarisieren

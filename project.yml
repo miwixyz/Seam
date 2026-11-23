@@ -34,6 +34,13 @@ targets:
       - path: Seam
       # E23: Schnittstelle zum Root-Helfer SeamWake, in beiden Zielen.
       - path: Shared
+      # E20: Nachrichtenformat des Stream-Deck-Plugins, in Seam und im Plugin dieselbe Datei.
+      - path: SharedDeck
+      # E20: Stream-Deck-Plugin (Manifest, Einstellungsseite, Symbole) als Ordner nach Contents/Resources.
+      # Das Programm `seamdeck` kommt über die Abhängigkeit unten in denselben Ordner.
+      - path: SeamDeck/dev.mwlr.seam.deck.sdPlugin
+        type: folder
+        buildPhase: resources
       # E23: launchd-Eintrag für SMAppService.daemon, an der Stelle, an der macOS ihn sucht.
       - path: LaunchDaemons/dev.mwlr.seam.wake.plist
         buildPhase:
@@ -60,6 +67,14 @@ targets:
         embed: true
         copy:
           destination: executables
+      # E20: Stream-Deck-Plugin, eigenes Programm mit eigener Kennung, damit Seam den Absender prüfen kann.
+      - target: SeamDeck
+        embed: true
+        link: false
+        codeSign: true
+        copy:
+          destination: resources
+          subpath: dev.mwlr.seam.deck.sdPlugin
     settings:
       base:
         INFOPLIST_FILE: Seam/Resources/Info.plist
@@ -117,6 +132,29 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Seam/Resources/Seam.entitlements
         CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
+
+  # E20: Stream-Deck-Plugin „SeamDeck“. Wird von Elgatos Stream Deck gestartet, spricht dessen WebSocket und Seams geprüften
+  # Socket `deck.sock`. Keine Berechtigungen. Nachrichtenformat = dieselbe Datei wie in Seam (SharedDeck/DeckWire).
+  # Kennung im Programm (eingebettete Info.plist), weil Seam den Peer an `dev.mwlr.seam.deck` erkennt.
+  SeamDeck:
+    type: tool
+    platform: macOS
+    sources:
+      - path: SeamDeck
+        excludes:
+          - dev.mwlr.seam.deck.sdPlugin/**
+      - path: SharedDeck
+    settings:
+      base:
+        PRODUCT_NAME: seamdeck
+        PRODUCT_BUNDLE_IDENTIFIER: dev.mwlr.seam.deck
+        GENERATE_INFOPLIST_FILE: YES
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Seam/Resources/Seam.entitlements
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+
 
   # Prüft ausschließlich reine Rechenlogik (Raster, Andockzonen, Mitziehen).
   # Keine Bedienungshilfen, keine Fenster. Die App erkennt den Testlauf und

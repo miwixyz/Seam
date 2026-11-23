@@ -1,0 +1,107 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Seam",
+  "Version": "1.3.0.1",
+  "Author": "MWLR",
+  "Description": "Fenster platzieren und die Naht zwischen zwei Fenstern verschieben, über Seam.",
+  "URL": "https://github.com/miwixyz/Seam",
+  "UUID": "dev.mwlr.seam.deck",
+  "Icon": "imgs/plugin",
+  "CodePath": "seamdeck",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "27"
+    }
+  ],
+  "Category": "Seam",
+  "CategoryIcon": "imgs/category",
+  "PropertyInspectorPath": "pi/index.html",
+  "Profiles": [
+    {
+      "Name": "profiles/seam-plus",
+      "DeviceType": 7,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    },
+    {
+      "Name": "profiles/seam-plus-raster",
+      "DeviceType": 7,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    },
+    {
+      "Name": "profiles/seam-neo",
+      "DeviceType": 9,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    },
+    {
+      "Name": "profiles/seam-neo-raster",
+      "DeviceType": 9,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    }
+  ],
+  "Actions": [
+    {
+      "Name": "Naht",
+      "UUID": "dev.mwlr.seam.deck.seam",
+      "Icon": "imgs/seam",
+      "Tooltip": "Naht zwischen zwei Fenstern: Stufe ⅓ ⅜ ½ ⅝ ⅔",
+      "Controllers": [
+        "Encoder",
+        "Keypad"
+      ],
+      "Encoder": {
+        "Icon": "imgs/seam-dial",
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Naht verschieben",
+          "Push": "Zwei Fenster teilen"
+        }
+      },
+      "States": [
+        {
+          "Image": "imgs/key-seam",
+          "TitleAlignment": "top",
+          "FontSize": 10
+        }
+      ]
+    },
+    {
+      "Name": "Platz",
+      "UUID": "dev.mwlr.seam.deck.place",
+      "Icon": "imgs/place",
+      "Tooltip": "Fenster auf eine feste Fläche setzen (Taste) oder Fläche am Regler wählen und mit Drücken anwenden",
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
+      "States": [
+        {
+          "Image": "imgs/key-place",
+          "TitleAlignment": "top",
+          "FontSize": 10
+        }
+      ],
+      "Encoder": {
+        "Icon": "imgs/place-dial",
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Fläche wählen",
+          "Push": "Anwenden",
+          "Touch": "Anwenden"
+        }
+      }
+    }
+  ]
+}

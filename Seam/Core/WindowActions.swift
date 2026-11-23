@@ -28,6 +28,12 @@ final class WindowActions {
     /// R5: zweimal schnell ⌃⌥⇧→ las beim zweiten Druck noch den alten Rahmen, eine Stufe ging verloren).
     private var planned: [AXWindow: CGRect] = [:]
 
+    /// Ergebnis des letzten Naht-Befehls (Stream Deck, E20): Stufe in 24steln oder Grund, warum nichts geschah.
+    enum SeamOutcome: Equatable, Sendable {
+        case moved(stop: Int), atEnd(stop: Int), noPair
+    }
+    private(set) var seamOutcome: SeamOutcome?
+
     init(prefs: Preferences) { self.prefs = prefs }
 
     /// Rahmen fürs Rechnen: der noch nicht gesetzte Soll-Rahmen, sonst der gelesene.
@@ -51,6 +57,7 @@ final class WindowActions {
     /// vorher wurde das Kürzel nach der Bildschirmausrichtung aufgelöst, auf einem Hochkant-
     /// Bildschirm taten manche Kacheln nichts oder etwas anderes.
     func perform(_ cmd: Command, on w: AXWindow) {
+        seamOutcome = nil   // sonst meldete ein Befehl ohne Wirkung das Ergebnis des vorigen (Code-Audit 23.11.)
         guard let f = frame(of: w), let screen = Screens.best(for: f) else {
             Self.log.notice("\(cmd.rawValue, privacy: .public): Rahmen von \(w.logName, privacy: .public) nicht lesbar")
             return
@@ -100,6 +107,7 @@ final class WindowActions {
         let gap = CGFloat(prefs.gap), o = screen.orientation, v = screen.visible
         guard let (other, of) = seamPartner(of: w, frame: f, gap: gap, orientation: o) else {
             Self.log.notice("Naht: kein Nachbar an einer gemeinsamen Kante, erst ⌃⌥S")
+            seamOutcome = .noPair
             return
         }
         let wFirst = Geometry.comesFirst(f, before: of, o)
@@ -110,6 +118,7 @@ final class WindowActions {
         let current = (seamPx - (o == .landscape ? v.minX : v.minY)) / cell
         guard let stop = Geometry.nextSeamStop(current: current, direction: direction) else {
             Self.log.notice("Naht: schon an der äußersten Stufe")
+            seamOutcome = .atEnd(stop: (direction > 0 ? Geometry.seamStops.last : Geometry.seamStops.first) ?? 12)
             return
         }
         let (a, b) = Geometry.splitFrames(at: stop, in: v, o, gap: gap)
@@ -118,6 +127,7 @@ final class WindowActions {
         let fb = o == .landscape ? CGRect(x: b.minX, y: sf.minY, width: b.width, height: sf.height)
                                  : CGRect(x: sf.minX, y: b.minY, width: sf.width, height: b.height)
         lastPair = (first, second)
+        seamOutcome = .moved(stop: stop)
         setPair((first, fa), (second, fb), name: "Naht \(stop)/24")
     }
 
