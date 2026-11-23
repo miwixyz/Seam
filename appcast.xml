@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.3.0</title>
+            <pubDate>Mon, 23 Nov 2026 11:50:32 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>114</sparkle:version>
+            <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck</b> (ab Werk aus, Einstellungen → „Stream Deck“): Ein Plugin für Elgatos Stream Deck steuert Seam. Der Regler „Naht“ verschiebt die Naht in den Stufen ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste; Drücken teilt zwei Fenster. Die Aktion „Platz“ setzt das vordere Fenster auf eine feste Fläche (Hälften, Drittel, Zweidrittel, Viertel, Maximieren, Zentrieren, Ursprüngliche Größe, Bildschirm wechseln), als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Dazu vier fertige Profile für Stream Deck + und Neo.</li><li><b>Wie es abgesichert ist:</b> Das Plugin ist mit Developer ID signiert und hat keine Berechtigungen. Seam öffnet erst mit dem Schalter einen lokalen Socket (Ordner nur für dich lesbar) und nimmt nur Verbindungen an, bei denen sowohl das Plugin als auch Elgatos Stream-Deck-App echt signiert sind. Es gibt nur feste Befehle (Naht eine Stufe weiter oder zurück, Fläche aus einer festen Liste), keine Fenster- oder App-Namen, keine Pfade. Zurück zum Gerät gehen nur Zahlen und Zustände. Ohne die Freigabe „Gerätesteuerung und Datenzugriff“ passiert am Gerät nichts.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.3.0/Seam-1.3.0.zip" length="4872247" type="application/octet-stream" sparkle:edSignature="Dy6tazO7oPpNKE97t8wnO8yX/0JttiMJlQ8+PsSORB4uIQ8k3Ys/KeVSLXnqFFYpOrwurcuLhx88QZShkLn8AQ=="/>
+        </item>
+        <item>
             <title>1.2.0</title>
             <pubDate>Sun, 22 Nov 2026 11:58:15 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Seam stürzte ab, wenn der Wach-Helfer nicht antwortete</b> (Tassen-Knopf nach dem Update auf 1.1.0). Seam zeigt jetzt einen Hinweis.</li><li><b>Nach einem Update lief der alte Wach-Helfer weiter,</b> und Seam lehnte ihn ab. Der Helfer beendet sich jetzt selbst, sobald der Knopf aus ist, und startet beim nächsten Einschalten aus der neuen Version. Steht „Alter Wach-Helfer: Mac neu starten“ im Fenster, läuft noch der Helfer aus 1.1.0: einmal den Mac neu starten.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.1/Seam-1.1.1.zip" length="4083810" type="application/octet-stream" sparkle:edSignature="O0QP2hfvUU+5NRCFr5LbCxW0q6FBQzymAQCue31ogDKJGQz1yVxmygQsfgdXzkpkvT8XH+UByoFFZeQ70HoECQ=="/>
         </item>
-        <item>
-            <title>1.1.0</title>
-            <pubDate>Fri, 20 Nov 2026 16:17:05 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>101</sparkle:version>
-            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Wach bei zugeklapptem Deckel</b> (Tassen-Knopf unten im Seam-Fenster): Das MacBook arbeitet zugeklappt weiter, auch ohne externen Bildschirm. Ein kleiner Helfer namens <b>SeamWake</b> schaltet dafür den Ruhezustand ab und von allein wieder ein: bei 20 % Akku ohne Netzteil, wenn der Mac zu warm wird, wenn Seam beendet wird und nach einem Neustart. Solange es an ist, ist das Seam-Symbol in der Menüleiste gefüllt. Beim ersten Einschalten fragt macOS einmal nach einer Freigabe unter Anmeldeobjekte → App-Hintergrundaktivitäten.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.1.0/Seam-1.1.0.zip" length="4079962" type="application/octet-stream" sparkle:edSignature="wBO/BL664NE8PA5lCEDOKxtyXFWGLzsGqzuGA5LQFVEjcxCHPZdFc5FoqJN0DN3JLaXYkx9+8FsqoN60iGq2Aw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: EvJT1obAGpsVIkku/Wl+mmZEBO5IZXRhRWbfBgBROz+f936qSwqQI0QDmZXLxsu6DgiN6XtHZ4eC3sI+uoftDg==
-length: 4296
+edSignature: JqxTOhEMAFeWiNgotDAcdxjcrSx6WFNxJ8o6GnFeR1uJI+Fi+1GnabkWKXVLnKppY88PRxxVI/E1Yg8MGbc9BA==
+length: 4920
 -->
