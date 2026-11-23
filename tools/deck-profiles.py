@@ -13,7 +13,7 @@ import uuid
 import zipfile
 from pathlib import Path
 
-PLUGIN = {"Name": "Seam", "UUID": "dev.mwlr.seam.deck", "Version": "1.3.0.1"}
+PLUGIN = {"Name": "Seam", "UUID": "dev.mwlr.seam.deck", "Version": "1.3.0.2"}
 NS = uuid.UUID("3b7d1c52-8a6e-4c1e-9d3a-5f4a2b7c9e11")   # Namensraum für feste UUIDs
 
 
@@ -27,7 +27,8 @@ def key_state():
 
 
 def action(kind, name, settings, slot):
-    uuids = {"place": "dev.mwlr.seam.deck.place", "seam": "dev.mwlr.seam.deck.seam"}
+    uuids = {"place": "dev.mwlr.seam.deck.place", "seam": "dev.mwlr.seam.deck.seam", "desk": "dev.mwlr.seam.deck.desk",
+             "wallpaper": "dev.mwlr.seam.deck.wallpaper"}
     return {"ActionID": fixed(f"{slot}-{kind}-{json.dumps(settings, sort_keys=True)}"), "LinkedTitle": True, "Name": name,
             "Plugin": PLUGIN, "Resources": None, "Settings": settings, "State": 0, "States": key_state(), "UUID": uuids[kind]}
 
@@ -52,6 +53,18 @@ def ring(name, slot):
 PLUS_DIALS = {"0,0": dial("d0"), "1,0": ring("halves", "d1"), "2,0": ring("thirds", "d2"), "3,0": ring("quarters", "d3")}
 
 
+def desk(what, slot):
+    return action("desk", "Layout", {"desk": what}, slot)
+
+
+def bild(direction, slot):
+    return action("wallpaper", "Hintergrund", {"dir": str(direction)}, slot)
+
+
+def bild_dial(slot):
+    return action("wallpaper", "Hintergrund", {}, slot)
+
+
 def keys(prefix, items):
     return {f"{i % 4},{i // 4}": item(f"{prefix}{i}") for i, item in enumerate(items)}
 
@@ -71,10 +84,20 @@ NEO_RASTER = [lambda s: place("topLeft", s), lambda s: place("topRight", s), lam
               lambda s: place("bottomRight", s),
               lambda s: place("up", s), lambda s: place("down", s), lambda s: naht(-1, s), lambda s: naht(1, s)]
 
+# Layout und Hintergrund (Stufe 2 und 3): Layout-Tasten nur per langem Druck (≥ 0,8 s, im Plugin).
+PLUS_LAYOUT = [lambda s: desk("save", s), lambda s: desk("tidy", s), lambda s: bild(-1, s), lambda s: bild(1, s),
+               lambda s: place("split", s), lambda s: place("left", s), lambda s: place("right", s), lambda s: place("maximize", s)]
+PLUS_LAYOUT_DIALS = {"0,0": bild_dial("d0"), "1,0": dial("d1"), "2,0": ring("halves", "d2"), "3,0": ring("thirds", "d3")}
+NEO_LAYOUT = [lambda s: desk("save", s), lambda s: desk("tidy", s), lambda s: bild(-1, s), lambda s: bild(1, s),
+              lambda s: place("split", s), lambda s: place("left", s), lambda s: place("right", s), lambda s: place("maximize", s)]
+
 # Gerätemodelle gemessen 17.11. in Michaels ProfilesV3: Stream Deck + = 20GBD9901, Stream Deck Neo = 20GBJ9901.
 PROFILES = [
     {"file": "seam-plus", "title": "Seam Fenster", "model": "20GBD9901", "second": "Encoder", "keys": PLUS_FENSTER, "dials": PLUS_DIALS},
     {"file": "seam-plus-raster", "title": "Seam Raster", "model": "20GBD9901", "second": "Encoder", "keys": PLUS_RASTER, "dials": PLUS_DIALS},
+    {"file": "seam-plus-layout", "title": "Seam Layout", "model": "20GBD9901", "second": "Encoder", "keys": PLUS_LAYOUT,
+     "dials": PLUS_LAYOUT_DIALS},
+    {"file": "seam-neo-layout", "title": "Seam Layout", "model": "20GBJ9901", "second": "Neo", "keys": NEO_LAYOUT, "dials": None},
     {"file": "seam-neo", "title": "Seam Fenster", "model": "20GBJ9901", "second": "Neo", "keys": NEO_FENSTER, "dials": None},
     {"file": "seam-neo-raster", "title": "Seam Raster", "model": "20GBJ9901", "second": "Neo", "keys": NEO_RASTER, "dials": None},
 ]

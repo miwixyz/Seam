@@ -60,6 +60,48 @@ enum Display {
         }
     }
 
+    /// Statuszeile der Layout-Tasten, nur aus Aufzählungswerten und der App-Zahl.
+    static func deskText(_ d: DeckWire.Desk?, tidy: Bool) -> String {
+        guard let d else { return "" }
+        if d.phase == .running { return tidy ? "läuft …" : "" }
+        // Das Ergebnis des letzten Layout-Befehls zeigt nur die Taste, die ihn ausgelöst hat.
+        let own = d.cmd == nil || d.cmd == (tidy ? .tidy : .save)
+        switch own ? d.last : nil {
+        case .blocked?: return reasonText(d.reason)
+        case .aborted?: return "abgebrochen"
+        case .ok?: if tidy { return "fertig" }
+        case nil: break
+        }
+        if tidy { return d.phase == .none ? "kein Layout" : "" }
+        return d.phase == .saved ? "\(d.apps ?? 0) Apps" : "kein Layout"
+    }
+
+    /// „3/12“, bei Videos mit Zusatz; nur Zahlen und Aufzählungen aus Seam.
+    static func wallpaperText(_ w: DeckWire.Wallpaper?) -> String {
+        guard let w else { return "" }
+        switch w.phase {
+        case .off: return "aus"
+        case .noImages: return "kein Bild"
+        case .busy, .ok:
+            let pos = w.index.flatMap { i in w.count.map { "\(i)/\($0)" } } ?? "–"
+            return w.phase == .busy ? "\(pos) …" : pos + (w.kind == .video ? " ▶" : "")
+        }
+    }
+
+    static func reasonText(_ r: DeckWire.Desk.Reason?) -> String {
+        switch r {
+        case .noLayout?: "kein Layout"
+        case .noAccessibility?: "Freigabe fehlt"
+        case .switchKeys?: "⌃←/→ aus"
+        case .locked?: "gesperrt"
+        case .fullScreen?: "Vollbild"
+        case .cooldown?: "zu schnell"
+        case .running?: "läuft schon"
+        case .spaces?: "keine Spaces"
+        default: "blockiert"
+        }
+    }
+
     /// Beschriftung je Fläche (steht oben auf der Taste, das Symbol kommt aus `imgs/key-place-<Fläche>@2x.png`).
     static let labels: [DeckWire.Place: String] = [
         .split: "Teilen", .left: "Links", .right: "Rechts", .up: "Oben", .down: "Unten",
@@ -91,7 +133,7 @@ enum Display {
 
 /// Eine Aktion auf dem Gerät.
 struct DeckAction {
-    enum Kind { case seam, place }
+    enum Kind { case seam, place, desk, wallpaper }
     let kind: Kind
     var onDial: Bool
     var place: DeckWire.Place = .left
@@ -99,6 +141,8 @@ struct DeckAction {
     /// Regler „Platz“: Ring und vorgewählte Stelle (nur lokal, bis Drücken).
     var ring = "halves"
     var index = 0
+    /// Taste „Layout“: `save` oder `tidy`.
+    var desk = "save"
 }
 
 @MainActor
@@ -106,18 +150,26 @@ final class Plugin {
 
     static let seamAction = "dev.mwlr.seam.deck.seam"
     static let placeAction = "dev.mwlr.seam.deck.place"
+    static let deskAction = "dev.mwlr.seam.deck.desk"
+    static let wallpaperAction = "dev.mwlr.seam.deck.wallpaper"
+    /// Layout-Tasten nur per langem Druck (E20k): Fehlgriff-Schutz, kein Sicherheitsrand.
+    static let holdSeconds = 0.8
 
     private let task: URLSessionWebSocketTask
     private let seam = SeamSocket()
     private var actions: [String: DeckAction] = [:]
     private var state: DeckWire.State?
     private var reconnect: Timer?
+    /// Taste „Layout“: Zeitpunkt des Drucks (Dauer gemessen beim Loslassen).
+    private var pressedAt: [String: Date] = [:]
+    private var hinting: Set<String> = []
 
     init(port: Int, uuid: String, register: String) {
         task = URLSession.shared.webSocketTask(with: URL(string: "ws://127.0.0.1:\(port)")!)
         task.resume()
         sendDeck(["event": register, "uuid": uuid])
         seam.onState = { [weak self] s in self?.received(s) }
+        seam.onPreview = { [weak self] jpeg in self?.receivedPreview(jpeg) }
         seam.onConnectionChange = { [weak self] up in self?.connectionChanged(up) }
         receiveLoop()
         tryConnect()
@@ -165,7 +217,10 @@ final class Plugin {
             let dirText = (settings["dir"] as? String) ?? (settings["dir"] as? Int).map(String.init)
             let dir = dirText == "-1" ? -1 : 1
             let onDial = (payload["controller"] as? String) == "Encoder"
-            var a = actions[ctx] ?? DeckAction(kind: action == Self.placeAction ? .place : .seam, onDial: onDial)
+            let kind: DeckAction.Kind = action == Self.placeAction ? .place : action == Self.deskAction ? .desk
+                : action == Self.wallpaperAction ? .wallpaper : .seam
+            var a = actions[ctx] ?? DeckAction(kind: kind, onDial: onDial)
+            a.desk = (settings["desk"] as? String) == "tidy" ? "tidy" : "save"
             if event == "willAppear" { a.onDial = onDial }
             a.place = place
             a.dir = dir
@@ -176,7 +231,7 @@ final class Plugin {
             render(ctx)
             tryConnect()
         case "willDisappear":
-            if let ctx { actions[ctx] = nil }
+            if let ctx { actions[ctx] = nil; customLayout.remove(ctx) }
         case "dialRotate":
             guard let ctx, let ticks = payload["ticks"] as? Int, ticks != 0 else { return }
             if var a = actions[ctx], a.kind == .place {
@@ -185,6 +240,11 @@ final class Plugin {
                 a.index = ((a.index + (ticks > 0 ? 1 : -1)) % count + count) % count
                 actions[ctx] = a
                 render(ctx)
+                return
+            }
+            if actions[ctx]?.kind == .wallpaper {
+                guard check(ctx) else { return }
+                seam.send(.wallpaper(dir: ticks > 0 ? 1 : -1))   // Seam lässt höchstens einen Wechsel je 1,5 s zu, der Rest fällt weg
                 return
             }
             guard actions[ctx]?.kind == .seam else { return }
@@ -200,11 +260,20 @@ final class Plugin {
                 seam.send(.place(.split))
             }
         case "keyDown":
-            guard let ctx, let a = actions[ctx], check(ctx) else { return }
+            guard let ctx, let a = actions[ctx] else { return }
+            if a.kind == .desk { pressedAt[ctx] = Date(); return }   // gesendet wird erst beim Loslassen nach ≥ 0,8 s
+            guard check(ctx) else { return }
             switch a.kind {
             case .seam: seam.send(.seam(dir: a.dir))
             case .place: seam.send(.place(a.place))
+            case .wallpaper: seam.send(.wallpaper(dir: a.dir))
+            case .desk: break
             }
+        case "keyUp":
+            guard let ctx, let a = actions[ctx], a.kind == .desk, let start = pressedAt.removeValue(forKey: ctx) else { return }
+            guard Date().timeIntervalSince(start) >= Self.holdSeconds else { return hint(ctx) }
+            guard check(ctx) else { return }
+            seam.send(a.desk == "tidy" ? .deskTidy : .deskSave)
         default:
             break
         }
@@ -227,11 +296,21 @@ final class Plugin {
 
     private func connectionChanged(_ up: Bool) {
         if up {
-            seam.send(.hello(version: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0"))
+            seam.send(.hello(version: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0", preview: true))
         } else {
             state = nil
+            preview = nil
         }
         for ctx in actions.keys { render(ctx) }
+    }
+
+    /// Vorschau nur im Speicher: nie auf Platte, nie auf stdout/stderr.
+    private var preview: Data?
+    private var customLayout: Set<String> = []
+
+    private func receivedPreview(_ jpeg: Data?) {
+        preview = jpeg
+        for (ctx, a) in actions where a.kind == .wallpaper && a.onDial { render(ctx) }
     }
 
     private func received(_ s: DeckWire.State) {
@@ -242,6 +321,15 @@ final class Plugin {
     }
 
     // MARK: Anzeige
+
+    /// Zu kurz gedrückt: 1,5 s „Halten“ statt Befehl (kein Warnzeichen, es ist kein Fehler).
+    private func hint(_ ctx: String) {
+        hinting.insert(ctx)
+        sendDeck(["event": "setTitle", "context": ctx, "payload": ["title": "Länger\nhalten", "target": 0]])
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            MainActor.assumeIsolated { self?.hinting.remove(ctx); self?.render(ctx) }
+        }
+    }
 
     private func render(_ ctx: String) {
         guard let a = actions[ctx] else { return }
@@ -259,6 +347,37 @@ final class Plugin {
                 let title = value == "–" ? name : "\(name)\n\(value)"
                 sendDeck(["event": "setTitle", "context": ctx, "payload": ["title": title, "target": 0]])
             }
+        case .wallpaper:
+            let text = seam.isConnected ? Display.wallpaperText(state?.wallpaper) : "Seam fehlt"
+            if a.onDial {
+                let w = state?.wallpaper
+                let pct = (w?.index).flatMap { i in w?.count.map { max(1, $0) > 1 ? (i - 1) * 100 / ($0 - 1) : 100 } } ?? 0
+                if let preview {
+                    // Mit Vorschau: eigenes Layout, Bild füllt das Feld, die Stelle steht darüber.
+                    if !customLayout.contains(ctx) {
+                        sendDeck(["event": "setFeedbackLayout", "context": ctx, "payload": ["layout": "layouts/bild.json"]])
+                        customLayout.insert(ctx)
+                    }
+                    sendDeck(["event": "setFeedback", "context": ctx,
+                              "payload": ["preview": "data:image/jpeg;base64," + preview.base64EncodedString(), "value": text]])
+                } else {
+                    if customLayout.remove(ctx) != nil {
+                        sendDeck(["event": "setFeedbackLayout", "context": ctx, "payload": ["layout": "$B1"]])
+                    }
+                    sendDeck(["event": "setFeedback", "context": ctx,
+                              "payload": ["title": "Hintergrund", "value": text, "indicator": ["value": pct]]])
+                }
+            } else {
+                setImage(ctx, Display.image(a.dir > 0 ? "key-bild-plus" : "key-bild-minus"))
+                let name = a.dir > 0 ? "Bild →" : "Bild ←"
+                sendDeck(["event": "setTitle", "context": ctx, "payload": ["title": text.isEmpty ? name : "\(name)\n\(text)", "target": 0]])
+            }
+        case .desk:
+            guard !hinting.contains(ctx) else { return }
+            setImage(ctx, Display.image(a.desk == "tidy" ? "key-desk-tidy" : "key-desk-save"))
+            let name = a.desk == "tidy" ? "Aufräumen" : "Layout sichern"
+            let status = seam.isConnected ? Display.deskText(state?.desk, tidy: a.desk == "tidy") : "Seam fehlt"
+            sendDeck(["event": "setTitle", "context": ctx, "payload": ["title": status.isEmpty ? name : "\(name)\n\(status)", "target": 0]])
         case .place where a.onDial:
             let ring = Display.rings[a.ring]
             let p = ring?.items[safe: a.index] ?? .left

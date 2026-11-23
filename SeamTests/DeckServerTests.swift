@@ -167,7 +167,7 @@ final class DeckServerTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.3)
         XCTAssertEqual(sink.commands.count, 5, "höchstens perSecond Befehle je Sekunde, der Rest fällt weg")
         // Ungültig (nicht in der Liste) → Verbindung zu.
-        write(fd, ["v": 1, "cmd": "deskTidy"])
+        write(fd, ["v": 1, "cmd": "wallpaper"])
         XCTAssertEqual(readResult(fd), 0)
     }
 

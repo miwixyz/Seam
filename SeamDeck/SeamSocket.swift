@@ -13,6 +13,8 @@ final class SeamSocket {
     static let ackTimeout: TimeInterval = 0.5
 
     var onState: (DeckWire.State) -> Void = { _ in }
+    /// Vorschau des Hintergrunds (E20m): `nil` = keine, sonst JPEG ≤ 5000 Byte.
+    var onPreview: (Data?) -> Void = { _ in }
     var onConnectionChange: (Bool) -> Void = { _ in }
 
     private var fd: Int32 = -1
@@ -108,16 +110,18 @@ final class SeamSocket {
     }
 
     private func readIncoming() {
-        var chunk = [UInt8](repeating: 0, count: DeckWire.maxFrame)
+        var chunk = [UInt8](repeating: 0, count: DeckWire.maxPreviewFrame)
         let n = read(fd, &chunk, chunk.count)
         if n == 0 { return close(reason: "Seam getrennt") }
         if n < 0 { return errno == EAGAIN ? () : close(reason: "Lesefehler") }
         buffer.append(contentsOf: chunk[0..<n])
         while fd >= 0 {
-            switch DeckWire.nextFrame(&buffer) {
+            // Größerer Rahmen nur, weil Seam Vorschaubilder schickt (nur nach `hello` mit `preview`); der Inhalt wird trotzdem geprüft.
+            switch DeckWire.nextFrame(&buffer, max: DeckWire.maxPreviewFrame) {
             case .needMore: return
             case .invalid: return close(reason: "ungültiger Rahmen")
             case .message(let payload):
+                if let preview = DeckWire.parsePreview(payload) { onPreview(preview); continue }
                 guard let s = DeckWire.parseState(payload) else { return close(reason: "ungültige Nachricht") }
                 onState(s)
             }

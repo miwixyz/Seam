@@ -945,6 +945,56 @@ bekommen vor dem Bau einen eigenen Nachtrag zu E20.
   Rahmen, ungültiger Befehl. Release-Gate prüft das Plugin am ZIP (Kennung, Team, Hardened Runtime, keine Berechtigungen,
   Manifest-Version = App-Version + „.0“).
 
+- **E20k – Stufe 2: Layout speichern und aufräumen vom Deck (23.11., VOR dem Code).** Neu: `deskSave` und `deskTidy`,
+  beide ohne Felder. `deskSave` ersetzt das gespeicherte Layout der aktuellen Bildschirm-Kombination (wie ⌃⌥-Speichern).
+  `deskTidy` ruft `tidyUp(automatic: false)`: die schwerste Aktion in Seam, künstliche Maus- und Tasteneingaben (E17a).
+  Das Deck bekommt dafür **nichts Neues**: E17b gilt unverändert (Bildschirm gesperrt, Vollbild, Abbruch bei Nutzereingriff,
+  60-s-Frist, Zeiger zurück, `alreadyRunning`, „Tastaturkürzel für Spaces“ nötig), das Deck zählt als „von Hand“.
+  - *Fehlgriff-Schutz:* Plugin-seitig nur per Druck ≥ 0,8 s (kein Sicherheitsrand); Seam-seitig höchstens **ein Layout-Befehl je
+    3 s**, der Rest wird mit `blocked/cooldown` abgewiesen. Während ein Lauf läuft, wird `deskSave` abgewiesen (`running`).
+  - *Rückkanal:* `desk` mit `state` (none/saved/running/blocked), `apps` (Zahl), `last` (ok/aborted/blocked) und `reason` aus
+    fester Liste (userInput, modifiersStuck, timeLimit, noLayout, noAccessibility, switchKeys, locked, fullScreen, cooldown,
+    running, spaces). **Nie** `DeskMessages`-Texte (enthalten App-Namen), nie Bildschirm- oder Space-Namen.
+  - *Tests:* Positivliste und Ablehnung (`deskSave` mit Feld → ungültig), jeder `DeskBlock`/`Abort` hat einen eigenen Grund,
+    Rückkanal trägt nur Aufzählungen und eine Zahl (Zahl außerhalb 0…999 und freier Text fallen weg).
+  - *Restrisiko:* Wer das Plugin steuern kann, kann alle 3 s das Layout überschreiben (kein „Rückgängig“ in Seam) oder einen
+    Lauf auslösen, der Maus und Tastatur übernimmt, bis der Nutzer eingreift. Beides setzt den Zugriff auf Elgatos App voraus
+    (Vertrauenskette E20b).
+
+- **E20l – Stufe 3: Bildwechsel vom Deck aus einem gewählten Ordner (23.11., VOR dem Code).** Neu: `wallpaper` mit `dir` ±1.
+  **Nur lokal:** Der Befehl wechselt zur nächsten/vorigen Datei im Bildordner. Er lädt nie nach, fragt nie das Netz, kennt keine
+  Adresse (E19f bleibt: Netz nur auf Handlung im Online-Fenster).
+  - *Ordner:* Einstellung „Bildordner“ nur über `NSOpenPanel` (Ordner), gespeichert als Text (`validPath`), Standard der Online-Ordner.
+    Kein Pfad und kein Dateiname je aus einer Nachricht (die Nachricht hat nur `dir`). Der Dateiname entsteht aus der
+    Verzeichnisliste.
+  - *Ring:* reguläre Dateien **direkt** im Ordner (`lstat`: keine Links, Ordner, Pakete; nicht rekursiv), Positivliste
+    jpg/jpeg/png/heic/mp4/mov, nicht leer, Bild ≤ 60 MB, Video ≤ 600 MB (Grenzen E19c), versteckte Dateien aus, nach Name sortiert,
+    höchstens 200; bei jedem Wechsel neu gelesen (kein Cache). Decoder = System (E18b).
+  - *Wirkung:* nur der gerade geltende Pfad (hell oder dunkel) über `Preferences.setWallpaperPath`, die einzige Stelle, die den Pfad
+    ändert. Das System-Aussehen ändert Seam nie. Liegt der aktuelle Pfad außerhalb des Rings, springt der Wechsel auf die erste Datei.
+    Seam löscht im Bildordner nie etwas (die Rotation von E19d gilt nur im Online-Ordner).
+  - *Grenzen:* höchstens ein Wechsel je 1,5 s, der Rest wird verworfen (Aufbau des Hintergrunds dauert).
+  - *Rückkanal:* `wallpaper` mit `state` (ok/noImages/off/busy), `index`, `count` (≤ 200), `dark`, `kind` (image/video). Nie Dateinamen,
+    Pfade oder der Ordnername.
+  - *Tests:* Ring mit Link, Unterordner, `.txt`, 0 Byte, versteckter und übergroßer Datei, 205 Dateien → 200; Wechsel am Ende des Rings;
+    Pfad außerhalb des Ordners liefert nie eine Datei außerhalb; Befehl mit `path`/`file`/falschem `dir` ungültig.
+  - *Restrisiko:* Zeigt der gewählte Ordner auf Fremdes, trifft eine bösartige Datei die System-Decoder wie bei E18. Die Wahl liegt
+    beim Nutzer im Dialog.
+
+- **E20m – Stufe 3b: Vorschau des Hintergrunds auf der Leiste (23.11., VOR dem Code; Michael 17.11.: ja).** Das schickt **Bilddaten an
+  Elgatos Stream-Deck-App**, bei einem eigenen Bildordner womöglich ein privates Foto. Bewusst angenommen, deshalb:
+  - *Eigener Schalter, ab Werk aus* („Vorschau des Hintergrunds auf der Leiste“, mit Warnhinweis in den Einstellungen).
+  - *Nur das gerade geltende Bild* (nie der Ring, nie das nächste), *nur Bilder* (Video: keine Vorschau), nur zulässige Dateien
+    (`isEligible`: Positivliste, kein Link, nicht leer, Größengrenze).
+  - *Klein und fertig:* Seam skaliert auf 200 × 100 (bildfüllend, mittig) und kodiert JPEG ≤ 5000 Byte (System-Decoder, kein Cache).
+    Das Plugin bekommt nie das Original. Größer wird nicht gesendet. Im Plugin nur im Speicher: nie auf Platte, nicht in Elgatos
+    Profilen (die Anzeige wird per `setFeedback` gesetzt), nie auf stdout/stderr.
+  - *Nur an Plugins, die es melden:* `hello` mit `preview: true`; die Nachricht hat einen eigenen, größeren Rahmen (8 KB) nur in
+    Richtung Plugin. Befehle bleiben bei 512 Byte. Sendepuffer des Sockets auf 64 KB (lokale Sockets puffern ab Werk 8 KB).
+  - *Gesendet nur bei Änderung*, im Hintergrund erzeugt; Schalter aus → einmal „keine Vorschau“ (leere Nachricht).
+  - *Tests:* Vorschau ist 200 × 100 und ≤ 5000 Byte; Video, Link, leere, unbekannte und kaputte Datei → keine Vorschau; Nachricht ohne
+    JPEG-Kopf, mit fremdem Feld oder über 5000 Byte wird nie gesendet bzw. verworfen.
+
 **Restrisiken (akzeptiert):** Wer schon Code als Nutzer ausführt, kann über den Deck-Weg Fenster verschieben; neu ist nur,
 dass er dafür kein eigenes AX-Recht braucht, beschränkt auf die feste Liste und ohne Lesezugriff. Elgatos Stream-Deck-App
 ist Teil der Vertrauenskette. **Offen:** `deskSave`/`deskTidy`/Bildwechsel (je eigener Nachtrag), Bildvorschau auf der Leiste

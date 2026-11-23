@@ -389,10 +389,16 @@ final class Engine {
     }
 
     // MARK: Stream Deck (E20)
-    @ObservationIgnored private lazy var deck = DeckLink(prefs: prefs) { [weak self] cmd in
-        guard let self else { return (.notRunning, nil) }
-        return (perform(cmd), actions.seamOutcome)
-    }
+    @ObservationIgnored private lazy var deck = DeckLink(prefs: prefs, hooks: .init(
+        run: { [weak self] cmd in
+            guard let self else { return (.notRunning, nil) }
+            return (perform(cmd), actions.seamOutcome)
+        },
+        save: { [weak self] in self?.saveDeskLayout() ?? false },
+        tidy: { [weak self] in self?.tidyUp(automatic: false) ?? .alreadyRunning },
+        deskRunning: { [weak self] in self?.deskRunning ?? false },
+        wallpaper: { [weak self] in self?.deckWallpaper(step: $0) ?? .init(phase: .off) },
+        imagePath: { [weak self] in self?.deckImagePath() }))
     func applyDeckSetting() { deck.apply() }   // Schalter angewendet: Socket auf/zu, ab Werk aus
     var deckFailed: Bool { deck.failed }
 
@@ -483,14 +489,15 @@ final class Engine {
     }
 
     /// Popover/Menü: jetzige Anordnung als Layout dieser Bildschirm-Kombination speichern.
-    func saveDeskLayout() {
+    @discardableResult
+    func saveDeskLayout() -> Bool {
         let screens = DeskLayouts.liveScreens()
         let spaces = SpaceReader.read() ?? []
         let layout = DeskLayouts.capture(windows: DeskLayouts.liveWindows(), spaces: spaces, names: prefs.spaceNames,
                                          screens: screens, ownBundleID: Bundle.main.bundleIdentifier)
         // Nichts erfasst (z. B. Spaces kurz nicht lesbar) → altes Layout behalten. Ein leeres Layout
         // hieße sonst „löschen“ (code-audit 19.10.).
-        guard !layout.isEmpty else { showDesk(DeskMessages.saved(apps: 0)); return }
+        guard !layout.isEmpty else { showDesk(DeskMessages.saved(apps: 0)); return false }
         prefs.rememberSpaceSlots(spaces)
         let ok = prefs.saveDeskLayout(layout, for: screens.combinationKey)
         deskIssues = []
@@ -499,18 +506,22 @@ final class Engine {
         showDesk(ok ? DeskMessages.saved(apps: apps)
                     : "Layout nicht gespeichert: Seam merkt sich höchstens 20 "
                         + "Bildschirm-Kombinationen.\n→ ZU TUN: in den Einstellungen unter „Layouts“ das Layout löschen und neu speichern.")
+        return ok
     }
 
     /// Popover, Kürzel ⌃⌥⌘L, Automatik.
-    func tidyUp(automatic: Bool) {
-        guard running else { return }
+    /// nil = Lauf gestartet (oder Seam läuft nicht), sonst der Grund, warum er nicht startet.
+    @discardableResult
+    func tidyUp(automatic: Bool) -> DeskBlock? {
+        guard running else { return .noAccessibility }
         if let block = desks.run(automatic: automatic, done: { [weak self] in self?.deskFinished($0) }) {
             if let text = DeskMessages.blocked(block, automatic: automatic) { showDesk(text) }
-            return
+            return block
         }
         deskRunning = true
         // Steht, bis das Ergebnis kommt (`deskFinished` blendet es aus) — auch wenn ein Lauf länger dauert.
         showDesk(DeskMessages.running, for: .seconds(600))
+        return nil
     }
 
     /// Popover „Alles öffnen“ (E17k): Apps des Layouts ohne Fenster öffnen, dann aufräumen. Nur auf
@@ -550,6 +561,7 @@ final class Engine {
         let text = DeskMessages.issues(r.issues, names: names, autoTidy: prefs.deskAutoTidy) ?? DeskMessages.result(r, names: names)
         deskHUD.hide()
         showDesk(text, for: r.issues.isEmpty ? .seconds(8) : .seconds(20))
+        deck.deskFinished(r)
     }
 
     private func showDesk(_ text: String, for duration: Duration = .seconds(8)) {

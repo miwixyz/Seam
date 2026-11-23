@@ -128,6 +128,10 @@ final class DeckServer: @unchecked Sendable {
             // Eine geprüfte neue Verbindung ersetzt die alte (höchstens eine).
             closeClient(reason: nil)
             _ = fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)
+            // Vorschau-Nachrichten sind ≈ 7 KB, lokale Sockets puffern ab Werk 8 KB (bei Gnotchi gemessen 17.11.): ein Teil-Schreiben
+            // schlösse die Verbindung.
+            var sndbuf: Int32 = 65_536
+            setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &sndbuf, socklen_t(MemoryLayout<Int32>.size))
             clientFD = fd
             buffer = Data()
             windowStart = .distantPast
@@ -201,8 +205,8 @@ final class DeckServer: @unchecked Sendable {
     }
 
     /// An den verbundenen, geprüften Client schreiben. Ohne Client nichts.
-    func send(_ object: [String: Any]) {
-        guard let data = DeckWire.frame(object) else { return }
+    func send(_ object: [String: Any], max: Int = DeckWire.maxFrame) {
+        guard let data = DeckWire.frame(object, max: max) else { return }
         queue.async { [weak self] in
             guard let self, clientFD >= 0 else { return }
             let n = data.withUnsafeBytes { write(self.clientFD, $0.baseAddress, data.count) }

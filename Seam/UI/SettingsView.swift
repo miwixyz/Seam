@@ -514,6 +514,28 @@ extension SettingsView {
             .buttonStyle(CardButtonStyle())
             .padding(.vertical, FamilyTheme.Space.s)
             .disabled(!prefs.deckEnabled)
+            divider
+            row("Bildordner") {
+                HStack {
+                    Text(prefs.deckImageFolder.map { ($0 as NSString).lastPathComponent } ?? "Online-Auswahl (Standard)")
+                        .foregroundStyle(FamilyTheme.textSecondary)
+                        .lineLimit(1)
+                    Button("Wählen …") { chooseDeckImageFolder() }.buttonStyle(CardButtonStyle())
+                    if prefs.deckImageFolder != nil {
+                        Button("Zurücksetzen") { prefs.setDeckImageFolder(nil) }.buttonStyle(CardButtonStyle())
+                    }
+                }
+            }
+            .disabled(!prefs.deckEnabled)
+            note("„Bild ←/→“ am Stream Deck wechselt nur zwischen den Dateien dieses Ordners (Bilder und Videos direkt darin, "
+                 + "höchstens 200). Es lädt nie etwas aus dem Netz. Den Ordner wählst du nur hier",
+                 symbol: "info.circle", color: FamilyTheme.textSecondary)
+            divider
+            toggleRow("Vorschau des Hintergrunds auf der Leiste", isOn: $prefs.deckPreview)
+                .disabled(!prefs.deckEnabled)
+            note("Schickt ein kleines Bild (200 × 100) des gerade geltenden Hintergrunds an die Stream-Deck-App von Elgato, "
+                 + "auch wenn es ein privates Foto aus deinem Ordner ist. Ab Werk aus. Videos haben keine Vorschau",
+                 symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
             if let deckInstallNote {
                 note(deckInstallNote, symbol: "info.circle", color: FamilyTheme.textSecondary)
             }
@@ -526,5 +548,17 @@ extension SettingsView {
                      symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
             }
         }
+    }
+
+    /// E20l: Der Ordner kommt nur aus diesem Dialog, nie aus dem Stream Deck.
+    private func chooseDeckImageFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Ordner mit Bildern und Videos für das Stream Deck wählen"
+        NSApp.activate()
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        prefs.setDeckImageFolder(url.path)
     }
 }

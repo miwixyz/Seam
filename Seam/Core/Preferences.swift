@@ -49,6 +49,8 @@ final class Preferences {
         static let commandSheetEnabled = "commandSheetEnabled"
         static let commandSheetDelay = "commandSheetDelay"
         static let deckEnabled = "deckEnabled"
+        static let deckImageFolder = "deckImageFolder"
+        static let deckPreview = "deckPreview"
     }
 
     private let defaults: UserDefaults
@@ -140,6 +142,14 @@ final class Preferences {
     var hyperKeyTap = "none" { didSet { defaults.set(hyperKeyTap, forKey: Key.hyperKeyTap) } }
     /// Stream Deck (E20): Socket für das eigene Plugin. Ab Werk aus.
     var deckEnabled = false { didSet { defaults.set(deckEnabled, forKey: Key.deckEnabled) } }
+    /// Bildordner für „Bild ←/→“ am Stream Deck (E20l). Nur aus dem Öffnen-Dialog; nil = Online-Ordner.
+    private(set) var deckImageFolder: String? { didSet { defaults.set(deckImageFolder, forKey: Key.deckImageFolder) } }
+    /// Vorschau des Hintergrunds auf der Leiste (E20m). Ab Werk aus.
+    var deckPreview = false { didSet { defaults.set(deckPreview, forKey: Key.deckPreview) } }
+    func setDeckImageFolder(_ path: String?) {
+        guard let path else { deckImageFolder = nil; return }
+        if Self.validPath(path) { deckImageFolder = path }
+    }
     /// Kürzel-Blatt (E24): ⌘ allein gehalten zeigt die Kürzel der vordersten App. Ab Werk aus (Michael, 22.11.).
     var commandSheetEnabled = false { didSet { defaults.set(commandSheetEnabled, forKey: Key.commandSheetEnabled) } }
     /// Haltezeit in ms, bis das Blatt erscheint (E24a). Ab Werk 600.
@@ -402,6 +412,8 @@ final class Preferences {
     private func loadCommandSheet() {
         commandSheetEnabled = defaults.object(forKey: Key.commandSheetEnabled) as? Bool ?? false
         deckEnabled = defaults.object(forKey: Key.deckEnabled) as? Bool ?? false
+        deckImageFolder = defaults.string(forKey: Key.deckImageFolder).flatMap { Self.validPath($0) ? $0 : nil }
+        deckPreview = defaults.object(forKey: Key.deckPreview) as? Bool ?? false
         let d = defaults.object(forKey: Key.commandSheetDelay) as? Int ?? Self.defaultCommandSheetDelay
         commandSheetDelay = Self.commandSheetDelayChoices.contains(d) ? d : Self.defaultCommandSheetDelay
     }

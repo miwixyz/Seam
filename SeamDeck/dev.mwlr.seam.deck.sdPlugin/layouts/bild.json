@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "dev.mwlr.seam.bild",
+  "items": [
+    { "key": "preview", "type": "pixmap", "rect": [0, 0, 200, 100] },
+    { "key": "value", "type": "text", "rect": [0, 72, 200, 28], "font": { "size": 16, "weight": 600 }, "alignment": "center", "color": "#FFFFFF", "background": "#000000AA" }
+  ]
+}

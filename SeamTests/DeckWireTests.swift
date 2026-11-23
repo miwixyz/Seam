@@ -11,6 +11,72 @@ final class DeckWireTests: XCTestCase {
         XCTAssertEqual(parse(#"{"v":1,"cmd":"seam","dir":-1}"#), .seam(dir: -1))
         XCTAssertEqual(parse(#"{"v":1,"cmd":"seam","dir":1}"#), .seam(dir: 1))
         XCTAssertEqual(parse(#"{"v":1,"cmd":"place","what":"left"}"#), .place(.left))
+        XCTAssertEqual(parse(#"{"v":1,"cmd":"deskSave"}"#), .deskSave)
+        XCTAssertEqual(parse(#"{"v":1,"cmd":"deskTidy"}"#), .deskTidy)
+        XCTAssertEqual(parse(#"{"v":1,"cmd":"wallpaper","dir":1}"#), .wallpaper(dir: 1))
+        XCTAssertEqual(parse(#"{"v":1,"cmd":"wallpaper","dir":-1}"#), .wallpaper(dir: -1))
+    }
+
+    func testHelloCanAnnouncePreviewAndPreviewMessagesAreStrict() {
+        XCTAssertEqual(parse(#"{"v":1,"hello":"1.3.0","preview":true}"#), .hello(version: "1.3.0", preview: true))
+        XCTAssertEqual(parse(#"{"v":1,"hello":"1.3.0","preview":false}"#), .hello(version: "1.3.0", preview: false))
+        XCTAssertNil(parse(#"{"v":1,"hello":"1.3.0","preview":1}"#))
+        XCTAssertNil(parse(#"{"v":1,"hello":"1.3.0","preview":"ja"}"#))
+        let jpeg = Data([0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3])
+        let frame = DeckWire.frame(DeckWire.encodePreview(jpeg)!, max: DeckWire.maxPreviewFrame)!.dropFirst(4)
+        XCTAssertEqual(DeckWire.parsePreview(Data(frame)), .some(jpeg))
+        let none = DeckWire.frame(DeckWire.encodePreview(nil)!, max: DeckWire.maxPreviewFrame)!.dropFirst(4)
+        XCTAssertEqual(DeckWire.parsePreview(Data(none)), .some(nil))
+        XCTAssertNil(DeckWire.encodePreview(Data(repeating: 0xFF, count: DeckWire.maxPreviewBytes + 1)), "zu groß wird nie gesendet")
+        XCTAssertNil(DeckWire.encodePreview(Data([1, 2, 3])), "kein JPEG wird nie gesendet")
+        XCTAssertNil(DeckWire.parsePreview(Data(#"{"v":1,"preview":"AAAA"}"#.utf8)), "Base64, aber kein JPEG")
+        XCTAssertNil(DeckWire.parsePreview(Data(#"{"v":1,"preview":"/9g=","x":1}"#.utf8)), "fremdes Feld")
+        XCTAssertNil(DeckWire.parsePreview(Data(#"{"v":1,"seam":{"state":"ok"}}"#.utf8)), "Zustand ist keine Vorschau")
+        var big = Data([0, 0, 0x20, 0x01])   // 8193 Byte
+        XCTAssertEqual(DeckWire.nextFrame(&big, max: DeckWire.maxPreviewFrame), .invalid, "Rahmen über 8 KB bleibt ungültig")
+    }
+
+    func testWallpaperCommandRejectsPathsAndOddValues() {
+        for json in [#"{"v":1,"cmd":"wallpaper","dir":0}"#, #"{"v":1,"cmd":"wallpaper","dir":2}"#, #"{"v":1,"cmd":"wallpaper"}"#,
+                     #"{"v":1,"cmd":"wallpaper","dir":true}"#, #"{"v":1,"cmd":"wallpaper","dir":1,"path":"/etc/passwd"}"#,
+                     #"{"v":1,"cmd":"wallpaper","dir":1,"file":"a.jpg"}"#, #"{"v":1,"cmd":"wallpaper","dir":"1"}"#] {
+            XCTAssertNil(parse(json), json)
+        }
+    }
+
+    func testWallpaperStateCarriesOnlyCountsAndEnumerations() {
+        let w = DeckWire.Wallpaper(phase: .ok, index: 3, count: 12, dark: true, kind: .video)
+        let s = DeckWire.State(seam: .ok, stop: nil, desk: nil, wallpaper: w)
+        XCTAssertEqual(DeckWire.parseState(Data(DeckWire.frame(DeckWire.encode(s))!.dropFirst(4)))?.wallpaper, w)
+        let bad = DeckWire.parseState(Data(#"{"v":1,"seam":{"state":"ok"},"wallpaper":{"state":"ok","index":9,"count":3,"kind":"/etc/x"}}"#.utf8))
+        XCTAssertEqual(bad?.wallpaper, DeckWire.Wallpaper(phase: .ok, index: nil, count: nil, dark: nil, kind: nil),
+                       "Stelle außerhalb des Rings und freier Text fallen weg")
+        XCTAssertNil(DeckWire.parseState(Data(#"{"v":1,"seam":{"state":"ok"},"wallpaper":{"state":"x"}}"#.utf8))?.wallpaper)
+        let big = DeckWire.Wallpaper(phase: .ok, index: 1, count: 5000, dark: nil, kind: nil)
+        let enc = DeckWire.encode(DeckWire.State(seam: .ok, stop: nil, desk: nil, wallpaper: big))["wallpaper"] as? [String: Any]
+        XCTAssertNil(enc?["count"], "Ring über 200 geht nicht aufs Gerät")
+    }
+
+    func testEveryDeskReasonCovered() {
+        let blocks: [DeskBlock] = [.noLayout, .noAccessibility, .switchKeysOff, .screenLocked, .fullScreenActive, .cooldown,
+                                   .alreadyRunning, .spacesUnavailable]
+        XCTAssertEqual(Set(blocks.map(DeckLink.reason(for:))).count, blocks.count, "jeder Grund hat einen eigenen Wert")
+        XCTAssertEqual(DeckLink.reason(for: DeskRunResult.Abort.userInput), .userInput)
+        XCTAssertEqual(DeckLink.reason(for: DeskRunResult.Abort.modifiersStuck), .modifiersStuck)
+        XCTAssertEqual(DeckLink.reason(for: DeskRunResult.Abort.timeLimit), .timeLimit)
+        XCTAssertGreaterThanOrEqual(DeckLink.deskInterval, 3)
+        XCTAssertGreaterThanOrEqual(DeckLink.wallpaperInterval, 1.5)
+    }
+
+    func testDeskStateRoundTripCarriesOnlyEnumerationsAndACount() {
+        let desk = DeckWire.Desk(phase: .saved, apps: 14, last: .blocked, reason: .fullScreen, cmd: .tidy)
+        let s = DeckWire.State(seam: .ok, stop: nil, desk: desk)
+        let data = DeckWire.frame(DeckWire.encode(s))!.dropFirst(4)
+        XCTAssertEqual(DeckWire.parseState(Data(data))?.desk, desk)
+        XCTAssertNil(DeckWire.parseState(Data(#"{"v":1,"seam":{"state":"ok"},"desk":{"state":"kaputt"}}"#.utf8))?.desk)
+        let odd = DeckWire.parseState(Data(#"{"v":1,"seam":{"state":"ok"},"desk":{"state":"saved","apps":-3,"reason":"Safari"}}"#.utf8))
+        XCTAssertEqual(odd?.desk, DeckWire.Desk(phase: .saved, apps: nil, last: nil, reason: nil, cmd: nil),
+                       "falsche Zahl und freier Text fallen weg")
     }
 
     func testEveryPlaceMapsToItsSeamCommand() {
@@ -38,7 +104,8 @@ final class DeckWireTests: XCTestCase {
             #"{"v":1,"cmd":"seam","dir":1,"extra":1}"#,
             #"{"v":1,"cmd":"place","what":"deskTidy"}"#, #"{"v":1,"cmd":"place","what":"seamLeft"}"#,
             #"{"v":1,"cmd":"place","what":"left","x":1}"#, #"{"v":1,"cmd":"place"}"#,
-            #"{"v":1,"cmd":"deskSave"}"#, #"{"v":1,"cmd":"wallpaper","dir":1}"#, #"{"v":1,"cmd":"shell","what":"left"}"#,
+            #"{"v":1,"cmd":"deskSave","what":"x"}"#, #"{"v":1,"cmd":"deskTidy","dir":1}"#, #"{"v":1,"cmd":"deskTidy2"}"#,
+            #"{"v":1,"cmd":"deskDelete"}"#, #"{"v":1,"cmd":"wallpaperNext","dir":1}"#, #"{"v":1,"cmd":"shell","what":"left"}"#,
             #"{"v":1,"hello":"../../x"}"#, #"{"v":1,"hello":""}"#, #"{"v":1,"hello":"1.2.3.4.5.6.7.8.9.10.11"}"#,
             #"{"v":1,"hello":"0.12.0","cmd":"seam"}"#,
             "[]", "null", "{}", "nicht json", #"{"v":1,"cmd":["seam"],"dir":1}"#,

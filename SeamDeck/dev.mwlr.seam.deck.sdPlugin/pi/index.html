@@ -39,6 +39,12 @@
       <option value="previousDisplay">Vorheriger Bildschirm</option>
     </select>
   </div>
+  <div class="row hidden" id="deskRow"><label for="desk">Layout</label>
+    <select id="desk">
+      <option value="save">Layout speichern (ersetzt das gespeicherte)</option>
+      <option value="tidy">Aufräumen (stellt das Layout her)</option>
+    </select>
+  </div>
   <div class="row hidden" id="ringRow"><label for="ring">Ring</label>
     <select id="ring">
       <option value="halves">Hälften, Maximieren, Teilen</option>
@@ -48,8 +54,8 @@
   </div>
   <div class="row hidden" id="dirRow"><label for="dir">Richtung</label>
     <select id="dir">
-      <option value="1">Naht nach rechts / unten (+)</option>
-      <option value="-1">Naht nach links / oben (−)</option>
+      <option value="1">Vorwärts / Naht nach rechts (+)</option>
+      <option value="-1">Zurück / Naht nach links (−)</option>
     </select>
   </div>
   <p id="hint"></p>
@@ -58,10 +64,11 @@
   const allowedWhat = Array.from(document.querySelectorAll('#what option')).map(o => o.value);
   const allowedDir = ['1', '-1'];
   const allowedRing = ['halves', 'thirds', 'quarters'];
+  const allowedDesk = ['save', 'tidy'];
 
   function save() {
     const settings = { what: document.getElementById('what').value, dir: document.getElementById('dir').value,
-                       ring: document.getElementById('ring').value };
+                       ring: document.getElementById('ring').value, desk: document.getElementById('desk').value };
     if (socket && socket.readyState === 1) {
       socket.send(JSON.stringify({ event: 'setSettings', context: uuid, payload: settings }));
     }
@@ -74,6 +81,7 @@
     try { action = JSON.parse(actionInfo); } catch (e) { action = {}; }
     const s = (action.payload && action.payload.settings) || {};
     document.getElementById('what').value = allowedWhat.includes(s.what) ? s.what : 'left';
+    document.getElementById('desk').value = allowedDesk.includes(s.desk) ? s.desk : 'save';
     document.getElementById('ring').value = allowedRing.includes(s.ring) ? s.ring : 'halves';
     document.getElementById('dir').value = allowedDir.includes(String(s.dir)) ? String(s.dir) : '1';
     const hint = document.getElementById('hint');
@@ -83,6 +91,14 @@
       hint.textContent = onDial
         ? 'Drehen wählt die Fläche, Drücken wendet sie auf das Fenster der vordersten App an. Seam muss laufen und „Bedienungshilfen“ haben.'
         : 'Wirkt auf das Fenster der vordersten App. Seam muss laufen und „Bedienungshilfen“ haben.';
+    }
+    if (action.action === 'dev.mwlr.seam.deck.wallpaper') {
+      if (action.payload && action.payload.controller === 'Keypad') document.getElementById('dirRow').classList.remove('hidden');
+      hint.textContent = 'Wechselt nur zwischen den Dateien des Bildordners (Einstellungen in Seam). Höchstens ein Wechsel alle 1,5 Sekunden.';
+    }
+    if (action.action === 'dev.mwlr.seam.deck.desk') {
+      document.getElementById('deskRow').classList.remove('hidden');
+      hint.textContent = 'Zum Auslösen die Taste mindestens 0,8 Sekunden halten. „Aufräumen“ bewegt für einige Sekunden Maus und Tastatur; ein Griff zur Maus bricht es ab.';
     }
     if (action.action === 'dev.mwlr.seam.deck.seam') {
       // Am Drehregler dreht der Regler, drücken teilt. Auf einer Taste gilt die Richtung.
@@ -94,6 +110,7 @@
     document.getElementById('what').onchange = save;
     document.getElementById('dir').onchange = save;
     document.getElementById('ring').onchange = save;
+    document.getElementById('desk').onchange = save;
   };
 </script>
 </body>
