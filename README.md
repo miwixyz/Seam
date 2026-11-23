@@ -69,6 +69,9 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   nach Menüs geordnet, nur zum Ansehen. Liest die Menüleiste (nur Punkte mit Kürzel, nur im Speicher)
   und von der Tastatur nur „⌘ allein gehalten“ (`flagsChanged`, eine einzige Datei, per Lint-Regel
   erzwungen, E24). Braucht keine Eingabeüberwachung.
+- **Stream Deck** (ab Werk aus): Plugin mit Regler „Naht“ (Stufen, Stufenanzeige, Drücken teilt) und
+  „Platz“ (feste Flächen als Taste oder als Regler mit Ring), vier fertige Profile für Stream Deck +
+  und Neo. Lokaler Socket, Plugin und Elgato-App beidseitig signaturgeprüft, nur feste Befehle (E20).
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
@@ -111,6 +114,8 @@ Seam Bilder und Titel der Fenster nur auf ⌘Tab bzw. beim Zeigen aufs Dock, nur
 nie im Protokoll (E21). Sonst liest es von fremden Fenstern Lage, Größe und Art, nie Titel oder Inhalte.
 Das Kürzel-Blatt (E24, wenn eingeschaltet) liest die Menüleiste der vordersten App: Titel nur von
 Menüpunkten mit Kürzel, nur im Arbeitsspeicher, nur solange das Blatt sichtbar ist.
+Mit eingeschaltetem Stream Deck (E20) nimmt Seam über einen lokalen, signaturgeprüften Socket nur feste
+Befehle des eigenen Plugins an und meldet nur Zahlen und Zustände zurück, nie Namen oder Inhalte.
 Für das Abdunkeln liest es aus der Fensterliste des Systems nur Nummer, Prozess und Lage, dazu,
 ob die vordere App der Finder ist (Schreibtisch). Hast du Apps gewählt, die nie abgedunkelt werden,
 vergleicht es die App-Kennung (Bundle-ID) der Fenster mit dieser Liste. Gespeichert werden nur deine

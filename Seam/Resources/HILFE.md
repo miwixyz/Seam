@@ -238,6 +238,25 @@ Kürzel mit ⌘ und einer Ziffer (⌘1 bis ⌘9) zeigt das Blatt nicht, weil dah
 mit Dokumentnamen stehen. In Seam selbst, im Anmeldefenster und im Sicherheitsdialog erscheint
 es nie. Apps, die ihre Kürzel nicht in der Menüleiste führen, zeigen weniger oder nichts.
 
+## Stream Deck
+
+Einstellungen → „Stream Deck erlauben“ (ab Werk aus), dann „Plugin installieren …“. Stream Deck fragt
+selbst nach der Installation. Danach liegt in der Stream-Deck-App die Kategorie „Seam“ mit zwei
+Aktionen, dazu vier fertige Profile (Stream Deck + und Neo, je „Fenster“ und „Raster“).
+
+- **Naht** (Regler oder Taste): Drehen verschiebt die Naht zwischen zwei bündigen Fenstern um eine
+  Stufe (⅓ ⅜ ½ ⅝ ⅔), die Leiste zeigt die Stufe. Drücken am Regler teilt zwei Fenster. Auf einer
+  Taste stellst du die Richtung ein. Steht kein zweites Fenster an der Naht, zeigt das Gerät
+  „erst Teilen“ und ein Warnzeichen, die Fenster bleiben unverändert.
+- **Platz** (Taste oder Regler): Setzt das Fenster der vordersten App auf die gewählte Fläche. Am
+  Regler wählst du die Fläche durch Drehen aus einem Ring (Hälften, Drittel, Viertel), angewendet wird
+  erst beim Drücken oder Tippen.
+
+Das Gerät kann nur diese festen Befehle senden. Es liest nichts von Seam außer einer Zahl und einem
+Zustand (Stufe, „kein Fenster“, „Freigabe fehlt“). Ohne die Freigabe „Gerätesteuerung und Datenzugriff“
+tut es nichts. Schalter aus: Der Socket ist zu und die Datei gelöscht. Funktioniert ein Befehl nicht,
+steht in den Einstellungen ein Hinweis; dann Schalter aus und wieder an.
+
 ## Supertaste
 
 Einstellungen → „Feststelltaste als Supertaste“. Hältst du die Feststelltaste, wirkt jede andere

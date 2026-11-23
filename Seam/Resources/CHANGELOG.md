@@ -2,6 +2,23 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.3.0] — 2026-11-23
+
+### Neu
+
+- **Stream Deck** (ab Werk aus, Einstellungen → „Stream Deck“): Ein Plugin für Elgatos Stream Deck
+  steuert Seam. Der Regler „Naht“ verschiebt die Naht in den Stufen ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe
+  auf der Leiste; Drücken teilt zwei Fenster. Die Aktion „Platz“ setzt das vordere Fenster auf eine
+  feste Fläche (Hälften, Drittel, Zweidrittel, Viertel, Maximieren, Zentrieren, Ursprüngliche Größe,
+  Bildschirm wechseln), als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an.
+  Dazu vier fertige Profile für Stream Deck + und Neo.
+- **Wie es abgesichert ist:** Das Plugin ist mit Developer ID signiert und hat keine Berechtigungen.
+  Seam öffnet erst mit dem Schalter einen lokalen Socket (Ordner nur für dich lesbar) und nimmt nur
+  Verbindungen an, bei denen sowohl das Plugin als auch Elgatos Stream-Deck-App echt signiert sind.
+  Es gibt nur feste Befehle (Naht eine Stufe weiter oder zurück, Fläche aus einer festen Liste),
+  keine Fenster- oder App-Namen, keine Pfade. Zurück zum Gerät gehen nur Zahlen und Zustände. Ohne
+  die Freigabe „Gerätesteuerung und Datenzugriff“ passiert am Gerät nichts.
+
 ## [1.2.0] — 2026-11-22
 
 ### Neu
