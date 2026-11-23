@@ -71,7 +71,9 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   erzwungen, E24). Braucht keine Eingabeüberwachung.
 - **Stream Deck** (ab Werk aus): Plugin mit Regler „Naht“ (Stufen, Stufenanzeige, Drücken teilt) und
   „Platz“ (feste Flächen als Taste oder als Regler mit Ring), vier fertige Profile für Stream Deck +
-  und Neo. Lokaler Socket, Plugin und Elgato-App beidseitig signaturgeprüft, nur feste Befehle (E20).
+  und Neo. Dazu „Layout“ (speichern/aufräumen, Taste halten), „Hintergrund“ (Bild ←/→ aus einem gewählten Ordner, nur lokal)
+  und eine optionale Vorschau auf der Leiste (ab Werk aus). Lokaler Socket, Plugin und Elgato-App beidseitig
+  signaturgeprüft, nur feste Befehle (E20).
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).

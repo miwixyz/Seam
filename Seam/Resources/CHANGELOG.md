@@ -2,6 +2,30 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.4.0] — 2026-11-23
+
+### Neu
+
+- **Stream Deck: Layout.** Die Aktion „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt
+  es wieder her. Beides löst erst aus, wenn du die Taste mindestens 0,8 Sekunden hältst, und höchstens
+  einmal alle 3 Sekunden. „Aufräumen“ bewegt wie bisher für einige Sekunden Maus und Tastatur und bricht
+  ab, sobald du eingreifst; alle bisherigen Sperren gelten (gesperrter Bildschirm, Vollbild, fehlende
+  Kurzbefehle für Spaces). Die Taste zeigt die Zahl der gespeicherten Apps, „läuft …“ oder den Grund, warum
+  nichts passierte.
+- **Stream Deck: Hintergrund.** Regler oder Taste „Hintergrund“ wechseln zum nächsten oder vorigen Bild eines
+  Ordners, den du in den Einstellungen unter „Stream Deck“ wählst (ohne Wahl: die Online-Auswahl). Es werden
+  nur Dateien direkt in diesem Ordner genommen (Bilder und Videos, höchstens 200), nichts wird aus dem Netz
+  geladen, und der Ordner lässt sich nur dort, nie vom Gerät aus, ändern. Höchstens ein Wechsel alle 1,5
+  Sekunden. Die Leiste zeigt „3/12“.
+- **Stream Deck: Vorschau auf der Leiste** (ab Werk aus, eigener Schalter). Seam schickt ein kleines Bild
+  (200 × 100) des gerade geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates
+  Foto ist. Für Videos gibt es keine Vorschau.
+- Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo (Layout, Bild ←/→, Teilen, Hälften, Regler).
+
+### Geändert
+
+- Plugin und Seam müssen zusammen aktualisiert werden (Einstellungen → „Stream Deck“ → „Plugin installieren …“).
+
 ## [1.3.0] — 2026-11-23
 
 ### Neu

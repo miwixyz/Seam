@@ -13,7 +13,7 @@ import uuid
 import zipfile
 from pathlib import Path
 
-PLUGIN = {"Name": "Seam", "UUID": "dev.mwlr.seam.deck", "Version": "1.3.0.2"}
+PLUGIN = {"Name": "Seam", "UUID": "dev.mwlr.seam.deck", "Version": "1.4.0.0"}
 NS = uuid.UUID("3b7d1c52-8a6e-4c1e-9d3a-5f4a2b7c9e11")   # Namensraum für feste UUIDs
 
 

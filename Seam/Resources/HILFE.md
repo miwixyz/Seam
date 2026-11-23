@@ -252,6 +252,17 @@ Aktionen, dazu vier fertige Profile (Stream Deck + und Neo, je „Fenster“ und
   Regler wählst du die Fläche durch Drehen aus einem Ring (Hälften, Drittel, Viertel), angewendet wird
   erst beim Drücken oder Tippen.
 
+- **Layout** (Taste): „Layout sichern“ ersetzt das gespeicherte Layout deiner Bildschirm-Kombination, „Aufräumen“
+  stellt es wieder her. Die Taste musst du mindestens 0,8 Sekunden halten; ein kurzer Druck zeigt „Länger halten“.
+  Aufräumen gilt wie sonst: Es bewegt kurz Maus und Tastatur und bricht ab, sobald du eingreifst. Höchstens ein
+  Layout-Befehl alle 3 Sekunden.
+- **Hintergrund** (Regler oder Taste): wechselt zum nächsten oder vorigen Bild. Den Ordner wählst du in den
+  Einstellungen unter „Stream Deck“ → „Bildordner“ (ohne Wahl: die Online-Auswahl). Es zählen nur Bilder und Videos
+  direkt im Ordner, höchstens 200. Das Gerät lädt nie etwas aus dem Netz und kann den Ordner nicht ändern.
+- **Vorschau auf der Leiste** (ab Werk aus, „Vorschau des Hintergrunds auf der Leiste“): Seam schickt dann ein kleines Bild
+  (200 × 100) des geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist. Videos
+  haben keine Vorschau.
+
 Das Gerät kann nur diese festen Befehle senden. Es liest nichts von Seam außer einer Zahl und einem
 Zustand (Stufe, „kein Fenster“, „Freigabe fehlt“). Ohne die Freigabe „Gerätesteuerung und Datenzugriff“
 tut es nichts. Schalter aus: Der Socket ist zu und die Datei gelöscht. Funktioniert ein Befehl nicht,

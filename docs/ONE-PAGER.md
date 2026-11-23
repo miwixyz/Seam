@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 1.4
+
+**Stream Deck: Layout und Hintergrund.** „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt es wieder her; die Taste löst erst nach 0,8 Sekunden Halten aus, und „Aufräumen“ bricht ab, sobald du die Maus anfasst. „Hintergrund“ wechselt zum nächsten oder vorigen Bild eines Ordners, den du in den Einstellungen wählst, nur lokal und nie aus dem Netz. Die Leiste zeigt die Stelle im Ordner, auf Wunsch (ab Werk aus) auch ein kleines Vorschaubild. Das geht an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist, deshalb der eigene Schalter. Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo.
+
+---
+
 ## Neu in 1.3
 
 **Stream Deck.** Mit einem Plugin für Elgatos Stream Deck verschiebst du die Naht und setzt Fenster, ohne die Maus zu holen. Der Regler „Naht“ springt durch ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste, Drücken teilt zwei Fenster. „Platz“ setzt das vordere Fenster auf eine feste Fläche, als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Vier fertige Profile für Stream Deck + und Neo liegen dabei. Ab Werk aus: Einstellungen → „Stream Deck“, dann „Plugin installieren“. Das Plugin kann nur feste Befehle senden, Seam prüft es und Elgatos App vor dem ersten Byte, und zurück gehen nur Zahlen und Zustände, keine Namen.
