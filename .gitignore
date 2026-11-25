@@ -14,3 +14,6 @@ build-test/
 
 # Lokale Claude-Code-Freigaben (koennen Zugangsdaten enthalten)
 .claude/settings.local.json
+
+# Spike Meeting-Privacy (25.11.2026): probe.log enthält Mikrofon- und Anruf-Aktivität, dazu die Sonden-Programmdatei. Repo ist öffentlich, nie committen.
+spike/meeting-privacy/
