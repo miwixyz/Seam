@@ -50,7 +50,8 @@ targets:
     resources:
       - path: Seam/Resources/HILFE.md
       - path: Seam/Resources/CHANGELOG.md
-      - path: Seam/Resources/AppIcon.icon
+      - path: Seam/Resources/Assets.xcassets
+      - path: Seam/Resources/seam.caf
       - path: Seam/Resources/THIRD-PARTY-LICENSES.md
       - path: Seam/Resources/PlusJakartaSans-Variable.ttf
     dependencies:
@@ -81,7 +82,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.mwlr.seam
         CODE_SIGN_ENTITLEMENTS: Seam/Resources/Seam.entitlements
         ENABLE_HARDENED_RUNTIME: YES
-        # Ebenen-Symbol aus Icon Composer (macOS 27: Hell/Dunkel/Klar/Getönt), 09.10.
+        # Maskottchen der App-Familie als klassisches AppIcon.appiconset (wie Tippi): kein
+        # Glas, eigenes Squircle im Bild. Das alte Icon-Composer-Symbol liegt unter design/.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
         COMBINE_HIDPI_IMAGES: YES

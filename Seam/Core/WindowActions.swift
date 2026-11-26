@@ -11,6 +11,8 @@ final class WindowActions {
     let writer = NeighborWriter()
     /// Hinweis, wenn ein Fenster an seiner Mindestgröße stehen blieb (MinimumNotice).
     private let hud = NoticeHUD()
+    /// Ton beim Einrasten (Einstellung „Ton beim Einrasten“, ab Werk aus).
+    private let snapSound = SnapSound()
 
     /// Rahmen vor dem ersten Andocken. Nur im Speicher, an die AX-Referenz
     /// gebunden, nach einem Neustart weg (docs/SECURE-DESIGN.md E10).
@@ -98,7 +100,10 @@ final class WindowActions {
         let (a, b) = Geometry.splitFrames(at: 12, in: screen.visible, screen.orientation, gap: CGFloat(prefs.gap))
         snappedSize[first] = a.size
         snappedSize[second] = b.size
-        setPair((first, a), (second, b), name: "Teilen") { [weak self] in self?.onSplit?(first, second) }
+        setPair((first, a), (second, b), name: "Teilen") { [weak self] in
+            self?.onSplit?(first, second)
+            self?.didSnap()
+        }
     }
 
     /// ⌃⌥⇧← / → : Naht zur nächsten festen Stufe (⅓ ⅜ ½ ⅝ ⅔). Beide Fenster in einem
@@ -196,6 +201,11 @@ final class WindowActions {
         }
     }
 
+    /// Fenster ist eingerastet (Rahmen gesetzt): Ton der App-Familie, falls eingeschaltet.
+    private func didSnap() {
+        if prefs.snapSound { snapSound.play() }
+    }
+
     private func plan(_ jobs: [(AXWindow, CGRect)]) {
         for (w, r) in jobs { planned[w] = r }
     }
@@ -236,7 +246,9 @@ final class WindowActions {
         // Nachbarn mitsetzen: nur bei festen Flächen (Hälften, Viertel, Drittel), nicht
         // beim Zentrieren, Wiederherstellen oder Bildschirmwechsel.
         let partners: [(AXWindow, CGRect)]
-        if let t = target, Layout.spec(cmd, screen.orientation)?.target != nil {
+        // Einrasten = feste Fläche (Hälfte, Viertel, Drittel …), per Kürzel, Popover oder Ziehen.
+        let isSnap = Layout.spec(cmd, screen.orientation)?.target != nil
+        if let t = target, isSnap {
             partners = WindowFinder.complements(target: Geometry.clamp(t, to: screen.visible), visible: screen.visible,
                                                 moving: w, movingFrame: f, gap: gap)
         } else {
@@ -256,6 +268,8 @@ final class WindowActions {
             Task { @MainActor in
                 self?.unplan(jobs)
                 self?.noteSnappedSizes([(w, finalSize ?? nil)])
+                // Erst wenn der Rahmen gesetzt ist, nicht bei Zwischenschritten oder beim Mitziehen.
+                if isSnap, (finalSize ?? nil) != nil { self?.didSnap() }
             }
         }
     }

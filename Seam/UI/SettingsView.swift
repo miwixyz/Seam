@@ -31,6 +31,8 @@ struct SettingsView: View {
                 toggleRow("Geteilte Fenster bleiben zusammen", isOn: $prefs.keepPairs)
                     .onChange(of: prefs.keepPairs) { engine.applyPairSetting() }
                 divider
+                toggleRow("Ton beim Einrasten", isOn: $prefs.snapSound)
+                divider
                 row("Abstand zwischen Fenstern") {
                     Picker("Abstand zwischen Fenstern", selection: $prefs.gap) {
                         ForEach(Preferences.gapChoices, id: \.self) { Text($0 == 0 ? "Kein Abstand" : "\($0) pt").tag($0) }

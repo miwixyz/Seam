@@ -16,20 +16,22 @@ struct SeamApp: App {
                 .environment(engine)
                 .environment(engine.prefs)
         } label: {
-            // E23: gefülltes Symbol, solange der Mac zugeklappt wach bleibt (nicht vergessen).
-            let symbol = !engine.isTrusted ? "rectangle.split.2x1.slash"
-                : engine.lidWake.isOn ? "rectangle.split.2x1.fill" : "rectangle.split.2x1"
+            // Familien-Symbol (Kopf mit Panda-Ohren, Fenster mit Naht) aus dem Asset-Katalog,
+            // Vorlagenbilder 18 pt. Durchgestrichen: Freigabe fehlt. E23: gefüllt, solange der
+            // Mac zugeklappt wach bleibt (nicht vergessen). Quellen: design/menueleiste/.
+            let symbol = !engine.isTrusted ? "MenuBarSeamSlash"
+                : engine.lidWake.isOn ? "MenuBarSeamFill" : "MenuBarSeam"
             // E14: selbst vergebener Name des aktuellen Space neben dem Symbol.
             let name = engine.spaces.menuBarTitle(engine.prefs)
             let icon = SpaceWatcher.showsIcon(title: name, hideWhenNamed: engine.prefs.hideIconWithSpaceName,
                                               trusted: engine.isTrusted)
             Group {
                 if let name, icon {
-                    Label(name, systemImage: symbol).labelStyle(.titleAndIcon)
+                    Label { Text(name) } icon: { Image(symbol) }.labelStyle(.titleAndIcon)
                 } else if let name {
                     Text(name)
                 } else {
-                    Image(systemName: symbol)
+                    Image(symbol)
                 }
             }
             // Neu aufbauen, wenn sich der Inhalt ändert: sonst behielt das Menüleisten-Symbol

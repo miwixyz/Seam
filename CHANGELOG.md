@@ -2,6 +2,22 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [Unveröffentlicht]
+
+### Neu
+
+- **Ton beim Einrasten** (ab Werk aus): Einstellungen → „Fenster“ → „Ton beim Einrasten“. Ein kurzer
+  Einrast-Ton, sobald ein Fenster auf seiner Fläche sitzt: nach dem Andocken per Ziehen, nach einem
+  Kürzel oder einer Kachel für eine feste Fläche (Hälfte, Viertel, Drittel …) und nach ⌃⌥S. Beim
+  Verschieben der Naht, beim Mitziehen und beim Zentrieren bleibt es still.
+
+### Geändert
+
+- **Neues App-Symbol:** das Seam-Maskottchen der App-Familie statt des Glas-Symbols.
+- **Neues Menüleisten-Symbol:** Kopf mit Panda-Ohren und Fenster mit Naht. Die Zustände bleiben:
+  durchgestrichen, solange die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt; Fenster gefüllt,
+  solange der Mac zugeklappt wach bleibt.
+
 ## [1.4.0] — 2026-11-23
 
 ### Neu

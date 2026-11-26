@@ -83,6 +83,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
   aus und ohne Verbindung beendet er sich nach 10 s, launchd startet ihn beim nächsten Auftrag neu (E23f, ab 1.1.1).
 - **Spaces in fester Reihenfolge halten:** setzt `mru-spaces` des Docks, merkt sich den alten Wert.
 - Abstand zwischen Fenstern, ursprüngliche Größe beim Herausziehen.
+- **Ton beim Einrasten** (ab Werk aus): kurzer Ton der App-Familie, sobald ein Fenster auf einer festen
+  Fläche sitzt (Ziehen, Kürzel, Kachel, ⌃⌥S), nicht beim Naht-Verschieben oder Mitziehen.
 
 ## Installieren
 

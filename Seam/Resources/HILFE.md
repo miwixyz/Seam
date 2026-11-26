@@ -5,6 +5,10 @@ Menüleiste. Ein Klick auf das Symbol öffnet ein Fenster mit allen Anordnungen 
 liegen Knöpfe für Abdunkeln, Spaces, Einstellungen (Zahnrad), Hilfe und Beenden. Einstellungen,
 Hilfe und „Spaces benennen“ öffnen sich immer im Space, in dem du gerade bist.
 
+Das Symbol in der Menüleiste zeigt einen Kopf mit Panda-Ohren und ein Fenster mit Naht.
+**Durchgestrichen** heißt: Die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt (siehe unten).
+**Fenster gefüllt** heißt: Der Mac bleibt zugeklappt wach (siehe „Wach bei zugeklapptem Deckel“).
+
 ## Einrichten
 
 Seam braucht die Freigabe **Gerätesteuerung und Datenzugriff** (früher „Bedienungshilfen“), sonst darf es
@@ -29,6 +33,10 @@ Programme. Beende das andere oder schalte dort die Kürzel ab.
   und beim Zurückholen kommen beide wieder. Das Paar löst sich, sobald ein Fenster geschlossen
   wird, die App endet oder ausgeblendet wird (⌘H), oder die beiden nicht mehr nebeneinander
   stehen. Abschalten: Einstellungen → „Geteilte Fenster bleiben zusammen“.
+- **Ton beim Einrasten** (ab Werk aus): Einstellungen → „Ton beim Einrasten“. Ein kurzer Ton, sobald
+  ein Fenster auf seiner Fläche sitzt, nach dem Andocken per Ziehen, nach einem Kürzel oder einer
+  Kachel für eine Hälfte, ein Viertel, ein Drittel und nach ⌃⌥S. Beim Verschieben der Naht und beim
+  Mitziehen bleibt es still.
 
 ## Namen für Spaces
 

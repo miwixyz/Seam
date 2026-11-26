@@ -14,6 +14,7 @@ final class Preferences {
         static let gap = "gap"
         static let restoreOnDragOut = "restoreOnDragOut"
         static let keepPairs = "keepPairs"
+        static let snapSound = "snapSound"
         static let dimEnabled = "dimEnabled"
         static let dimStrength = "dimStrength"
         static let dimScreenModes = "dimScreenModes"
@@ -66,6 +67,8 @@ final class Preferences {
     var restoreOnDragOut: Bool { didSet { defaults.set(restoreOnDragOut, forKey: Key.restoreOnDragOut) } }
     /// Mit ⌃⌥S geteilte Fenster kommen gemeinsam nach vorn und werden gemeinsam minimiert (E12).
     var keepPairs: Bool { didSet { defaults.set(keepPairs, forKey: Key.keepPairs) } }
+    /// Ton der App-Familie, wenn ein Fenster einrastet (Andockfläche, ⌃⌥S). Ab Werk aus.
+    var snapSound: Bool { didSet { defaults.set(snapSound, forKey: Key.snapSound) } }
     /// Hintergrund abdunkeln wie HazeOver (E13). Ab Werk aus (Michael, 09.10.).
     var dimEnabled: Bool { didSet { defaults.set(dimEnabled, forKey: Key.dimEnabled) } }
     /// Deckkraft der Abdunklung in Prozent. Ab 0.6 der Wert für Bildschirme ohne eigene Stärke.
@@ -309,6 +312,7 @@ final class Preferences {
         gap = Self.gapChoices.contains(g) ? g : 5
         restoreOnDragOut = defaults.object(forKey: Key.restoreOnDragOut) as? Bool ?? true
         keepPairs = defaults.object(forKey: Key.keepPairs) as? Bool ?? true
+        snapSound = defaults.object(forKey: Key.snapSound) as? Bool ?? false
         dimEnabled = defaults.object(forKey: Key.dimEnabled) as? Bool ?? false
         let s = defaults.object(forKey: Key.dimStrength) as? Int ?? 35
         dimStrength = Self.dimChoices.contains(s) ? s : 35
