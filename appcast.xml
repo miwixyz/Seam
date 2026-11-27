@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.5.0</title>
+            <pubDate>Fri, 27 Nov 2026 16:51:54 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>122</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Ton beim Einrasten</b> (ab Werk aus): Einstellungen → „Fenster“ → „Ton beim Einrasten“. Ein kurzer Einrast-Ton, sobald ein Fenster auf seiner Fläche sitzt: nach dem Andocken per Ziehen, nach einem Kürzel oder einer Kachel für eine feste Fläche (Hälfte, Viertel, Drittel …) und nach ⌃⌥S. Beim Verschieben der Naht, beim Mitziehen und beim Zentrieren bleibt es still.</li></ul><h3>Geändert</h3><ul><li><b>Glas-Sprache der App-Familie</b> (wie Kalli 0.20.0 und Qotti 1.7.0): Popover und alle Fenster (Einstellungen, Abdunkeln, Hintergrund, Layout, Link-Regeln, Online-Auswahl, Browser-Auswahl) liegen auf einem ruhigen Verlauf statt auf Systemglas bzw. dem festen Familien-Verlauf. Ein buntes Schreibtischbild färbt das Popover nicht mehr ein. „Quer“/„Hochkant“ ist eine gleitende, leuchtende Pille, der aktuelle Space leuchtet in derselben Pille, und die runden Knöpfe unten im Popover sitzen zusammen in einer schwebenden Glaskapsel. Bei „Transparenz reduzieren“ und „Kontrast erhöhen“ bleibt der Hintergrund ein fester Verlauf, bei „Bewegung reduzieren“ steht er still.</li><li><b>Neues App-Symbol:</b> das Seam-Maskottchen der App-Familie statt des Glas-Symbols.</li><li><b>Neues Menüleisten-Symbol:</b> Kopf mit Panda-Ohren und Fenster mit Naht. Die Zustände bleiben: durchgestrichen, solange die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt; Fenster gefüllt, solange der Mac zugeklappt wach bleibt.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.0/Seam-1.5.0.zip" length="6204822" type="application/octet-stream" sparkle:edSignature="w+fVF3UYrDeHQykAtAqkhM0xJKwegmf5sdre2NclBYqozRLNMNjYTX2DKGXqfSeUYme1b1ijzMXd0pFrluWJDQ=="/>
+        </item>
+        <item>
             <title>1.4.0</title>
             <pubDate>Mon, 23 Nov 2026 12:39:04 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck</b> (ab Werk aus, Einstellungen → „Stream Deck“): Ein Plugin für Elgatos Stream Deck steuert Seam. Der Regler „Naht“ verschiebt die Naht in den Stufen ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste; Drücken teilt zwei Fenster. Die Aktion „Platz“ setzt das vordere Fenster auf eine feste Fläche (Hälften, Drittel, Zweidrittel, Viertel, Maximieren, Zentrieren, Ursprüngliche Größe, Bildschirm wechseln), als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Dazu vier fertige Profile für Stream Deck + und Neo.</li><li><b>Wie es abgesichert ist:</b> Das Plugin ist mit Developer ID signiert und hat keine Berechtigungen. Seam öffnet erst mit dem Schalter einen lokalen Socket (Ordner nur für dich lesbar) und nimmt nur Verbindungen an, bei denen sowohl das Plugin als auch Elgatos Stream-Deck-App echt signiert sind. Es gibt nur feste Befehle (Naht eine Stufe weiter oder zurück, Fläche aus einer festen Liste), keine Fenster- oder App-Namen, keine Pfade. Zurück zum Gerät gehen nur Zahlen und Zustände. Ohne die Freigabe „Gerätesteuerung und Datenzugriff“ passiert am Gerät nichts.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.3.0/Seam-1.3.0.zip" length="4872247" type="application/octet-stream" sparkle:edSignature="Dy6tazO7oPpNKE97t8wnO8yX/0JttiMJlQ8+PsSORB4uIQ8k3Ys/KeVSLXnqFFYpOrwurcuLhx88QZShkLn8AQ=="/>
         </item>
-        <item>
-            <title>1.2.0</title>
-            <pubDate>Sun, 22 Nov 2026 11:58:15 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>111</sparkle:version>
-            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Kürzel-Blatt</b> (ab Werk aus, Einstellungen → „Kürzel-Blatt“): Hältst du ⌘ allein gedrückt (Standard 0,6 s, wählbar bis 1,5 s), zeigt Seam die Kürzel der vordersten App, nach Menüs geordnet. Das Blatt ist nur zum Ansehen: kein Klick, kein Fokus. Seam liest dafür die Menüleiste der App, nur Menüpunkte mit Kürzel, nur im Arbeitsspeicher und nur, solange das Blatt sichtbar ist. Von der Tastatur sieht Seam dabei nur, ob ⌘ allein gehalten wird, nie Buchstaben. Kürzel mit ⌘ und einer Ziffer lässt das Blatt weg (das sind meist Fensterlisten mit Dokumentnamen).</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.2.0/Seam-1.2.0.zip" length="4114898" type="application/octet-stream" sparkle:edSignature="XljE4jZC5wubWTC5y9gEHmcAi2l2X5gmM4G3ao/dR3ih+v8Hb/SwUByCAGt9XasvLv4hvutDehoXL++Bo9VQAw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: HQIs+7ZqBwO5kn4p58ErMU0lV2osmTJHza5tWjSj0zWsgiFpBEqslLpu/2nzFMpJKMoCYa2V0Z2yQ5V6eOxbCA==
-length: 6041
+edSignature: ics9iDkvjQN4rG2jVJgP4qhcKp5bxNKqbVuaMegvJCqXh5b7zetfwM6FBTCYUXgPV6EOIFHUJsWE6avDb1+CAg==
+length: 6917
 -->
