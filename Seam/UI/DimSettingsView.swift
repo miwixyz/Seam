@@ -204,6 +204,6 @@ struct DimSettingsWindow: View {
             DimSettingsView().padding(FamilyTheme.Space.l)
         }
         .frame(width: Self.size.width, height: Self.size.height)
-        .familyBackground()
+        .familyAmbientBackground()
     }
 }

@@ -139,7 +139,7 @@ struct SettingsView: View {
         .foregroundStyle(FamilyTheme.textPrimary)
         .tint(FamilyTheme.accent)
         .fixedSize(horizontal: false, vertical: true)
-        .familyBackground()
+        .familyAmbientBackground()
         .onAppear {
             login = LoginItem.state
             router.refresh()

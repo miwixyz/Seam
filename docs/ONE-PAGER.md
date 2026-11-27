@@ -18,6 +18,12 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ---
 
+## Neu in 1.5
+
+**Neues Aussehen.** Das Seam-Fenster in der Menüleiste und alle Einstellungsfenster liegen jetzt auf einem ruhigen Farbverlauf, und ein buntes Schreibtischbild färbt sie nicht mehr ein. „Quer“ und „Hochkant“ wechselst du mit einer leuchtenden Pille, der aktuelle Space leuchtet genauso, und die runden Knöpfe unten sitzen zusammen in einer schwebenden Glasleiste. Neu ist auch ein kurzer Ton beim Einrasten (ab Werk aus), dazu tragen App und Menüleiste das Maskottchen der App-Familie.
+
+---
+
 ## Neu in 1.4
 
 **Stream Deck: Layout und Hintergrund.** „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt es wieder her; die Taste löst erst nach 0,8 Sekunden Halten aus, und „Aufräumen“ bricht ab, sobald du die Maus anfasst. „Hintergrund“ wechselt zum nächsten oder vorigen Bild eines Ordners, den du in den Einstellungen wählst, nur lokal und nie aus dem Netz. Die Leiste zeigt die Stelle im Ordner, auf Wunsch (ab Werk aus) auch ein kleines Vorschaubild. Das geht an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist, deshalb der eigene Schalter. Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo.

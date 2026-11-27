@@ -77,7 +77,7 @@ struct LinkRulesWindow: View {
         LinkRulesView(router: router)
             .padding(16)
             .frame(width: Self.size.width, height: Self.size.height)
-            .familyBackground()
+            .familyAmbientBackground()
     }
 }
 

@@ -335,6 +335,6 @@ struct WallpaperSettingsWindow: View {
             WallpaperSettingsView().padding(FamilyTheme.Space.l)
         }
         .frame(width: Self.size.width, height: Self.size.height)
-        .familyBackground()
+        .familyAmbientBackground()
     }
 }

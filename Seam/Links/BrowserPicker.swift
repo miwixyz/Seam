@@ -147,7 +147,7 @@ private struct BrowserPickerView: View {
         .padding(FamilyTheme.Space.l)
         .padding(.top, FamilyTheme.Space.s)
         .frame(width: 360)
-        .familyBackground()
+        .familyAmbientBackground()
         .focusable()
         .focusEffectDisabled()
         .focused($focused)

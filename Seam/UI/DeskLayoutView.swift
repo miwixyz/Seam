@@ -159,6 +159,6 @@ struct DeskLayoutWindow: View {
             DeskLayoutView().padding(FamilyTheme.Space.l)
         }
         .frame(width: 480, height: 560)
-        .familyBackground()
+        .familyAmbientBackground()
     }
 }

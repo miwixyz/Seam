@@ -55,6 +55,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 - **Glas-Fenster in der Menüleiste** (0.4): alle Anordnungen als Kacheln mit Piktogramm, Quer/Hochkant
   passend zum Bildschirm des Zielfensters, aktueller Space oben, Knöpfe für Abdunkeln, Spaces,
   Einstellungen und Hilfe. Einstellungen im eigenen Fenster im selben Look, erscheinen im aktuellen Space (0.4.2).
+  Ab 1.5.0 in der Glas-Sprache der App-Familie: ruhiger Verlauf als Hintergrund, Quer/Hochkant und
+  aktueller Space als leuchtende Pille, Knopfreihe als schwebende Glaskapsel.
 - **Links verteilen** (0.5, ab Werk aus): Seam als Standardbrowser gibt jeden Link nach Regeln
   (Website und/oder Quell-App) an einen Browser weiter, eine gehaltene Taste beim Klick (Fn, ⌥, ⇧ oder ⌃⌥, wählbar; ab Werk Fn und ⌥) zeigt eine Auswahl, ⌘
   merkt sich die Website. Tracking-Anhänge (`utm_*`, `fbclid` …) werden abgeschnitten. Idee aus

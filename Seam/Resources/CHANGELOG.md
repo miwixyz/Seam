@@ -2,7 +2,7 @@
 
 Alle nennenswerten Änderungen an Seam.
 
-## [Unveröffentlicht]
+## [1.5.0] — 2026-11-27
 
 ### Neu
 
@@ -13,10 +13,25 @@ Alle nennenswerten Änderungen an Seam.
 
 ### Geändert
 
+- **Glas-Sprache der App-Familie** (wie Kalli 0.20.0 und Qotti 1.7.0): Popover und alle Fenster
+  (Einstellungen, Abdunkeln, Hintergrund, Layout, Link-Regeln, Online-Auswahl, Browser-Auswahl) liegen
+  auf einem ruhigen Verlauf statt auf Systemglas bzw. dem festen Familien-Verlauf. Ein buntes
+  Schreibtischbild färbt das Popover nicht mehr ein. „Quer“/„Hochkant“ ist eine gleitende, leuchtende
+  Pille, der aktuelle Space leuchtet in derselben Pille, und die runden Knöpfe unten im Popover sitzen
+  zusammen in einer schwebenden Glaskapsel. Bei „Transparenz reduzieren“ und „Kontrast erhöhen“ bleibt
+  der Hintergrund ein fester Verlauf, bei „Bewegung reduzieren“ steht er still.
 - **Neues App-Symbol:** das Seam-Maskottchen der App-Familie statt des Glas-Symbols.
 - **Neues Menüleisten-Symbol:** Kopf mit Panda-Ohren und Fenster mit Naht. Die Zustände bleiben:
   durchgestrichen, solange die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt; Fenster gefüllt,
   solange der Mac zugeklappt wach bleibt.
+
+### Intern
+
+- `Seam/UI/FamilyGlassKit.swift`: Kopie des Glas-Kits aus der Vault-Vorlage, **ohne Teil I**
+  (`FamilyFloatingPanel` fängt `keyDown` ab; SwiftLint `keine_synthetischen_ereignisse`, SECURE-DESIGN
+  E1/E2). `Seam/UI/SeamChrome.swift`: `familyAmbientBackground()` und `islandButton()`.
+- `-renderPreview`: Im hellen Modus zeichnet der Renderer ohne Bildschirm Flächen mit Glas weiß
+  (gemessen 27.11.), dunkel stimmt es. Liquid Glass ist offscreen ohnehin nicht echt.
 
 ## [1.4.0] — 2026-11-23
 

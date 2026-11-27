@@ -401,7 +401,7 @@ struct OnlineGalleryWindow: View {
     var body: some View {
         OnlineGalleryView()
             .frame(width: Self.size.width, height: Self.size.height)
-            .familyBackground()
+            .familyAmbientBackground()
     }
 }
 

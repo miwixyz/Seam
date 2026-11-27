@@ -42,6 +42,9 @@ struct PopoverView: View {
         .padding(FamilyTheme.Space.l)
         .frame(width: 364)   // 332 pt Inhalt: so breit ist die Zeile „Ganz“ (5 Kacheln)
         .tint(FamilyTheme.accent)
+        // Glas-Sprache (1.5.0): deckender, ruhig lebender Verlauf statt Systemglas. Ein buntes
+        // Schreibtischbild färbt das Popover damit nicht mehr ein.
+        .familyAmbientBackground()
         .onAppear {
             // Kacheln passend zum Bildschirm des Zielfensters (Code-Audit 09.10., C1).
             let info = engine.targetInfo()
@@ -117,13 +120,11 @@ struct PopoverView: View {
             HStack {
                 Text("Anordnen").font(FamilyTheme.font(.headline)).foregroundStyle(FamilyTheme.textPrimary)
                 Spacer()
-                Picker("Ausrichtung", selection: $orientation) {
-                    Text("Quer").tag(Orientation.landscape)
-                    Text("Hochkant").tag(Orientation.portrait)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 150)
+                // Glas-Sprache: gleitende Akzent-Pille statt Systemumschalter.
+                GlassPillBar(items: [Orientation.landscape, .portrait], selection: orientation,
+                             label: { Text($0 == .landscape ? "Quer" : "Hochkant") },
+                             onSelect: { orientation = $0 })
+                    .accessibilityLabel("Ausrichtung")
             }
             ForEach(Self.groups, id: \.0) { group in
                 HStack(spacing: 6) {
@@ -239,8 +240,13 @@ struct PopoverView: View {
             }
             .padding(.horizontal, 9).frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(space.isCurrent ? FamilyTheme.accent : FamilyTheme.cardStroke.opacity(0.45))
+                // Aktueller Space: dieselbe leuchtende Akzent-Pille wie die Ausrichtung.
+                if space.isCurrent {
+                    FamilyAccentPill(shape: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                } else {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(FamilyTheme.cardStroke.opacity(0.45))
+                }
             }
             .contentShape(Rectangle())
         }
@@ -326,7 +332,7 @@ struct PopoverView: View {
                     Image(systemName: prefs.dimEnabled ? "circle.lefthalf.filled.inverse" : "circle.lefthalf.filled")
                         .foregroundStyle(prefs.dimEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
                 }
-                .buttonStyle(.familyGlass(.circle, size: 30))
+                .islandButton()
                 .modifier(HoverHint(text: prefs.dimEnabled ? "Hintergrund abdunkeln ist an – klicken zum Ausschalten"
                                                          : "Hintergrund abdunkeln ist aus – klicken zum Einschalten",
                                     current: $footerHint))
@@ -334,7 +340,7 @@ struct PopoverView: View {
 
                 if engine.spaces.available {
                     Button { openSpaces() } label: { Image(systemName: "square.on.square") }
-                        .buttonStyle(.familyGlass(.circle, size: 30))
+                        .islandButton()
                         .modifier(HoverHint(text: "Spaces benennen", current: $footerHint))
                         .accessibilityLabel("Spaces benennen")
                 }
@@ -342,7 +348,7 @@ struct PopoverView: View {
                     Image(systemName: "photo.on.rectangle")
                         .foregroundStyle(prefs.wallpaperEnabled ? FamilyTheme.accent : FamilyTheme.textPrimary)
                 }
-                .buttonStyle(.familyGlass(.circle, size: 30))
+                .islandButton()
                 .modifier(HoverHint(text: "Eigener Hintergrund: Video oder Bild", current: $footerHint))
                 .accessibilityLabel("Hintergrund")
                 lidWakeButton
@@ -350,22 +356,27 @@ struct PopoverView: View {
                 Button {
                     open("einstellungen")
                 } label: { Image(systemName: "gearshape") }
-                    .buttonStyle(.familyGlass(.circle, size: 30))
+                    .islandButton()
                     .modifier(HoverHint(text: "Einstellungen", current: $footerHint))
                     .accessibilityLabel("Einstellungen")
                 Button {
                     open("hilfe")
                 } label: { Image(systemName: "questionmark") }
-                    .buttonStyle(.familyGlass(.circle, size: 30))
+                    .islandButton()
                     .modifier(HoverHint(text: "Hilfe", current: $footerHint))
                     .accessibilityLabel("Hilfe")
                 Button { NSApp.terminate(nil) } label: { Image(systemName: "power") }
-                    .buttonStyle(.familyGlass(.circle, size: 30))
+                    .islandButton()
                     .modifier(HoverHint(text: "Seam beenden", current: $footerHint))
                     .accessibilityLabel("Seam beenden")
             }
+            // Glas-Sprache: Die ganze Knopfreihe schwebt als eine Glas-Insel (wie Kallis Fußleiste),
+            // die Knöpfe darin ohne eigenes Glas.
+            .padding(.horizontal, 6).padding(.vertical, 4)
+            .floatingGlassIsland(in: Capsule(style: .continuous))
             // Leerzeichen hält die Höhe, damit das Fenster beim Darüberfahren nicht springt.
             Text(verbatim: footerHint ?? " ")
+                .padding(.leading, 8)
                 .font(FamilyTheme.font(.caption))
                 .foregroundStyle(FamilyTheme.textSecondary)
                 .lineLimit(1)
@@ -419,7 +430,7 @@ extension PopoverView {
             Image(systemName: wake.isOn ? "cup.and.saucer.fill" : "cup.and.saucer")
                 .foregroundStyle(wake.isOn ? FamilyTheme.accent : FamilyTheme.textPrimary)
         }
-        .buttonStyle(.familyGlass(.circle, size: 30))
+        .islandButton()
         .modifier(HoverHint(text: wake.isOn ? "Wach bei zugeklapptem Deckel ist an – klicken zum Ausschalten"
                                             : "Wach bei zugeklapptem Deckel – klicken zum Einschalten",
                             current: $footerHint))
