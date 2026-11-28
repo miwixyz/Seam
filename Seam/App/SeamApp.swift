@@ -244,18 +244,14 @@ final class Engine {
         setSystemSwitcherOff(false)
         terminateToken = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.setSystemSwitcherOff(false)
-                KeyHelper.stop()
-            }
+            MainActor.assumeIsolated { self?.cleanUpOnQuit() }
         }
         // `pkill`/Sofort beenden schickt SIGTERM, das löst willTerminate NICHT aus → selbst abfangen.
         signal(SIGTERM, SIG_IGN)
         let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
         source.setEventHandler { [weak self] in
             MainActor.assumeIsolated {
-                self?.setSystemSwitcherOff(false)
-                KeyHelper.stop()
+                self?.cleanUpOnQuit()
                 exit(0)
             }
         }
@@ -435,6 +431,21 @@ final class Engine {
         }
         // E21i: macOS' ⌘Tab nur aus, wenn Seams eigenes ⌘Tab angemeldet ist — sonst gäbe es gar keins.
         setSystemSwitcherOff(prefs.switcherEnabled && !failedShortcuts.contains(Switcher.next))
+    }
+
+    /// Beim Beenden: eigenen Helfer stoppen, macOS' ⌘Tab nur zurückgeben, wenn keine andere Seam mehr
+    /// läuft. Beide teilen Kennung und Einstellungen; sonst gab das Beenden eines Testbaus ⌘Tab
+    /// an macOS zurück, während die installierte Seam den Umschalter noch braucht (28.11.).
+    private func cleanUpOnQuit() {
+        let me = ProcessInfo.processInfo.processIdentifier
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .contains { $0.processIdentifier != me }
+        if others {
+            Self.log.notice("Andere Seam läuft noch, ⌘Tab bleibt wie es ist")
+        } else {
+            setSystemSwitcherOff(false)
+        }
+        KeyHelper.stop()
     }
 
     /// E21i: Merker VOR dem Abschalten setzen (überlebt einen Absturz), nach dem Einschalten löschen.

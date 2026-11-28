@@ -13,6 +13,20 @@ enum KeyHelper {
 
     static var isRunning: Bool { !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty }
 
+    /// Nur der Helfer aus dem eigenen Paket. Laufen zwei Seams (z. B. Testbau neben der installierten),
+    /// hat jede ihren eigenen SeamKeys mit derselben Kennung; beim Beenden riss die eine sonst den
+    /// Helfer der anderen mit (28.11.: Supertaste der installierten Seam fiel aus).
+    static var ownHelpers: [NSRunningApplication] {
+        NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).filter { isOwn($0.bundleURL, own: url) }
+    }
+
+    /// Getestet. Ohne bekannten Pfad zählt ein Prozess nicht als eigener (lieber stehen lassen).
+    nonisolated static func isOwn(_ bundleURL: URL?, own: URL) -> Bool {
+        guard let bundleURL else { return false }
+        return bundleURL.standardizedFileURL.resolvingSymlinksInPath().path
+            == own.standardizedFileURL.resolvingSymlinksInPath().path
+    }
+
     enum Status: Equatable { case off, waitingForAccess, active }
 
     /// Schlüssel in SeamKeys' eigener Domain (gleich `HyperSettings.tapPIDKey`, Test hält das fest).
@@ -40,7 +54,7 @@ enum KeyHelper {
         }
         Task { @MainActor in
             // Der alte Helfer räumt beim Beenden die Belegung ab; erst danach den neuen starten.
-            for _ in 0..<20 where isRunning { try? await Task.sleep(for: .milliseconds(100)) }
+            for _ in 0..<20 where !ownHelpers.isEmpty { try? await Task.sleep(for: .milliseconds(100)) }
             let config = NSWorkspace.OpenConfiguration()
             config.activates = false
             config.addsToRecentItems = false
@@ -55,7 +69,7 @@ enum KeyHelper {
     }
 
     static func stop() {
-        for app in NSRunningApplication.runningApplications(withBundleIdentifier: bundleID) { app.terminate() }
+        for app in ownHelpers { app.terminate() }
     }
 
     /// E22c: Wurde SeamKeys früher ohne Aufräumen beendet (Absturz, ältere Version), bliebe die

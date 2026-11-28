@@ -71,6 +71,15 @@ final class KeyHelperTests: XCTestCase {
         XCTAssertEqual(found.map(\.path), ["/Applications/SeamKeys.app", "/Users/x/Applications/Alt.app"])
     }
 
+    /// 28.11.: Beenden eines Testbaus stoppte den Helfer der installierten Seam mit.
+    func testOnlyOwnHelperCounts() {
+        let own = URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/SeamKeys.app")
+        XCTAssertTrue(KeyHelper.isOwn(URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/SeamKeys.app/"), own: own))
+        XCTAssertTrue(KeyHelper.isOwn(URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/../Helpers/SeamKeys.app"), own: own))
+        XCTAssertFalse(KeyHelper.isOwn(URL(fileURLWithPath: "/Users/x/Coding/Seam/build/Debug/Seam.app/Contents/Helpers/SeamKeys.app"), own: own))
+        XCTAssertFalse(KeyHelper.isOwn(nil, own: own))
+    }
+
     func testNoForeignCopies() {
         let own = URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/SeamKeys.app")
         XCTAssertTrue(KeyHelper.foreignCopies(candidates: [own], own: own, appFolders: ["/Applications"]).isEmpty)
