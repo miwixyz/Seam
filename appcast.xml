@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.5.2</title>
+            <pubDate>Sat, 28 Nov 2026 11:05:01 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>129</sparkle:version>
+            <sparkle:shortVersionString>1.5.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Einstellungsfenster passt auf kleine Bildschirme.</b> Auf dem MacBook waren die drei Spalten höher als der Bildschirm, die Karte „Stream Deck“ lag unter dem Dock. Das Fenster ist jetzt höchstens so hoch wie der sichtbare Bildschirm, der Rest lässt sich scrollen. Auf großen Bildschirmen bleibt alles wie bisher.</li><li><b>Supertaste bleibt beim Beenden einer zweiten Seam an.</b> Wurde eine zweite Seam beendet (etwa eine Testkopie), stoppte sie auch den Supertasten-Helfer der laufenden Seam. Jede Seam stoppt jetzt nur noch ihren eigenen Helfer.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.2/Seam-1.5.2.zip" length="6211737" type="application/octet-stream" sparkle:edSignature="xPGsI8acuQ81Gl8EXXjoCVAIIL+b0RNrRjhAH5cRPgdqYouuK8HYEY5MYpSBQAHp3bw3EoI+R7eE9Y6vfGoHCg=="/>
+        </item>
+        <item>
             <title>1.5.1</title>
             <pubDate>Sat, 28 Nov 2026 09:46:48 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Ton beim Einrasten</b> (ab Werk aus): Einstellungen → „Fenster“ → „Ton beim Einrasten“. Ein kurzer Einrast-Ton, sobald ein Fenster auf seiner Fläche sitzt: nach dem Andocken per Ziehen, nach einem Kürzel oder einer Kachel für eine feste Fläche (Hälfte, Viertel, Drittel …) und nach ⌃⌥S. Beim Verschieben der Naht, beim Mitziehen und beim Zentrieren bleibt es still.</li></ul><h3>Geändert</h3><ul><li><b>Glas-Sprache der App-Familie</b> (wie Kalli 0.20.0 und Qotti 1.7.0): Popover und alle Fenster (Einstellungen, Abdunkeln, Hintergrund, Layout, Link-Regeln, Online-Auswahl, Browser-Auswahl) liegen auf einem ruhigen Verlauf statt auf Systemglas bzw. dem festen Familien-Verlauf. Ein buntes Schreibtischbild färbt das Popover nicht mehr ein. „Quer“/„Hochkant“ ist eine gleitende, leuchtende Pille, der aktuelle Space leuchtet in derselben Pille, und die runden Knöpfe unten im Popover sitzen zusammen in einer schwebenden Glaskapsel. Bei „Transparenz reduzieren“ und „Kontrast erhöhen“ bleibt der Hintergrund ein fester Verlauf, bei „Bewegung reduzieren“ steht er still.</li><li><b>Neues App-Symbol:</b> das Seam-Maskottchen der App-Familie statt des Glas-Symbols.</li><li><b>Neues Menüleisten-Symbol:</b> Kopf mit Panda-Ohren und Fenster mit Naht. Die Zustände bleiben: durchgestrichen, solange die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt; Fenster gefüllt, solange der Mac zugeklappt wach bleibt.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.0/Seam-1.5.0.zip" length="6204822" type="application/octet-stream" sparkle:edSignature="w+fVF3UYrDeHQykAtAqkhM0xJKwegmf5sdre2NclBYqozRLNMNjYTX2DKGXqfSeUYme1b1ijzMXd0pFrluWJDQ=="/>
         </item>
-        <item>
-            <title>1.4.0</title>
-            <pubDate>Mon, 23 Nov 2026 12:39:04 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>117</sparkle:version>
-            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck: Layout.</b> Die Aktion „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt es wieder her. Beides löst erst aus, wenn du die Taste mindestens 0,8 Sekunden hältst, und höchstens einmal alle 3 Sekunden. „Aufräumen“ bewegt wie bisher für einige Sekunden Maus und Tastatur und bricht ab, sobald du eingreifst; alle bisherigen Sperren gelten (gesperrter Bildschirm, Vollbild, fehlende Kurzbefehle für Spaces). Die Taste zeigt die Zahl der gespeicherten Apps, „läuft …“ oder den Grund, warum nichts passierte.</li><li><b>Stream Deck: Hintergrund.</b> Regler oder Taste „Hintergrund“ wechseln zum nächsten oder vorigen Bild eines Ordners, den du in den Einstellungen unter „Stream Deck“ wählst (ohne Wahl: die Online-Auswahl). Es werden nur Dateien direkt in diesem Ordner genommen (Bilder und Videos, höchstens 200), nichts wird aus dem Netz geladen, und der Ordner lässt sich nur dort, nie vom Gerät aus, ändern. Höchstens ein Wechsel alle 1,5 Sekunden. Die Leiste zeigt „3/12“.</li><li><b>Stream Deck: Vorschau auf der Leiste</b> (ab Werk aus, eigener Schalter). Seam schickt ein kleines Bild (200 × 100) des gerade geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist. Für Videos gibt es keine Vorschau.</li><li>Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo (Layout, Bild ←/→, Teilen, Hälften, Regler).</li></ul><h3>Geändert</h3><ul><li>Plugin und Seam müssen zusammen aktualisiert werden (Einstellungen → „Stream Deck“ → „Plugin installieren …“).</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.4.0/Seam-1.4.0.zip" length="5039973" type="application/octet-stream" sparkle:edSignature="QTAPhJb+eAu1zSLCdMc8QvmxjKjEv7eawGY8IAGWTG6sBNGXmLPK/5fGjbXfnNyoG5jAxESnDjtHEhhdUvL5Aw=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: JMBPuHafqFgl0EEVkFFeT/snVIbcDx6K5MTTip2kBaaToJdOY7EqLaecBVrNu7KxXVafZS8nRYQaD4irYpueDA==
-length: 6247
+edSignature: yxF7JhKhCLLBya6W9vOmNJuPzeaq3HgsfyMkEMSGBS02t4+olx4MApVxTEyaHWTEhH22YnPFgIzmkd1r87g5BQ==
+length: 5211
 -->
