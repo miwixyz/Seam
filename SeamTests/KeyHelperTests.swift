@@ -55,4 +55,24 @@ final class KeyHelperTests: XCTestCase {
         XCTAssertEqual(KeyHelper.status(running: [812], tapPID: 812), .active)
         XCTAssertEqual(KeyHelper.tapPIDKey, HyperSettings.tapPIDKey)                // Helfer und Seam: derselbe Schlüssel
     }
+
+    /// 28.11.: alte SeamKeys-Kopie in /Applications hatte die Freigabe, der Helfer im Paket nicht.
+    func testForeignCopiesOnlyInAppFolders() {
+        let own = URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/SeamKeys.app")
+        let folders = ["/Applications", "/Users/x/Applications"]
+        let found = KeyHelper.foreignCopies(candidates: [
+            own,                                                                              // eigener Helfer
+            URL(fileURLWithPath: "/Applications/SeamKeys.app"),                               // lose Kopie
+            URL(fileURLWithPath: "/Users/x/Applications/Alt.app/Contents/Helpers/SeamKeys.app"), // in anderer App
+            URL(fileURLWithPath: "/Users/x/Applications/Alt.app/Contents/Helpers/SeamKeys.app"), // doppelt gemeldet
+            URL(fileURLWithPath: "/Users/x/Coding/Seam/build/Debug/SeamKeys.app"),            // Bauordner
+            URL(fileURLWithPath: "/ApplicationsX/SeamKeys.app"),                              // nur Namensanfang
+        ], own: own, appFolders: folders)
+        XCTAssertEqual(found.map(\.path), ["/Applications/SeamKeys.app", "/Users/x/Applications/Alt.app"])
+    }
+
+    func testNoForeignCopies() {
+        let own = URL(fileURLWithPath: "/Applications/Seam.app/Contents/Helpers/SeamKeys.app")
+        XCTAssertTrue(KeyHelper.foreignCopies(candidates: [own], own: own, appFolders: ["/Applications"]).isEmpty)
+    }
 }

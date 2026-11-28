@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var router = LinkRouter.shared
     @State private var linkError: String?
     @State private var hyperStatus = KeyHelper.status
+    @State private var foreignKeyCopies: [URL] = []
 
     var body: some View {
         @Bindable var prefs = prefs
@@ -186,6 +187,10 @@ struct SettingsView: View {
                 case .waitingForAccess:
                     note("SeamKeys wartet auf die Freigabe – die Feststelltaste arbeitet bis dahin normal",
                          symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                    ForEach(foreignKeyCopies, id: \.self) { copy in
+                        note("Weitere Kopie gefunden: \(copy.path). Die Freigabe gilt vermutlich für diese Kopie. In den Papierkorb legen, den Eintrag „SeamKeys“ in der Freigabeliste mit − entfernen und Seam neu starten.",
+                             symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                    }
                 case .off:
                     note("SeamKeys läuft nicht", symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
                 }
@@ -200,6 +205,8 @@ struct SettingsView: View {
             // Läuft der Helfer, und ist sein Tap aktiv? Prozess von macOS gelesen, Tap vom Helfer gemeldet.
             while !Task.isCancelled {
                 hyperStatus = KeyHelper.status
+                // Launch-Services-Abfrage nur, solange die Freigabe fehlt.
+                foreignKeyCopies = hyperStatus == .waitingForAccess ? KeyHelper.foreignCopies : []
                 try? await Task.sleep(for: .seconds(1))
             }
         }

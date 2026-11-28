@@ -98,6 +98,36 @@ enum KeyHelper {
         }
     }
 
+    /// Weitere SeamKeys-Kopien in einem Programme-Ordner (Michael 28.11.: eine nach /Applications
+    /// gezogene alte Kopie hatte dieselbe Kennung, aber eine andere Signatur – freigegeben war die
+    /// Kopie, gestartet wird aber immer der Helfer im Paket). Liefert je Fund das äußerste .app,
+    /// also das, was der Nutzer im Finder sieht und entfernen kann.
+    static var foreignCopies: [URL] {
+        let candidates = NSWorkspace.shared.urlsForApplications(withBundleIdentifier: bundleID)
+        let homeApps = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path
+        return foreignCopies(candidates: candidates, own: url, appFolders: ["/Applications", homeApps])
+    }
+
+    /// Getestet. Nur Programme-Ordner zählen: Bauordner (Xcode) sind keine Kopien, die ein Nutzer freigibt.
+    nonisolated static func foreignCopies(candidates: [URL], own: URL, appFolders: [String]) -> [URL] {
+        let ownPath = own.standardizedFileURL.resolvingSymlinksInPath().path
+        var result: [URL] = []
+        for candidate in candidates {
+            let path = candidate.standardizedFileURL.resolvingSymlinksInPath().path
+            guard path != ownPath,
+                  appFolders.contains(where: { path.hasPrefix($0 + "/") }) else { continue }
+            let outer = outermostApp(path)
+            if !result.contains(outer) { result.append(outer) }
+        }
+        return result
+    }
+
+    /// `/Applications/X.app/Contents/Helpers/SeamKeys.app` → `/Applications/X.app`.
+    nonisolated private static func outermostApp(_ path: String) -> URL {
+        guard let range = path.range(of: ".app/") else { return URL(fileURLWithPath: path) }
+        return URL(fileURLWithPath: String(path[..<range.lowerBound]) + ".app")
+    }
+
     static func openAccessibilitySettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
