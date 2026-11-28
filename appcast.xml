@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.5.1</title>
+            <pubDate>Sat, 28 Nov 2026 09:46:48 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>125</sparkle:version>
+            <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Supertaste: Freigabe für die falsche Kopie.</b> Lag eine weitere SeamKeys-Kopie im Programme-Ordner (z. B. von Hand hineingezogen), galt die Freigabe oft für diese Kopie. Gestartet wird aber immer der Helfer in Seam, also blieb „SeamKeys wartet auf die Freigabe“ stehen. Seam nennt solche Kopien jetzt in den Einstellungen unter „Supertaste“, mit Pfad und Abhilfe: Kopie in den Papierkorb, den Eintrag „SeamKeys“ in der Freigabeliste mit − entfernen, Seam neu starten.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.1/Seam-1.5.1.zip" length="6209422" type="application/octet-stream" sparkle:edSignature="eVl6g+h4nwiBTlbiIfDOb+AIkDhsrKby/aNP2vqBMft7f2h0Uuam8rBszVXIGpaAThEtIzYULDcG2m2s1CtHCg=="/>
+        </item>
+        <item>
             <title>1.5.0</title>
             <pubDate>Fri, 27 Nov 2026 16:51:54 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck: Layout.</b> Die Aktion „Layout“ speichert das Layout deiner Bildschirm-Kombination oder stellt es wieder her. Beides löst erst aus, wenn du die Taste mindestens 0,8 Sekunden hältst, und höchstens einmal alle 3 Sekunden. „Aufräumen“ bewegt wie bisher für einige Sekunden Maus und Tastatur und bricht ab, sobald du eingreifst; alle bisherigen Sperren gelten (gesperrter Bildschirm, Vollbild, fehlende Kurzbefehle für Spaces). Die Taste zeigt die Zahl der gespeicherten Apps, „läuft …“ oder den Grund, warum nichts passierte.</li><li><b>Stream Deck: Hintergrund.</b> Regler oder Taste „Hintergrund“ wechseln zum nächsten oder vorigen Bild eines Ordners, den du in den Einstellungen unter „Stream Deck“ wählst (ohne Wahl: die Online-Auswahl). Es werden nur Dateien direkt in diesem Ordner genommen (Bilder und Videos, höchstens 200), nichts wird aus dem Netz geladen, und der Ordner lässt sich nur dort, nie vom Gerät aus, ändern. Höchstens ein Wechsel alle 1,5 Sekunden. Die Leiste zeigt „3/12“.</li><li><b>Stream Deck: Vorschau auf der Leiste</b> (ab Werk aus, eigener Schalter). Seam schickt ein kleines Bild (200 × 100) des gerade geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist. Für Videos gibt es keine Vorschau.</li><li>Zwei neue Profile „Seam Layout“ für Stream Deck + und Neo (Layout, Bild ←/→, Teilen, Hälften, Regler).</li></ul><h3>Geändert</h3><ul><li>Plugin und Seam müssen zusammen aktualisiert werden (Einstellungen → „Stream Deck“ → „Plugin installieren …“).</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.4.0/Seam-1.4.0.zip" length="5039973" type="application/octet-stream" sparkle:edSignature="QTAPhJb+eAu1zSLCdMc8QvmxjKjEv7eawGY8IAGWTG6sBNGXmLPK/5fGjbXfnNyoG5jAxESnDjtHEhhdUvL5Aw=="/>
         </item>
-        <item>
-            <title>1.3.0</title>
-            <pubDate>Mon, 23 Nov 2026 11:50:32 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>114</sparkle:version>
-            <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream Deck</b> (ab Werk aus, Einstellungen → „Stream Deck“): Ein Plugin für Elgatos Stream Deck steuert Seam. Der Regler „Naht“ verschiebt die Naht in den Stufen ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste; Drücken teilt zwei Fenster. Die Aktion „Platz“ setzt das vordere Fenster auf eine feste Fläche (Hälften, Drittel, Zweidrittel, Viertel, Maximieren, Zentrieren, Ursprüngliche Größe, Bildschirm wechseln), als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Dazu vier fertige Profile für Stream Deck + und Neo.</li><li><b>Wie es abgesichert ist:</b> Das Plugin ist mit Developer ID signiert und hat keine Berechtigungen. Seam öffnet erst mit dem Schalter einen lokalen Socket (Ordner nur für dich lesbar) und nimmt nur Verbindungen an, bei denen sowohl das Plugin als auch Elgatos Stream-Deck-App echt signiert sind. Es gibt nur feste Befehle (Naht eine Stufe weiter oder zurück, Fläche aus einer festen Liste), keine Fenster- oder App-Namen, keine Pfade. Zurück zum Gerät gehen nur Zahlen und Zustände. Ohne die Freigabe „Gerätesteuerung und Datenzugriff“ passiert am Gerät nichts.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.3.0/Seam-1.3.0.zip" length="4872247" type="application/octet-stream" sparkle:edSignature="Dy6tazO7oPpNKE97t8wnO8yX/0JttiMJlQ8+PsSORB4uIQ8k3Ys/KeVSLXnqFFYpOrwurcuLhx88QZShkLn8AQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: ics9iDkvjQN4rG2jVJgP4qhcKp5bxNKqbVuaMegvJCqXh5b7zetfwM6FBTCYUXgPV6EOIFHUJsWE6avDb1+CAg==
-length: 6917
+edSignature: JMBPuHafqFgl0EEVkFFeT/snVIbcDx6K5MTTip2kBaaToJdOY7EqLaecBVrNu7KxXVafZS8nRYQaD4irYpueDA==
+length: 6247
 -->
