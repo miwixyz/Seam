@@ -6,6 +6,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <channel>
         <title>Seam</title>
         <item>
+            <title>1.5.3</title>
+            <pubDate>Sat, 28 Nov 2026 11:15:15 +0100</pubDate>
+            <link>https://github.com/miwixyz/Seam</link>
+            <sparkle:version>133</sparkle:version>
+            <sparkle:shortVersionString>1.5.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[<meta charset="utf-8"><h3>Geändert</h3><ul><li><b>Einstellungen nach Themen geordnet.</b> Links alles zu Fenstern (Fenster, Layouts, Abdunkeln, Spaces), in der Mitte die Tastatur (Tastenkürzel, Supertaste, Kürzel-Blatt) und „Allgemein“, rechts Umschalter, Dock-Vorschau, Vorschaubilder und Links. Vorher lagen Tastenkürzel und Supertaste in verschiedenen Spalten, und die rechte Spalte war am MacBook höher als der Bildschirm. Das Fenster passt dort jetzt ohne Scrollen.</li><li><b>Stream Deck im eigenen Fenster:</b> Einstellungen → „Allgemein“ → „Stream Deck …“. Die Einstellungen sind dieselben wie bisher.</li></ul><h3>Behoben</h3><ul><li><b>⌘Tab beim Start einer zweiten Seam.</b> Startete eine zweite Seam (etwa eine Testkopie), gab sie ⌘Tab kurz an macOS zurück, obwohl die erste Seam den Umschalter noch nutzte. Jetzt nur noch, wenn keine andere Seam läuft.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.3/Seam-1.5.3.zip" length="6216922" type="application/octet-stream" sparkle:edSignature="0vZR+KWuZr6ToqXjJ6M2odTdqEk1h+K8HR2p3tIv/uCZzYn6fyY4Jw4EOZUQC4y10Y0rwWHVoaK9zdhafhxWCA=="/>
+        </item>
+        <item>
             <title>1.5.2</title>
             <pubDate>Sat, 28 Nov 2026 11:05:01 +0100</pubDate>
             <link>https://github.com/miwixyz/Seam</link>
@@ -25,19 +35,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Supertaste: Freigabe für die falsche Kopie.</b> Lag eine weitere SeamKeys-Kopie im Programme-Ordner (z. B. von Hand hineingezogen), galt die Freigabe oft für diese Kopie. Gestartet wird aber immer der Helfer in Seam, also blieb „SeamKeys wartet auf die Freigabe“ stehen. Seam nennt solche Kopien jetzt in den Einstellungen unter „Supertaste“, mit Pfad und Abhilfe: Kopie in den Papierkorb, den Eintrag „SeamKeys“ in der Freigabeliste mit − entfernen, Seam neu starten.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.1/Seam-1.5.1.zip" length="6209422" type="application/octet-stream" sparkle:edSignature="eVl6g+h4nwiBTlbiIfDOb+AIkDhsrKby/aNP2vqBMft7f2h0Uuam8rBszVXIGpaAThEtIzYULDcG2m2s1CtHCg=="/>
         </item>
-        <item>
-            <title>1.5.0</title>
-            <pubDate>Fri, 27 Nov 2026 16:51:54 +0100</pubDate>
-            <link>https://github.com/miwixyz/Seam</link>
-            <sparkle:version>122</sparkle:version>
-            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Ton beim Einrasten</b> (ab Werk aus): Einstellungen → „Fenster“ → „Ton beim Einrasten“. Ein kurzer Einrast-Ton, sobald ein Fenster auf seiner Fläche sitzt: nach dem Andocken per Ziehen, nach einem Kürzel oder einer Kachel für eine feste Fläche (Hälfte, Viertel, Drittel …) und nach ⌃⌥S. Beim Verschieben der Naht, beim Mitziehen und beim Zentrieren bleibt es still.</li></ul><h3>Geändert</h3><ul><li><b>Glas-Sprache der App-Familie</b> (wie Kalli 0.20.0 und Qotti 1.7.0): Popover und alle Fenster (Einstellungen, Abdunkeln, Hintergrund, Layout, Link-Regeln, Online-Auswahl, Browser-Auswahl) liegen auf einem ruhigen Verlauf statt auf Systemglas bzw. dem festen Familien-Verlauf. Ein buntes Schreibtischbild färbt das Popover nicht mehr ein. „Quer“/„Hochkant“ ist eine gleitende, leuchtende Pille, der aktuelle Space leuchtet in derselben Pille, und die runden Knöpfe unten im Popover sitzen zusammen in einer schwebenden Glaskapsel. Bei „Transparenz reduzieren“ und „Kontrast erhöhen“ bleibt der Hintergrund ein fester Verlauf, bei „Bewegung reduzieren“ steht er still.</li><li><b>Neues App-Symbol:</b> das Seam-Maskottchen der App-Familie statt des Glas-Symbols.</li><li><b>Neues Menüleisten-Symbol:</b> Kopf mit Panda-Ohren und Fenster mit Naht. Die Zustände bleiben: durchgestrichen, solange die Freigabe „Gerätesteuerung und Datenzugriff“ fehlt; Fenster gefüllt, solange der Mac zugeklappt wach bleibt.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Seam/releases/download/v1.5.0/Seam-1.5.0.zip" length="6204822" type="application/octet-stream" sparkle:edSignature="w+fVF3UYrDeHQykAtAqkhM0xJKwegmf5sdre2NclBYqozRLNMNjYTX2DKGXqfSeUYme1b1ijzMXd0pFrluWJDQ=="/>
-        </item>
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: yxF7JhKhCLLBya6W9vOmNJuPzeaq3HgsfyMkEMSGBS02t4+olx4MApVxTEyaHWTEhH22YnPFgIzmkd1r87g5BQ==
-length: 5211
+edSignature: KCp7iCH/eeaoC0tdu/BXiz1tNej8V7Lx7Js+MYQzWEA01ITXmTC5prFySLT5j31GSw1V+Fw/bc83aL0uHKX/BA==
+length: 4599
 -->
