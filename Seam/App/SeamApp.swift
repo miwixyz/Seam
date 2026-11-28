@@ -45,7 +45,7 @@ struct SeamApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Seam – Einstellungen", id: "einstellungen") {
-            SettingsView()
+            SettingsWindow()
                 .environment(engine)
                 .environment(engine.prefs)
                 .background(MoveToActiveSpace())

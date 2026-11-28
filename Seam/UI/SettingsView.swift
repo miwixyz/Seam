@@ -571,3 +571,28 @@ extension SettingsView {
         prefs.setDeckImageFolder(url.path)
     }
 }
+
+/// Hülle des Einstellungsfensters (1.5.2). Drei Spalten waren am MacBook höher als der Bildschirm
+/// (Michael 28.11., 1470 × 956 pt: Stream-Deck-Karte unter dem Dock abgeschnitten). Das Fenster
+/// wird jetzt höchstens so hoch wie die sichtbare Bildschirmfläche, der Rest scrollt. Auf großen
+/// Bildschirmen bleibt es so hoch wie der Inhalt, ohne Scrollen.
+struct SettingsWindow: View {
+    @State private var contentSize: CGSize = .zero
+
+    /// Sichtbare Höhe des Bildschirms mit dem aktiven Fenster, minus Titelleiste und etwas Luft.
+    private var maxHeight: CGFloat {
+        let visible = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame.height ?? 900
+        return max(300, visible - 60)
+    }
+
+    var body: some View {
+        ScrollView(.vertical) {
+            SettingsView()
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { contentSize = $0 }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(width: contentSize.width > 0 ? contentSize.width : nil,
+               height: contentSize.height > 0 ? min(contentSize.height, maxHeight) : nil)
+        .familyAmbientBackground()
+    }
+}

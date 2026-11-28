@@ -2,6 +2,18 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.5.2] — 2026-11-28
+
+### Behoben
+
+- **Einstellungsfenster passt auf kleine Bildschirme.** Auf dem MacBook waren die drei Spalten höher
+  als der Bildschirm, die Karte „Stream Deck“ lag unter dem Dock. Das Fenster ist jetzt höchstens so
+  hoch wie der sichtbare Bildschirm, der Rest lässt sich scrollen. Auf großen Bildschirmen bleibt
+  alles wie bisher.
+- **Supertaste bleibt beim Beenden einer zweiten Seam an.** Wurde eine zweite Seam beendet (etwa eine
+  Testkopie), stoppte sie auch den Supertasten-Helfer der laufenden Seam. Jede Seam stoppt jetzt nur
+  noch ihren eigenen Helfer.
+
 ## [1.5.1] — 2026-11-28
 
 ### Behoben
