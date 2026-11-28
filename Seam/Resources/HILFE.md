@@ -291,6 +291,11 @@ Funktion zurück. Lass unter Systemeinstellungen → Tastatur → Sondertasten f
 die Standardaktion eingestellt. Hast du mit `hidutil` eigene Tastenbelegungen gesetzt, ersetzt
 SeamKeys sie.
 
+Bleibt „SeamKeys wartet auf die Freigabe“ stehen, obwohl du SeamKeys freigegeben hast, liegt meist
+eine zweite SeamKeys-Kopie im Programme-Ordner. Ziehe SeamKeys nicht selbst dorthin, es steckt
+schon in Seam. Seam nennt solche Kopien unter dem Hinweis. Lege sie in den Papierkorb, entferne den
+Eintrag „SeamKeys“ in der Freigabeliste mit − und starte Seam neu.
+
 ## Wach bei zugeklapptem Deckel
 
 Tassen-Knopf unten im Seam-Fenster. Ist er an, schläft das MacBook beim Zuklappen nicht ein,

@@ -2,6 +2,16 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.5.1] — 2026-11-28
+
+### Behoben
+
+- **Supertaste: Freigabe für die falsche Kopie.** Lag eine weitere SeamKeys-Kopie im Programme-Ordner
+  (z. B. von Hand hineingezogen), galt die Freigabe oft für diese Kopie. Gestartet wird aber immer der
+  Helfer in Seam, also blieb „SeamKeys wartet auf die Freigabe“ stehen. Seam nennt solche Kopien
+  jetzt in den Einstellungen unter „Supertaste“, mit Pfad und Abhilfe: Kopie in den Papierkorb, den
+  Eintrag „SeamKeys“ in der Freigabeliste mit − entfernen, Seam neu starten.
+
 ## [1.5.0] — 2026-11-27
 
 ### Neu
