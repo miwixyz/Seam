@@ -2,6 +2,14 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## Unveröffentlicht
+
+### Geändert
+
+- **Neues Menüleistensymbol** mit eigener Form, damit Seam neben den anderen Apps der Familie gut zu
+  unterscheiden ist. Die drei Zustände (normal, durchgestrichen, gefüllt) bleiben.
+- **Popover-Kopf** zeigt jetzt dasselbe Symbol wie die Menüleiste statt eines Systemsymbols.
+
 ## [1.5.3] — 2026-11-28
 
 ### Geändert

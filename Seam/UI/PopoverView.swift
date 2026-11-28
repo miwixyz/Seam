@@ -58,9 +58,13 @@ struct PopoverView: View {
 
     private var header: some View {
         HStack(spacing: FamilyTheme.Space.s) {
-            Image(systemName: "rectangle.split.2x1")
-                .font(.system(size: 15, weight: .medium))
+            // Familien-Symbol (Menüleiste, Fassung C) statt Systemsymbol, damit Kopf und Leiste gleich aussehen.
+            Image("MenuBarSeam")
+                .renderingMode(.template)
+                .resizable()
+                .frame(width: 18, height: 18)
                 .foregroundStyle(FamilyTheme.accent)
+                .accessibilityHidden(true)
             Text("Seam").font(FamilyTheme.font(.title3, weight: .semibold)).foregroundStyle(FamilyTheme.textPrimary)
             Spacer()
             if let current = engine.spaces.current {
