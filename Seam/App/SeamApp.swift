@@ -241,7 +241,13 @@ final class Engine {
     private func boot() {
         // E21i: Hat eine frühere Seam macOS' ⌘Tab abgeschaltet (Absturz?), erst wieder einschalten.
         // Ist der Umschalter an, schaltet applyShortcutSetting es nach dem Anmelden wieder ab.
-        setSystemSwitcherOff(false)
+        // Nicht, wenn schon eine andere Seam läuft: sie hat ⌘Tab mit Absicht abgeschaltet und beide
+        // teilen den Merker; sonst gäbe der Start einer zweiten Seam ⌘Tab an macOS zurück (28.11.).
+        if otherSeamRunning {
+            Self.log.notice("Andere Seam läuft schon, ⌘Tab bleibt wie es ist")
+        } else {
+            setSystemSwitcherOff(false)
+        }
         terminateToken = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.cleanUpOnQuit() }
@@ -437,15 +443,19 @@ final class Engine {
     /// läuft. Beide teilen Kennung und Einstellungen; sonst gab das Beenden eines Testbaus ⌘Tab
     /// an macOS zurück, während die installierte Seam den Umschalter noch braucht (28.11.).
     private func cleanUpOnQuit() {
-        let me = ProcessInfo.processInfo.processIdentifier
-        let others = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
-            .contains { $0.processIdentifier != me }
-        if others {
+        if otherSeamRunning {
             Self.log.notice("Andere Seam läuft noch, ⌘Tab bleibt wie es ist")
         } else {
             setSystemSwitcherOff(false)
         }
         KeyHelper.stop()
+    }
+
+    /// Läuft außer dieser noch eine Seam mit derselben Kennung (z. B. Testbau neben der installierten)?
+    private var otherSeamRunning: Bool {
+        let me = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+            .contains { $0.processIdentifier != me }
     }
 
     /// E21i: Merker VOR dem Abschalten setzen (überlebt einen Absturz), nach dem Einschalten löschen.
