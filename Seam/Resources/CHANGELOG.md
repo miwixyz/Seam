@@ -2,6 +2,24 @@
 
 Alle nennenswerten Änderungen an Seam.
 
+## [1.5.3] — 2026-11-28
+
+### Geändert
+
+- **Einstellungen nach Themen geordnet.** Links alles zu Fenstern (Fenster, Layouts, Abdunkeln,
+  Spaces), in der Mitte die Tastatur (Tastenkürzel, Supertaste, Kürzel-Blatt) und „Allgemein“,
+  rechts Umschalter, Dock-Vorschau, Vorschaubilder und Links. Vorher lagen Tastenkürzel und
+  Supertaste in verschiedenen Spalten, und die rechte Spalte war am MacBook höher als der Bildschirm.
+  Das Fenster passt dort jetzt ohne Scrollen.
+- **Stream Deck im eigenen Fenster:** Einstellungen → „Allgemein“ → „Stream Deck …“. Die
+  Einstellungen sind dieselben wie bisher.
+
+### Behoben
+
+- **⌘Tab beim Start einer zweiten Seam.** Startete eine zweite Seam (etwa eine Testkopie), gab sie
+  ⌘Tab kurz an macOS zurück, obwohl die erste Seam den Umschalter noch nutzte. Jetzt nur noch, wenn
+  keine andere Seam läuft.
+
 ## [1.5.2] — 2026-11-28
 
 ### Behoben

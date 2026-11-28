@@ -26,6 +26,9 @@ enum PreviewRenderer {
                 render(SettingsView().environment(engine).environment(engine.prefs),
                        to: dir.appendingPathComponent("einstellungen-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
+                render(SettingsView(section: .deck).environment(engine).environment(engine.prefs),
+                       to: dir.appendingPathComponent("streamdeck-\(name).png"), appearance: appearance,
+                       background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))
                 render(DimSettingsWindow().environment(engine).environment(engine.prefs),
                        to: dir.appendingPathComponent("abdunkeln-\(name).png"), appearance: appearance,
                        background: dark ? NSColor(white: 0.12, alpha: 1) : NSColor(white: 0.93, alpha: 1))

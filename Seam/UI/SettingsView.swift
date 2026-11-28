@@ -4,6 +4,9 @@ import SwiftUI
 /// 0.4.2: gleiche Bausteine wie das Seam-Fenster (Verlauf, weiße Karten, Titel in der Karte,
 /// Plus Jakarta Sans) statt Apples grauem Formular — Michael: „passt optisch nicht“ (09.10.).
 struct SettingsView: View {
+    /// Was das Fenster zeigt: alle Einstellungen oder nur Stream Deck (eigenes Fenster ab 1.5.2).
+    enum Section { case main, deck }
+    var section: Section = .main
     @Environment(Engine.self) private var engine
     @Environment(Preferences.self) private var prefs
     @Environment(\.openWindow) private var openWindow
@@ -19,7 +22,12 @@ struct SettingsView: View {
 
     var body: some View {
         @Bindable var prefs = prefs
-        // 0.5: zwei Spalten, mit „Links“ war eine Spalte höher als der MacBook-Bildschirm.
+        // 1.5.2: nach Themen geordnet (Fenster · Tastatur · Umschalten & Vorschau). Vorher stand
+        // Tastenkürzel links, Supertaste und Kürzel-Blatt rechts, die dritte Spalte war am MacBook zu hoch.
+        Group {
+        if section == .deck {
+            deckCard.frame(width: 428)
+        } else {
         HStack(alignment: .top, spacing: FamilyTheme.Space.m) {
         VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
             card("Fenster") {
@@ -42,12 +50,13 @@ struct SettingsView: View {
                     .fixedSize()
                 }
             }
-            card("Tastenkürzel") {
-                toggleRow("Tastenkürzel", isOn: $prefs.shortcuts)
-                    .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
-                if !engine.failedShortcuts.isEmpty {
-                    note("\(engine.failedShortcuts.count) Kürzel belegt, läuft Magnet noch?",
-                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+            if engine.spaces.available {
+                card("Layouts") {
+                    toggleRow("Nach Anmeldung und Bildschirmwechsel aufräumen", isOn: $prefs.deskAutoTidy)
+                    divider
+                    Button("Layout bearbeiten …") { openWindow(id: "layout") }
+                        .buttonStyle(CardButtonStyle())
+                        .padding(.vertical, FamilyTheme.Space.s)
                 }
             }
             card("Hintergrund abdunkeln") {
@@ -63,9 +72,6 @@ struct SettingsView: View {
                     .buttonStyle(CardButtonStyle())
                     .padding(.vertical, FamilyTheme.Space.s)
             }
-        }
-        .frame(width: 428)
-        VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
             if engine.spaces.available {
                 card("Spaces") {
                     toggleRow("Space-Namen in der Menüleiste", isOn: $prefs.showSpaceName)
@@ -87,16 +93,19 @@ struct SettingsView: View {
                     .padding(.vertical, FamilyTheme.Space.s)
                 }
             }
-            if engine.spaces.available {
-                card("Layouts") {
-                    toggleRow("Nach Anmeldung und Bildschirmwechsel aufräumen", isOn: $prefs.deskAutoTidy)
-                    divider
-                    Button("Layout bearbeiten …") { openWindow(id: "layout") }
-                        .buttonStyle(CardButtonStyle())
-                        .padding(.vertical, FamilyTheme.Space.s)
+        }
+        .frame(width: 428)
+        VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
+            card("Tastenkürzel") {
+                toggleRow("Tastenkürzel", isOn: $prefs.shortcuts)
+                    .onChange(of: prefs.shortcuts) { engine.applyShortcutSetting() }
+                if !engine.failedShortcuts.isEmpty {
+                    note("\(engine.failedShortcuts.count) Kürzel belegt, läuft Magnet noch?",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
                 }
             }
-            linksCard
+            hyperKeyCard
+            commandSheetCard
             card("Allgemein") {
                 toggleRow("Bei Anmeldung starten", isOn: Binding(
                     get: { login == .on || login == .needsApproval },
@@ -122,6 +131,11 @@ struct SettingsView: View {
                 if let loginError {
                     note(loginError, symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
                 }
+                divider
+                // 1.5.2: Stream Deck im eigenen Fenster, die Karte machte die dritte Spalte zu hoch.
+                Button("Stream Deck …") { openWindow(id: "streamdeck") }
+                    .buttonStyle(CardButtonStyle())
+                    .padding(.vertical, FamilyTheme.Space.s)
                 if let updater = engine.updater {
                     divider
                     Button("Nach Updates suchen …") { updater.checkForUpdates() }
@@ -134,6 +148,8 @@ struct SettingsView: View {
         .frame(width: 428)
         previewColumn
             .frame(width: 428)
+        }
+        }
         }
         .padding(FamilyTheme.Space.l)
         .font(FamilyTheme.font(.body))
@@ -215,63 +231,6 @@ struct SettingsView: View {
     private func applyHyperKey() { KeyHelper.apply(enabled: prefs.hyperKeyEnabled) }
 
     // MARK: - Umschalter und Dock-Vorschau (E21)
-
-    private var previewColumn: some View {
-        @Bindable var prefs = prefs
-        return VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
-            card("Fensterumschalter") {
-                toggleRow("Seam-Umschalter verwenden", isOn: $prefs.switcherEnabled)
-                    .onChange(of: prefs.switcherEnabled) { engine.applyPreviewSettings() }
-                note("⌘Tab alle Fenster, ⌘< Fenster der vorderen App. ⇧ geht zurück, Esc bricht ab, Q beendet die App",
-                     symbol: "command", color: FamilyTheme.textSecondary)
-                if prefs.switcherEnabled, engine.failedShortcuts.contains(where: Switcher.keys.contains) {
-                    note("⌘Tab oder ⌘< ist belegt, läuft Vorsaint noch?",
-                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
-                }
-                divider
-                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.switcherCurrentSpaceOnly)
-                    .disabled(!prefs.switcherEnabled)
-            }
-            card("Dock-Vorschau") {
-                toggleRow("Fenster im Dock vorab anzeigen", isOn: $prefs.dockPreviewEnabled)
-                    .onChange(of: prefs.dockPreviewEnabled) { engine.applyPreviewSettings() }
-                divider
-                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.dockPreviewCurrentSpaceOnly)
-                    .disabled(!prefs.dockPreviewEnabled)
-                divider
-                row("Öffnungsverzögerung") {
-                    Picker("Öffnungsverzögerung", selection: $prefs.dockPreviewDelay) {
-                        ForEach(Preferences.dockDelayChoices, id: \.self) { ms in
-                            Text(ms < 1000 ? "\(ms) ms" : (Double(ms) / 1000).formatted(.number.locale(Locale(identifier: "de_DE"))) + " s").tag(ms)
-                        }
-                    }
-                    .labelsHidden()
-                    .fixedSize()
-                }
-                .disabled(!prefs.dockPreviewEnabled)
-            }
-            hyperKeyCard
-            commandSheetCard
-            deckCard
-            card("Vorschaubilder") {
-                row("Vorschaugröße") {
-                    Picker("Vorschaugröße", selection: $prefs.previewSize) {
-                        ForEach(PreviewSize.allCases, id: \.self) { Text($0.label).tag($0) }
-                    }
-                    .labelsHidden()
-                    .fixedSize()
-                }
-                if (prefs.switcherEnabled || prefs.dockPreviewEnabled) && !engine.canCapture {
-                    divider
-                    note("Ohne Freigabe „Bildschirmaufnahme“ zeigt Seam nur App-Symbole",
-                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
-                    Button("Freigeben …") { WindowCatalog.openCaptureSettings() }
-                        .buttonStyle(CardButtonStyle())
-                        .padding(.vertical, FamilyTheme.Space.s)
-                }
-            }
-        }
-    }
 
     // MARK: - Links (E16)
 
@@ -477,6 +436,61 @@ private struct FamilySwitch: View {
 // MARK: - Kürzel-Blatt (E24)
 
 extension SettingsView {
+    private var previewColumn: some View {
+        @Bindable var prefs = prefs
+        return VStack(alignment: .leading, spacing: FamilyTheme.Space.m) {
+            card("Fensterumschalter") {
+                toggleRow("Seam-Umschalter verwenden", isOn: $prefs.switcherEnabled)
+                    .onChange(of: prefs.switcherEnabled) { engine.applyPreviewSettings() }
+                note("⌘Tab alle Fenster, ⌘< Fenster der vorderen App. ⇧ geht zurück, Esc bricht ab, Q beendet die App",
+                     symbol: "command", color: FamilyTheme.textSecondary)
+                if prefs.switcherEnabled, engine.failedShortcuts.contains(where: Switcher.keys.contains) {
+                    note("⌘Tab oder ⌘< ist belegt, läuft Vorsaint noch?",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                }
+                divider
+                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.switcherCurrentSpaceOnly)
+                    .disabled(!prefs.switcherEnabled)
+            }
+            card("Dock-Vorschau") {
+                toggleRow("Fenster im Dock vorab anzeigen", isOn: $prefs.dockPreviewEnabled)
+                    .onChange(of: prefs.dockPreviewEnabled) { engine.applyPreviewSettings() }
+                divider
+                toggleRow("Nur den aktuellen Schreibtisch", isOn: $prefs.dockPreviewCurrentSpaceOnly)
+                    .disabled(!prefs.dockPreviewEnabled)
+                divider
+                row("Öffnungsverzögerung") {
+                    Picker("Öffnungsverzögerung", selection: $prefs.dockPreviewDelay) {
+                        ForEach(Preferences.dockDelayChoices, id: \.self) { ms in
+                            Text(ms < 1000 ? "\(ms) ms" : (Double(ms) / 1000).formatted(.number.locale(Locale(identifier: "de_DE"))) + " s").tag(ms)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                .disabled(!prefs.dockPreviewEnabled)
+            }
+            card("Vorschaubilder") {
+                row("Vorschaugröße") {
+                    Picker("Vorschaugröße", selection: $prefs.previewSize) {
+                        ForEach(PreviewSize.allCases, id: \.self) { Text($0.label).tag($0) }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                if (prefs.switcherEnabled || prefs.dockPreviewEnabled) && !engine.canCapture {
+                    divider
+                    note("Ohne Freigabe „Bildschirmaufnahme“ zeigt Seam nur App-Symbole",
+                         symbol: "exclamationmark.triangle", color: FamilyTheme.warning)
+                    Button("Freigeben …") { WindowCatalog.openCaptureSettings() }
+                        .buttonStyle(CardButtonStyle())
+                        .padding(.vertical, FamilyTheme.Space.s)
+                }
+            }
+            linksCard
+        }
+    }
+
     private var commandSheetCard: some View {
         @Bindable var prefs = prefs
         return card("Kürzel-Blatt") {

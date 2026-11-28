@@ -248,7 +248,7 @@ es nie. Apps, die ihre Kürzel nicht in der Menüleiste führen, zeigen weniger 
 
 ## Stream Deck
 
-Einstellungen → „Stream Deck erlauben“ (ab Werk aus), dann „Plugin installieren …“. Stream Deck fragt
+Einstellungen → „Allgemein“ → „Stream Deck …“ → „Stream Deck erlauben“ (ab Werk aus), dann „Plugin installieren …“. Stream Deck fragt
 selbst nach der Installation. Danach liegt in der Stream-Deck-App die Kategorie „Seam“ mit zwei
 Aktionen, dazu vier fertige Profile (Stream Deck + und Neo, je „Fenster“ und „Raster“).
 
@@ -264,8 +264,8 @@ Aktionen, dazu vier fertige Profile (Stream Deck + und Neo, je „Fenster“ und
   stellt es wieder her. Die Taste musst du mindestens 0,8 Sekunden halten; ein kurzer Druck zeigt „Länger halten“.
   Aufräumen gilt wie sonst: Es bewegt kurz Maus und Tastatur und bricht ab, sobald du eingreifst. Höchstens ein
   Layout-Befehl alle 3 Sekunden.
-- **Hintergrund** (Regler oder Taste): wechselt zum nächsten oder vorigen Bild. Den Ordner wählst du in den
-  Einstellungen unter „Stream Deck“ → „Bildordner“ (ohne Wahl: die Online-Auswahl). Es zählen nur Bilder und Videos
+- **Hintergrund** (Regler oder Taste): wechselt zum nächsten oder vorigen Bild. Den Ordner wählst du im Fenster
+  „Stream Deck“ (Einstellungen → „Allgemein“ → „Stream Deck …“) → „Bildordner“ (ohne Wahl: die Online-Auswahl). Es zählen nur Bilder und Videos
   direkt im Ordner, höchstens 200. Das Gerät lädt nie etwas aus dem Netz und kann den Ordner nicht ändern.
 - **Vorschau auf der Leiste** (ab Werk aus, „Vorschau des Hintergrunds auf der Leiste“): Seam schickt dann ein kleines Bild
   (200 × 100) des geltenden Hintergrunds an die Stream-Deck-App von Elgato, auch wenn es ein privates Foto ist. Videos

@@ -80,6 +80,16 @@ struct SeamApp: App {
         // zeigt bei Ereignissen von außen ein Fenster. Seams Fenster öffnet nur der Nutzer.
         .handlesExternalEvents(matching: [])
 
+        // 1.5.2: Stream Deck aus dem Einstellungsfenster ausgelagert (Knopf unter „Allgemein“).
+        Window("Stream Deck", id: "streamdeck") {
+            SettingsView(section: .deck)
+                .environment(engine)
+                .environment(engine.prefs)
+                .background(MoveToActiveSpace())
+        }
+        .windowResizability(.contentSize)
+        .handlesExternalEvents(matching: [])
+
         Window("Abdunkeln", id: "abdunkeln") {
             DimSettingsWindow()
                 .environment(engine)

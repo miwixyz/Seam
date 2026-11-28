@@ -32,7 +32,7 @@ Die Besonderheit ist die Naht. Mit ⌃⌥S teilst du den Bildschirm zwischen dem
 
 ## Neu in 1.3
 
-**Stream Deck.** Mit einem Plugin für Elgatos Stream Deck verschiebst du die Naht und setzt Fenster, ohne die Maus zu holen. Der Regler „Naht“ springt durch ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste, Drücken teilt zwei Fenster. „Platz“ setzt das vordere Fenster auf eine feste Fläche, als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Vier fertige Profile für Stream Deck + und Neo liegen dabei. Ab Werk aus: Einstellungen → „Stream Deck“, dann „Plugin installieren“. Das Plugin kann nur feste Befehle senden, Seam prüft es und Elgatos App vor dem ersten Byte, und zurück gehen nur Zahlen und Zustände, keine Namen.
+**Stream Deck.** Mit einem Plugin für Elgatos Stream Deck verschiebst du die Naht und setzt Fenster, ohne die Maus zu holen. Der Regler „Naht“ springt durch ⅓ ⅜ ½ ⅝ ⅔ und zeigt die Stufe auf der Leiste, Drücken teilt zwei Fenster. „Platz“ setzt das vordere Fenster auf eine feste Fläche, als Taste oder als Regler: Drehen wählt die Fläche, Drücken wendet sie an. Vier fertige Profile für Stream Deck + und Neo liegen dabei. Ab Werk aus: Einstellungen → „Allgemein“ → „Stream Deck …“, dann „Plugin installieren“. Das Plugin kann nur feste Befehle senden, Seam prüft es und Elgatos App vor dem ersten Byte, und zurück gehen nur Zahlen und Zustände, keine Namen.
 
 ---
 
