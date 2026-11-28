@@ -79,6 +79,8 @@ Voraussetzungen: macOS 27, Mac mit Apple-Chip. Kostenlos, Open Source (MIT).
 - **Supertaste** (ab Werk aus): Feststelltaste gehalten = ⇧⌃⌥⌘ (wählbar), kurz = nichts oder
   Escape. Im eingebetteten Helfer `SeamKeys` (eigener Prozess, eigene Freigabe, nur Tastatur-Code,
   per Lint-Regel erzwungen), damit Seam selbst weiter keinen Tastatur-Abgriff hat (E22).
+  SeamKeys nicht selbst in den Programme-Ordner legen: Eine zweite Kopie mit gleicher Kennung
+  fängt die Freigabe ab. Ab 1.5.1 nennt Seam solche Kopien im Freigabe-Hinweis.
 - **Wach bei zugeklapptem Deckel** (ab Werk aus): `pmset disablesleep` über den Root-Helfer
   `SeamWake` (launchd, `SMAppService.daemon`, XPC nur von Seams Signatur angenommen). Schaltet von
   selbst ab bei ≤ 20 % Akku ohne Netzteil, Hitze ab „ernst“, Seams Ende und Neustart (E23) Der Helfer läuft nur bei Bedarf:
